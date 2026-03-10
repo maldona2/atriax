@@ -37,7 +37,7 @@ A modern full-stack web application template with React 19, Node.js 20, Express,
 │   │   ├── app.ts          # Express app configuration
 │   │   ├── index.ts        # Entry point
 │   │   ├── config/         # Configuration
-│   │   ├── db/             # Database (connect.ts, migrate.ts)
+│   │   ├── db/             # Database (connect.ts, schema.ts, client.ts)
 │   │   ├── domain/         # Domain models/types
 │   │   ├── middleware/     # Express middleware
 │   │   ├── routes/         # API route handlers
@@ -130,7 +130,7 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 - **Backend**: Express app with CORS, JSON body parser, static uploads at `/uploads`, health check at `/api/health`
 - **Frontend**: React Router with `BrowserRouter`, Tailwind for styling, shadcn/ui components
 - **Add shadcn components**: `cd frontend && npx shadcn@latest add [component-name]`
-- **Migrations**: SQL files in `backend/src/db/migrations/` named `NNN_description.sql`; run via `npm run db:migrate`
+- **Migrations**: Drizzle schema in `backend/src/db/schema.ts`; run `npm run db:generate` to create migration, then `npm run db:migrate`
 
 ## Files/Folders to Be Aware Of
 

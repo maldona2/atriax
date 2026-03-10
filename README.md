@@ -184,11 +184,11 @@ cd backend
 npm run db:migrate
 ```
 
-### Creating New Migrations
+### Creating New Migrations (Drizzle)
 
-1. Create a new SQL file in `backend/src/db/migrations/`
-2. Name it with a sequential number: `002_your_migration_name.sql`
-3. Run migrations: `npm run db:migrate`
+1. Edit the schema in `backend/src/db/schema.ts`
+2. Generate migration: `cd backend && npm run db:generate`
+3. Apply migration: `npm run db:migrate`
 
 ## 🎨 Adding shadcn/ui Components
 
@@ -268,8 +268,8 @@ Make sure to set appropriate environment variables:
 ## 📚 Next Steps
 
 1. **Customize Database Schema**
-   - Edit `backend/src/db/migrations/001_initial_schema.sql`
-   - Add your own tables and indexes
+   - Edit `backend/src/db/schema.ts` and add tables/columns
+   - Run `npm run db:generate` then `npm run db:migrate`
 
 2. **Add API Routes**
    - Create route files in `backend/src/routes/`

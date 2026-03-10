@@ -1,25 +1,53 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
-function Home() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Starter Template</h1>
-        <p className="text-muted-foreground">
-          A modern full-stack template with React, Node.js, and PostgreSQL
-        </p>
-      </div>
-    </div>
-  );
-}
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
+import { AdminLayout } from '@/components/layout/AdminLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Toaster } from '@/components/ui/sonner';
+import { LoginPage } from '@/pages/LoginPage';
+import { TenantsPage } from '@/pages/admin/TenantsPage';
+import { AppointmentsPage } from '@/pages/AppointmentsPage';
+import { AppointmentDetailPage } from '@/pages/AppointmentDetailPage';
+import { PatientsPage } from '@/pages/PatientsPage';
+import { PatientDetailPage } from '@/pages/PatientDetailPage';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="tenants" element={<TenantsPage />} />
+            <Route index element={<Navigate to="/admin/tenants" replace />} />
+          </Route>
+          <Route
+            path="/app"
+            element={
+              <ProtectedRoute allowedRoles={['professional']}>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="appointments" element={<AppointmentsPage />} />
+            <Route path="appointments/:id" element={<AppointmentDetailPage />} />
+            <Route path="patients" element={<PatientsPage />} />
+            <Route path="patients/:id" element={<PatientDetailPage />} />
+            <Route index element={<Navigate to="/app/appointments" replace />} />
+          </Route>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+      <Toaster />
+    </AuthProvider>
   );
 }
 

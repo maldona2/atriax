@@ -46,8 +46,18 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API routes (add your routes here)
-// app.use('/api/example', exampleRoutes);
+// API routes
+import authRoutes from './routes/auth.js';
+import adminRoutes from './routes/admin.js';
+import patientsRoutes from './routes/patients.js';
+import appointmentsRoutes from './routes/appointments.js';
+import sessionsRoutes from './routes/sessions.js';
+
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/patients', patientsRoutes);
+app.use('/api/appointments', appointmentsRoutes);
+app.use('/api/sessions', sessionsRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
