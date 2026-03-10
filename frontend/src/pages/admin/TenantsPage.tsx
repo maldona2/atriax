@@ -103,7 +103,9 @@ export function TenantsPage() {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="name">Nombre del profesional / consultorio</Label>
+                  <Label htmlFor="name">
+                    Nombre del profesional / consultorio
+                  </Label>
                   <Input
                     id="name"
                     value={form.name}

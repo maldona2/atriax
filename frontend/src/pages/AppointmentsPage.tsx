@@ -28,7 +28,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -108,7 +112,10 @@ export function AppointmentsPage() {
             <SheetHeader>
               <SheetTitle>Nuevo turno</SheetTitle>
             </SheetHeader>
-            <form onSubmit={handleCreate} className="flex flex-1 flex-col gap-4 p-4">
+            <form
+              onSubmit={handleCreate}
+              className="flex flex-1 flex-col gap-4 p-4"
+            >
               <div className="space-y-2">
                 <span className="text-sm font-medium">Paciente</span>
                 <Select
@@ -231,7 +238,7 @@ export function AppointmentsPage() {
         <Select
           value={status}
           onValueChange={(v) =>
-            setStatus(v as (typeof status) | 'pending' | 'confirmed')
+            setStatus(v as typeof status | 'pending' | 'confirmed')
           }
         >
           <SelectTrigger className="w-[180px]">

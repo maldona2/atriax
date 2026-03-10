@@ -93,11 +93,7 @@ export function PatientsPage() {
                 <TableCell>{p.phone ?? '—'}</TableCell>
                 <TableCell>{p.email ?? '—'}</TableCell>
                 <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openEdit(p)}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => openEdit(p)}>
                     Editar
                   </Button>
                 </TableCell>

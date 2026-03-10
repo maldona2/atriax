@@ -70,4 +70,3 @@ export function useAppointment(id: string | undefined) {
 
   return { detail, loading };
 }
-

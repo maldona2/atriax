@@ -182,7 +182,10 @@ export function AppointmentDetailPage() {
                 <form onSubmit={saveSession} className="space-y-3 text-sm">
                   <p className="font-medium">Registrar sesión</p>
                   <div className="space-y-1">
-                    <label className="text-muted-foreground" htmlFor="procedures">
+                    <label
+                      className="text-muted-foreground"
+                      htmlFor="procedures"
+                    >
                       Procedimientos realizados
                     </label>
                     <Textarea
@@ -217,4 +220,3 @@ export function AppointmentDetailPage() {
     </div>
   );
 }
-

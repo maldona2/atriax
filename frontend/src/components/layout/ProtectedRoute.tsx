@@ -6,7 +6,10 @@ interface ProtectedRouteProps {
   allowedRoles?: ('super_admin' | 'professional')[];
 }
 
-export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+export function ProtectedRoute({
+  children,
+  allowedRoles,
+}: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
