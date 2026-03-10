@@ -57,3 +57,17 @@ export interface AppointmentDetail extends Appointment {
   procedures_performed?: string | null;
   recommendations?: string | null;
 }
+
+export interface Option {
+  label: string;
+  value: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  withCount?: boolean;
+}
+
+export interface DataTableFilterField<TData> {
+  label: string;
+  value: keyof TData | string;
+  placeholder?: string;
+  options?: Option[];
+}

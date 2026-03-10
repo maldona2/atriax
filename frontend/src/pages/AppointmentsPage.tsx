@@ -1,18 +1,18 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  createColumnHelper,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { useAppointments } from '@/hooks/useAppointments';
 import { usePatients } from '@/hooks/usePatients';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   Select,
   SelectContent,
@@ -34,8 +34,13 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { DataTable } from '@/components/data-table/data-table';
+import { DataTableSkeleton } from '@/components/data-table/data-table-skeleton';
+import { DataTableToolbar } from '@/components/data-table/data-table-toolbar';
+import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { Appointment } from '@/types';
 import type { AppointmentFormData } from '@/hooks/useAppointments';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -55,6 +60,8 @@ const emptyForm: AppointmentFormData = {
   notes: '',
 };
 
+const columnHelper = createColumnHelper<Appointment>();
+
 export function AppointmentsPage() {
   const { appointments, loading, date, setDate, status, setStatus, refetch } =
     useAppointments();
@@ -62,6 +69,70 @@ export function AppointmentsPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<AppointmentFormData>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('scheduled_at', {
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Fecha" />
+        ),
+        cell: ({ getValue }) =>
+          new Date(getValue()).toLocaleString('es-AR', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+          }),
+      }),
+      columnHelper.accessor(
+        (row) =>
+          row.patient_last_name && row.patient_first_name
+            ? `${row.patient_last_name}, ${row.patient_first_name}`
+            : '—',
+        {
+          id: 'patient',
+          header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Paciente" />
+          ),
+        }
+      ),
+      columnHelper.accessor('status', {
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Estado" />
+        ),
+        cell: ({ getValue }) => (
+          <Badge variant="secondary">
+            {statusLabels[getValue()] ?? getValue()}
+          </Badge>
+        ),
+      }),
+      columnHelper.accessor('notes', {
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Notas" />
+        ),
+        cell: ({ getValue }) => (
+          <span className="max-w-xs truncate block">{getValue() ?? '—'}</span>
+        ),
+      }),
+      columnHelper.display({
+        id: 'actions',
+        header: () => <span className="sr-only">Acciones</span>,
+        cell: ({ row }) => (
+          <Button asChild variant="ghost" size="sm">
+            <Link to={`/app/appointments/${row.original.id}`}>Ver</Link>
+          </Button>
+        ),
+      }),
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: appointments,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
 
   function openCreate() {
     setForm({
@@ -100,9 +171,25 @@ export function AppointmentsPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-semibold">Turnos</h1>
+          <Button disabled>Nuevo turno</Button>
+        </div>
+        <DataTableSkeleton
+          columnCount={5}
+          searchableColumnCount={0}
+          filterableColumnCount={0}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold">Turnos</h1>
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
@@ -212,97 +299,57 @@ export function AppointmentsPage() {
         </Sheet>
       </div>
 
-      <div className="flex flex-wrap gap-3 items-center">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                'w-[220px] justify-start text-left font-normal',
-                !date && 'text-muted-foreground'
-              )}
-              type="button"
+      <DataTable table={table}>
+        <DataTableToolbar table={table} filterFields={[]}>
+          <div className="flex flex-wrap items-center gap-3">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    'w-[220px] justify-start text-left font-normal',
+                    !date && 'text-muted-foreground'
+                  )}
+                  type="button"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date
+                    ? date.toLocaleDateString('es-AR')
+                    : 'Filtrar por fecha'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-2" align="start">
+                <Calendar
+                  required
+                  mode="single"
+                  selected={date ?? undefined}
+                  onSelect={setDate}
+                />
+              </PopoverContent>
+            </Popover>
+            <Select
+              value={status}
+              onValueChange={(v) => setStatus(v as typeof status)}
             >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? date.toLocaleDateString('es-AR') : 'Filtrar por fecha'}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="p-2" align="start">
-            <Calendar
-              mode="single"
-              selected={date ?? undefined}
-              onSelect={setDate}
-            />
-          </PopoverContent>
-        </Popover>
-        <Select
-          value={status}
-          onValueChange={(v) =>
-            setStatus(v as typeof status | 'pending' | 'confirmed')
-          }
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Estado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="pending">Pendientes</SelectItem>
-            <SelectItem value="confirmed">Confirmados</SelectItem>
-            <SelectItem value="completed">Completados</SelectItem>
-            <SelectItem value="cancelled">Cancelados</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {loading ? (
-        <p className="text-muted-foreground">Cargando...</p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Fecha</TableHead>
-              <TableHead>Paciente</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Notas</TableHead>
-              <TableHead className="w-[120px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {appointments.map((a) => (
-              <TableRow key={a.id}>
-                <TableCell>
-                  {new Date(a.scheduled_at).toLocaleString('es-AR', {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  })}
-                </TableCell>
-                <TableCell>
-                  {a.patient_last_name && a.patient_first_name
-                    ? `${a.patient_last_name}, ${a.patient_first_name}`
-                    : '—'}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary">
-                    {statusLabels[a.status] ?? a.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="max-w-xs truncate">
-                  {a.notes ?? '—'}
-                </TableCell>
-                <TableCell>
-                  <Button asChild variant="ghost" size="sm">
-                    <Link to={`/app/appointments/${a.id}`}>Ver</Link>
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-
-      {appointments.length === 0 && !loading && (
-        <p className="text-muted-foreground">No hay turnos para los filtros.</p>
-      )}
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="pending">Pendientes</SelectItem>
+                <SelectItem value="confirmed">Confirmados</SelectItem>
+                <SelectItem value="completed">Completados</SelectItem>
+                <SelectItem value="cancelled">Cancelados</SelectItem>
+              </SelectContent>
+            </Select>
+            {appointments.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No hay turnos para los filtros.
+              </p>
+            )}
+          </div>
+        </DataTableToolbar>
+      </DataTable>
     </div>
   );
 }

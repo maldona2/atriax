@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
@@ -11,6 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldError,
+} from '@/components/ui/field';
+import { Stethoscope } from 'lucide-react';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -55,50 +61,64 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Iniciar sesión</CardTitle>
-          <CardDescription>
-            Panel de administración — profesionales de salud estética
+    <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 px-4 py-12">
+      <div className="mb-8 flex flex-col items-center gap-2">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+          <Stethoscope className="h-6 w-6" />
+        </div>
+        <span className="text-lg font-semibold tracking-tight text-foreground">
+          Power Med
+        </span>
+      </div>
+
+      <Card className="w-full max-w-sm shadow-lg">
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Iniciar sesión</CardTitle>
+          <CardDescription className="text-balance">
+            Panel de administración para profesionales de salud estética
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@email.com"
-                required
-                autoComplete="email"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-              />
-            </div>
-            {error && (
-              <p className="text-sm text-destructive" role="alert">
-                {error}
-              </p>
-            )}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Entrando...' : 'Entrar'}
-            </Button>
+          <form onSubmit={handleSubmit}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="doctor@clinica.com"
+                  required
+                  autoComplete="email"
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="password">Contraseña</FieldLabel>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                />
+              </Field>
+
+              {error && <FieldError>{error}</FieldError>}
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Entrando...' : 'Entrar'}
+              </Button>
+            </FieldGroup>
           </form>
         </CardContent>
       </Card>
+
+      <p className="mt-6 text-center text-xs text-muted-foreground">
+        Software exclusivo para profesionales autorizados
+      </p>
     </div>
   );
 }
