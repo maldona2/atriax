@@ -8,17 +8,28 @@ const router = Router();
 const professionalOnly = [authenticate, requireRole('professional')];
 
 const statusEnum = z.enum(['pending', 'confirmed', 'completed', 'cancelled']);
+const paymentStatusEnum = z.enum(['unpaid', 'paid', 'partial', 'refunded']);
+
+const treatmentLineItemSchema = z.object({
+  treatment_id: z.string().uuid(),
+  quantity: z.number().int().min(1),
+  unit_price_cents: z.number().int().min(0),
+});
 
 const createAppointmentSchema = z.object({
   patient_id: z.string().uuid(),
   scheduled_at: z.string().datetime({ offset: true }),
   duration_minutes: z.number().int().positive().optional(),
   notes: z.string().optional().nullable(),
+  payment_status: paymentStatusEnum.optional(),
+  treatments: z.array(treatmentLineItemSchema).optional(),
 });
 
-const updateAppointmentSchema = createAppointmentSchema
-  .partial()
-  .extend({ status: statusEnum.optional() });
+const updateAppointmentSchema = createAppointmentSchema.partial().extend({
+  status: statusEnum.optional(),
+  payment_status: paymentStatusEnum.optional(),
+  treatments: z.array(treatmentLineItemSchema).optional(),
+});
 
 function getTenantId(req: Request): string {
   const tenantId = req.user?.tenantId;

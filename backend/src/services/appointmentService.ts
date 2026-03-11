@@ -1,11 +1,34 @@
 import { and, asc, eq, sql } from 'drizzle-orm';
-import { db, appointments, patients, sessions } from '../db/client.js';
+import {
+  db,
+  appointments,
+  patients,
+  sessions,
+  appointmentTreatments,
+  treatments,
+} from '../db/client.js';
 
 export type AppointmentStatus =
   | 'pending'
   | 'confirmed'
   | 'completed'
   | 'cancelled';
+
+export type PaymentStatus = 'unpaid' | 'paid' | 'partial' | 'refunded';
+
+export interface TreatmentLineItem {
+  treatment_id: string;
+  quantity: number;
+  unit_price_cents: number;
+}
+
+export interface AppointmentTreatmentRow {
+  id: string;
+  treatment_id: string;
+  treatment_name: string;
+  quantity: number;
+  unit_price_cents: number;
+}
 
 export interface AppointmentRow {
   id: string;
@@ -14,6 +37,8 @@ export interface AppointmentRow {
   scheduled_at: Date | null;
   duration_minutes: number | null;
   status: AppointmentStatus;
+  payment_status: PaymentStatus;
+  total_amount_cents: number | null;
   notes: string | null;
   created_at: Date | null;
   updated_at: Date | null;
@@ -24,6 +49,7 @@ export interface AppointmentRow {
 export interface AppointmentDetail extends AppointmentRow {
   procedures_performed?: string | null;
   recommendations?: string | null;
+  treatments?: AppointmentTreatmentRow[];
 }
 
 export interface CreateAppointmentInput {
@@ -31,6 +57,8 @@ export interface CreateAppointmentInput {
   scheduled_at: string;
   duration_minutes?: number;
   notes?: string | null;
+  payment_status?: PaymentStatus;
+  treatments?: TreatmentLineItem[];
 }
 
 export interface ListFilters {
@@ -55,6 +83,8 @@ function toRow(
     scheduled_at: a.scheduledAt,
     duration_minutes: a.durationMinutes ?? null,
     status: a.status as AppointmentStatus,
+    payment_status: (a.paymentStatus as PaymentStatus) ?? 'unpaid',
+    total_amount_cents: a.totalAmountCents ?? null,
     notes: a.notes ?? null,
     created_at: a.createdAt ?? null,
     updated_at: a.updatedAt ?? null,
@@ -89,6 +119,8 @@ export async function list(
       scheduledAt: appointments.scheduledAt,
       durationMinutes: appointments.durationMinutes,
       status: appointments.status,
+      paymentStatus: appointments.paymentStatus,
+      totalAmountCents: appointments.totalAmountCents,
       notes: appointments.notes,
       createdAt: appointments.createdAt,
       updatedAt: appointments.updatedAt,
@@ -109,6 +141,8 @@ export async function list(
         scheduledAt: r.scheduledAt,
         durationMinutes: r.durationMinutes,
         status: r.status,
+        paymentStatus: r.paymentStatus,
+        totalAmountCents: r.totalAmountCents,
         notes: r.notes,
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
@@ -130,6 +164,8 @@ export async function getById(
       scheduledAt: appointments.scheduledAt,
       durationMinutes: appointments.durationMinutes,
       status: appointments.status,
+      paymentStatus: appointments.paymentStatus,
+      totalAmountCents: appointments.totalAmountCents,
       notes: appointments.notes,
       createdAt: appointments.createdAt,
       updatedAt: appointments.updatedAt,
@@ -146,6 +182,26 @@ export async function getById(
 
   if (!row) return null;
 
+  const treatmentRows = await db
+    .select({
+      id: appointmentTreatments.id,
+      treatmentId: appointmentTreatments.treatmentId,
+      treatmentName: treatments.name,
+      quantity: appointmentTreatments.quantity,
+      unitPriceCents: appointmentTreatments.unitPriceCents,
+    })
+    .from(appointmentTreatments)
+    .innerJoin(treatments, eq(treatments.id, appointmentTreatments.treatmentId))
+    .where(eq(appointmentTreatments.appointmentId, id));
+
+  const treatmentItems: AppointmentTreatmentRow[] = treatmentRows.map((t) => ({
+    id: t.id,
+    treatment_id: t.treatmentId,
+    treatment_name: t.treatmentName,
+    quantity: t.quantity,
+    unit_price_cents: t.unitPriceCents,
+  }));
+
   return {
     ...toRow(
       {
@@ -155,6 +211,8 @@ export async function getById(
         scheduledAt: row.scheduledAt,
         durationMinutes: row.durationMinutes,
         status: row.status,
+        paymentStatus: row.paymentStatus,
+        totalAmountCents: row.totalAmountCents,
         notes: row.notes,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
@@ -163,13 +221,26 @@ export async function getById(
     ),
     procedures_performed: row.proceduresPerformed ?? null,
     recommendations: row.recommendations ?? null,
+    treatments: treatmentItems,
   };
+}
+
+function computeTotalCents(items: TreatmentLineItem[]): number {
+  return items.reduce(
+    (sum, item) => sum + item.quantity * item.unit_price_cents,
+    0
+  );
 }
 
 export async function create(
   tenantId: string,
   input: CreateAppointmentInput
 ): Promise<AppointmentRow> {
+  const totalCents =
+    input.treatments && input.treatments.length > 0
+      ? computeTotalCents(input.treatments)
+      : null;
+
   const [row] = await db
     .insert(appointments)
     .values({
@@ -178,17 +249,38 @@ export async function create(
       scheduledAt: new Date(input.scheduled_at),
       durationMinutes: input.duration_minutes ?? 60,
       status: 'pending',
+      paymentStatus: input.payment_status ?? 'unpaid',
+      totalAmountCents: totalCents,
       notes: input.notes ?? null,
     })
     .returning();
 
+  if (!row) throw new Error('Failed to create appointment');
+
+  if (input.treatments && input.treatments.length > 0) {
+    await db.insert(appointmentTreatments).values(
+      input.treatments.map((t) => ({
+        appointmentId: row.id,
+        treatmentId: t.treatment_id,
+        quantity: t.quantity,
+        unitPriceCents: t.unit_price_cents,
+      }))
+    );
+  }
+
   return toRow(row);
 }
+
+export type UpdateAppointmentInput = Partial<CreateAppointmentInput> & {
+  status?: AppointmentStatus;
+  payment_status?: PaymentStatus;
+  treatments?: TreatmentLineItem[];
+};
 
 export async function update(
   tenantId: string,
   id: string,
-  data: Partial<CreateAppointmentInput> & { status?: AppointmentStatus }
+  data: UpdateAppointmentInput
 ): Promise<AppointmentRow | null> {
   const setValue: Partial<typeof appointments.$inferInsert> = {};
 
@@ -198,10 +290,28 @@ export async function update(
   if (data.duration_minutes !== undefined)
     setValue.durationMinutes = data.duration_minutes ?? 60;
   if (data.status !== undefined) setValue.status = data.status;
+  if (data.payment_status !== undefined)
+    setValue.paymentStatus = data.payment_status;
   if (data.notes !== undefined) setValue.notes = data.notes ?? null;
 
-  if (Object.keys(setValue).length === 0) {
-    return getById(tenantId, id);
+  if (data.treatments !== undefined) {
+    await db
+      .delete(appointmentTreatments)
+      .where(eq(appointmentTreatments.appointmentId, id));
+
+    if (data.treatments.length > 0) {
+      setValue.totalAmountCents = computeTotalCents(data.treatments);
+      await db.insert(appointmentTreatments).values(
+        data.treatments.map((t) => ({
+          appointmentId: id,
+          treatmentId: t.treatment_id,
+          quantity: t.quantity,
+          unitPriceCents: t.unit_price_cents,
+        }))
+      );
+    } else {
+      setValue.totalAmountCents = null;
+    }
   }
 
   setValue.updatedAt = new Date();
