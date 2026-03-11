@@ -4,4 +4,3 @@ import * as schema from './schema.js';
 
 export const db = drizzle(pool, { schema });
 export * from './schema.js';
-

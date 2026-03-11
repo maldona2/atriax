@@ -1,4 +1,9 @@
-import { ArrowDownIcon, ArrowUpIcon, CaretSortIcon, EyeNoneIcon } from '@radix-ui/react-icons';
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CaretSortIcon,
+  EyeNoneIcon,
+} from '@radix-ui/react-icons';
 import { type Column } from '@tanstack/react-table';
 
 import { cn } from '@/lib/utils';
@@ -11,7 +16,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-interface DataTableColumnHeaderProps<TData, TValue> extends React.HTMLAttributes<HTMLDivElement> {
+interface DataTableColumnHeaderProps<
+  TData,
+  TValue,
+> extends React.HTMLAttributes<HTMLDivElement> {
   column: Column<TData, TValue>;
   title: string;
 }
@@ -76,13 +84,18 @@ export function DataTableColumnHeader<TData, TValue>({
               </DropdownMenuItem>
             </>
           )}
-          {column.getCanSort() && column.getCanHide() && <DropdownMenuSeparator />}
+          {column.getCanSort() && column.getCanHide() && (
+            <DropdownMenuSeparator />
+          )}
           {column.getCanHide() && (
             <DropdownMenuItem
               aria-label="Hide column"
               onClick={() => column.toggleVisibility(false)}
             >
-              <EyeNoneIcon className="mr-2 size-3.5 text-muted-foreground/70" aria-hidden="true" />
+              <EyeNoneIcon
+                className="mr-2 size-3.5 text-muted-foreground/70"
+                aria-hidden="true"
+              />
               Hide
             </DropdownMenuItem>
           )}

@@ -18,10 +18,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { AppointmentFormData } from '@/hooks/useAppointments';
 import type { Patient } from '@/types';

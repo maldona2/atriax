@@ -13,7 +13,9 @@ import { relations, sql } from 'drizzle-orm';
 // ─── tenants ────────────────────────────────────────────────────────────────
 
 export const tenants = pgTable('tenants', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   slug: text('slug').unique().notNull(),
   isActive: boolean('is_active').notNull().default(true),
@@ -29,7 +31,9 @@ export type NewTenant = typeof tenants.$inferInsert;
 export const users = pgTable(
   'users',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     tenantId: uuid('tenant_id').references(() => tenants.id, {
       onDelete: 'cascade',
     }),
@@ -44,9 +48,10 @@ export const users = pgTable(
     licenseNumber: text('license_number'),
     address: text('address'),
     bio: text('bio'),
-    education: jsonb('education').$type<
-      Array<{ degree: string; institution: string; year: number }>
-    >(),
+    education:
+      jsonb('education').$type<
+        Array<{ degree: string; institution: string; year: number }>
+      >(),
     workingHours: jsonb('working_hours').$type<{
       start: string;
       end: string;
@@ -72,7 +77,9 @@ export type NewUser = typeof users.$inferInsert;
 export const patients = pgTable(
   'patients',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     tenantId: uuid('tenant_id')
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),
@@ -96,7 +103,9 @@ export type NewPatient = typeof patients.$inferInsert;
 export const appointments = pgTable(
   'appointments',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     tenantId: uuid('tenant_id')
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),
@@ -131,7 +140,9 @@ export type NewAppointment = typeof appointments.$inferInsert;
 export const sessions = pgTable(
   'sessions',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     tenantId: uuid('tenant_id')
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),

@@ -41,48 +41,61 @@ const changePasswordSchema = z.object({
   newPassword: z.string().min(8),
 });
 
-router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const parsed = loginSchema.safeParse(req.body);
-    if (!parsed.success) {
-      const err = new Error('Invalid email or password');
-      (err as Error & { statusCode?: number }).statusCode = 400;
-      return next(err);
+router.post(
+  '/login',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const parsed = loginSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const err = new Error('Invalid email or password');
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        return next(err);
+      }
+
+      const { email, password } = parsed.data;
+      const result = await authService.login(email, password);
+      res.json(result);
+    } catch (e) {
+      next(e);
     }
-
-    const { email, password } = parsed.data;
-    const result = await authService.login(email, password);
-    res.json(result);
-  } catch (e) {
-    next(e);
   }
-});
+);
 
-router.get('/me', authenticate, async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.user) return next(new Error('Unauthorized'));
-    const user = await authService.me(req.user.id);
-    res.json(user);
-  } catch (e) {
-    next(e);
-  }
-});
-
-router.patch('/me', authenticate, async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.user) return next(new Error('Unauthorized'));
-    const parsed = updateProfileSchema.safeParse(req.body);
-    if (!parsed.success) {
-      const err = new Error(parsed.error.errors[0]?.message ?? 'Invalid request');
-      (err as Error & { statusCode?: number }).statusCode = 400;
-      return next(err);
+router.get(
+  '/me',
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user) return next(new Error('Unauthorized'));
+      const user = await authService.me(req.user.id);
+      res.json(user);
+    } catch (e) {
+      next(e);
     }
-    const user = await authService.updateProfile(req.user.id, parsed.data);
-    res.json(user);
-  } catch (e) {
-    next(e);
   }
-});
+);
+
+router.patch(
+  '/me',
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user) return next(new Error('Unauthorized'));
+      const parsed = updateProfileSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const err = new Error(
+          parsed.error.errors[0]?.message ?? 'Invalid request'
+        );
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        return next(err);
+      }
+      const user = await authService.updateProfile(req.user.id, parsed.data);
+      res.json(user);
+    } catch (e) {
+      next(e);
+    }
+  }
+);
 
 router.post(
   '/me/password',
@@ -92,7 +105,9 @@ router.post(
       if (!req.user) return next(new Error('Unauthorized'));
       const parsed = changePasswordSchema.safeParse(req.body);
       if (!parsed.success) {
-        const err = new Error(parsed.error.errors[0]?.message ?? 'Invalid request');
+        const err = new Error(
+          parsed.error.errors[0]?.message ?? 'Invalid request'
+        );
         (err as Error & { statusCode?: number }).statusCode = 400;
         return next(err);
       }

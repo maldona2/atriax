@@ -36,16 +36,35 @@ interface DashboardShellProps {
   children: React.ReactNode;
 }
 
-function Logo({ collapsed }: { collapsed: boolean }) {
+function Logo({
+  collapsed,
+  userName,
+  href,
+}: {
+  collapsed: boolean;
+  userName?: string | null;
+  href: string;
+}) {
+  const firstName = userName?.split(' ')[0] ?? null;
+
   return (
-    <div className="flex items-center gap-2 px-2">
-      <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-        D
+    <Link to={href} className="flex items-center gap-2 px-2">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
+        P
       </div>
       {!collapsed && (
-        <span className="font-semibold text-foreground">Dashboard</span>
+        <div className="min-w-0">
+          <span className="block truncate font-semibold text-foreground">
+            PowerMed
+          </span>
+          {firstName && (
+            <span className="block truncate text-xs text-muted-foreground">
+              Hola, {firstName}
+            </span>
+          )}
+        </div>
       )}
-    </div>
+    </Link>
   );
 }
 
@@ -186,8 +205,17 @@ export function DashboardShell({
           collapsed ? 'w-16' : 'w-64'
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b px-4">
-          <Logo collapsed={collapsed} />
+        <div
+          className={cn(
+            'flex h-16 items-center border-b px-4',
+            collapsed ? 'justify-center' : 'justify-between'
+          )}
+        >
+          <Logo
+            collapsed={collapsed}
+            userName={userName}
+            href={sidebarItems[0]?.to ?? '/'}
+          />
           {!collapsed && (
             <Button
               variant="ghost"
@@ -239,7 +267,11 @@ export function DashboardShell({
         <SheetContent side="left" className="w-64 p-0">
           <SheetHeader className="border-b px-4 py-4">
             <SheetTitle asChild>
-              <Logo collapsed={false} />
+              <Logo
+                collapsed={false}
+                userName={userName}
+                href={sidebarItems[0]?.to ?? '/'}
+              />
             </SheetTitle>
           </SheetHeader>
 

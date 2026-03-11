@@ -16,24 +16,27 @@ export function useAppointments() {
   const [date, setDate] = useState<Date | null>(null);
   const [status, setStatus] = useState<Appointment['status'] | 'all'>('all');
 
-  const fetchAppointments = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, string> = {};
-      if (date) {
-        params.date = date.toISOString().slice(0, 10);
+  const fetchAppointments = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!options?.silent) setLoading(true);
+      try {
+        const params: Record<string, string> = {};
+        if (date) {
+          params.date = date.toISOString().slice(0, 10);
+        }
+        if (status !== 'all') {
+          params.status = status;
+        }
+        const { data } = await api.get<Appointment[]>('/appointments', {
+          params,
+        });
+        setAppointments(data);
+      } finally {
+        if (!options?.silent) setLoading(false);
       }
-      if (status !== 'all') {
-        params.status = status;
-      }
-      const { data } = await api.get<Appointment[]>('/appointments', {
-        params,
-      });
-      setAppointments(data);
-    } finally {
-      setLoading(false);
-    }
-  }, [date, status]);
+    },
+    [date, status]
+  );
 
   useEffect(() => {
     fetchAppointments();

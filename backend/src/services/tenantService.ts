@@ -103,7 +103,9 @@ export async function getTenantById(id: string): Promise<TenantRow | null> {
   };
 }
 
-export async function createTenant(input: CreateTenantInput): Promise<TenantRow> {
+export async function createTenant(
+  input: CreateTenantInput
+): Promise<TenantRow> {
   const slug =
     (input.slug && input.slug.trim()) ||
     slugify(input.name) ||

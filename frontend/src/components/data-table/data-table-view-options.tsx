@@ -17,7 +17,9 @@ interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
 }
 
-export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps<TData>) {
+export function DataTableViewOptions<TData>({
+  table,
+}: DataTableViewOptionsProps<TData>) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -36,11 +38,17 @@ export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps
         <DropdownMenuSeparator />
         {table
           .getAllColumns()
-          .filter(column => typeof column.accessorFn !== 'undefined' && column.getCanHide())
-          .map(column => {
+          .filter(
+            (column) =>
+              typeof column.accessorFn !== 'undefined' && column.getCanHide()
+          )
+          .map((column) => {
             const headerContent = column.columnDef.header
               ? typeof column.columnDef.header === 'function'
-                ? column.columnDef.header({ column, table } as HeaderContext<TData, unknown>)
+                ? column.columnDef.header({ column, table } as HeaderContext<
+                    TData,
+                    unknown
+                  >)
                 : column.columnDef.header
               : column.id;
 
@@ -49,7 +57,7 @@ export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps
                 key={column.id}
                 className="capitalize"
                 checked={column.getIsVisible()}
-                onCheckedChange={value => column.toggleVisibility(!!value)}
+                onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
                 <span className="truncate">{headerContent}</span>
               </DropdownMenuCheckboxItem>

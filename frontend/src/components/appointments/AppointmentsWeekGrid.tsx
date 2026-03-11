@@ -5,12 +5,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  HOUR_HEIGHT,
-  HOURS,
-  START_HOUR,
-  statusConfig,
-} from './constants';
+import { HOUR_HEIGHT, HOURS, START_HOUR, statusConfig } from './constants';
 import { CurrentTimeIndicator } from './CurrentTimeIndicator';
 import type { Appointment } from '@/types';
 
@@ -38,8 +33,7 @@ function calculatePosition(apt: Appointment) {
   const date = parseISO(apt.scheduled_at);
   const hours = date.getHours();
   const minutes = date.getMinutes();
-  const top =
-    (hours - START_HOUR) * HOUR_HEIGHT + (minutes / 60) * HOUR_HEIGHT;
+  const top = (hours - START_HOUR) * HOUR_HEIGHT + (minutes / 60) * HOUR_HEIGHT;
   const height = (apt.duration_minutes / 60) * HOUR_HEIGHT;
   return { top, height: Math.max(height, 24) };
 }
@@ -81,7 +75,10 @@ export function AppointmentsWeekGrid({
         <div className="w-16 border-r" />
         {weekDays.map((day) => {
           const isToday = isSameDay(day, new Date());
-          const dayAppointments = getAppointmentsForDay(filteredAppointments, day);
+          const dayAppointments = getAppointmentsForDay(
+            filteredAppointments,
+            day
+          );
           return (
             <div
               key={day.toISOString()}

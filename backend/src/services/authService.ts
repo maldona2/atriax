@@ -16,7 +16,10 @@ export interface LoginResult {
   };
 }
 
-export async function login(email: string, password: string): Promise<LoginResult> {
+export async function login(
+  email: string,
+  password: string
+): Promise<LoginResult> {
   const [user] = await db
     .select()
     .from(users)
@@ -75,7 +78,11 @@ export interface UserProfile {
   licenseNumber?: string | null;
   address?: string | null;
   bio?: string | null;
-  education?: Array<{ degree: string; institution: string; year: number }> | null;
+  education?: Array<{
+    degree: string;
+    institution: string;
+    year: number;
+  }> | null;
   workingHours?: { start: string; end: string; days: string[] } | null;
   appointmentDuration?: number | null;
   avatarUrl?: string | null;
@@ -126,7 +133,11 @@ export interface UpdateProfileInput {
   licenseNumber?: string | null;
   address?: string | null;
   bio?: string | null;
-  education?: Array<{ degree: string; institution: string; year: number }> | null;
+  education?: Array<{
+    degree: string;
+    institution: string;
+    year: number;
+  }> | null;
   workingHours?: { start: string; end: string; days: string[] } | null;
   appointmentDuration?: number | null;
   avatarUrl?: string | null;
@@ -155,7 +166,9 @@ export async function updateProfile(
     const [taken] = await db
       .select({ id: users.id })
       .from(users)
-      .where(sql`lower(${users.email}) = lower(${data.email}) AND ${users.id} != ${userId}`)
+      .where(
+        sql`lower(${users.email}) = lower(${data.email}) AND ${users.id} != ${userId}`
+      )
       .limit(1);
     if (taken) {
       const err = new Error('Email already in use');
@@ -166,11 +179,13 @@ export async function updateProfile(
   }
   if (data.phone !== undefined) updates.phone = data.phone ?? null;
   if (data.specialty !== undefined) updates.specialty = data.specialty ?? null;
-  if (data.licenseNumber !== undefined) updates.licenseNumber = data.licenseNumber ?? null;
+  if (data.licenseNumber !== undefined)
+    updates.licenseNumber = data.licenseNumber ?? null;
   if (data.address !== undefined) updates.address = data.address ?? null;
   if (data.bio !== undefined) updates.bio = data.bio ?? null;
   if (data.education !== undefined) updates.education = data.education ?? null;
-  if (data.workingHours !== undefined) updates.workingHours = data.workingHours ?? null;
+  if (data.workingHours !== undefined)
+    updates.workingHours = data.workingHours ?? null;
   if (data.appointmentDuration !== undefined)
     updates.appointmentDuration = data.appointmentDuration ?? null;
   if (data.avatarUrl !== undefined) updates.avatarUrl = data.avatarUrl ?? null;

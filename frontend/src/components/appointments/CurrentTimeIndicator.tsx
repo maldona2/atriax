@@ -7,8 +7,7 @@ export function CurrentTimeIndicator() {
 
   if (hours < START_HOUR || hours >= END_HOUR) return null;
 
-  const top =
-    (hours - START_HOUR) * HOUR_HEIGHT + (minutes / 60) * HOUR_HEIGHT;
+  const top = (hours - START_HOUR) * HOUR_HEIGHT + (minutes / 60) * HOUR_HEIGHT;
 
   return (
     <div

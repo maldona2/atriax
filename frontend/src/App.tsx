@@ -23,42 +23,42 @@ function App() {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <AuthProvider>
         <Router>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRoles={['super_admin']}>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="tenants" element={<TenantsPage />} />
-            <Route index element={<Navigate to="/admin/tenants" replace />} />
-          </Route>
-          <Route
-            path="/app"
-            element={
-              <ProtectedRoute allowedRoles={['professional']}>
-                <AppLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="appointments" element={<AppointmentsPage />} />
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
             <Route
-              path="appointments/:id"
-              element={<AppointmentDetailPage />}
-            />
-            <Route path="patients" element={<PatientsPage />} />
-            <Route path="patients/:id" element={<PatientDetailPage />} />
-            <Route path="profile" element={<ProfilePage />} />
+              path="/admin"
+              element={
+                <ProtectedRoute allowedRoles={['super_admin']}>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="tenants" element={<TenantsPage />} />
+              <Route index element={<Navigate to="/admin/tenants" replace />} />
+            </Route>
             <Route
-              index
-              element={<Navigate to="/app/appointments" replace />}
-            />
-          </Route>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+              path="/app"
+              element={
+                <ProtectedRoute allowedRoles={['professional']}>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="appointments" element={<AppointmentsPage />} />
+              <Route
+                path="appointments/:id"
+                element={<AppointmentDetailPage />}
+              />
+              <Route path="patients" element={<PatientsPage />} />
+              <Route path="patients/:id" element={<PatientDetailPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route
+                index
+                element={<Navigate to="/app/appointments" replace />}
+              />
+            </Route>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
         <Toaster />

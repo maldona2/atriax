@@ -27,7 +27,10 @@ async function seed() {
     .select({ id: users.id })
     .from(users)
     .where(
-      and(eq(users.role, 'super_admin'), sql`lower(${users.email}) = ${emailLower}`)
+      and(
+        eq(users.role, 'super_admin'),
+        sql`lower(${users.email}) = ${emailLower}`
+      )
     )
     .limit(1);
 

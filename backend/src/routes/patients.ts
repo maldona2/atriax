@@ -107,7 +107,11 @@ router.put(
           parsed.data.date_of_birth === '' ? null : parsed.data.date_of_birth,
       };
       const tenantId = getTenantId(req);
-      const patient = await patientService.update(tenantId, req.params.id, data);
+      const patient = await patientService.update(
+        tenantId,
+        req.params.id,
+        data
+      );
       if (!patient) {
         const err = new Error('Patient not found');
         (err as Error & { statusCode?: number }).statusCode = 404;

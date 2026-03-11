@@ -3,22 +3,26 @@ import { Link } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CalendarIcon, Clock, User, FileText } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import api from '@/lib/api';
 import { statusConfig } from './constants';
 import type { Appointment } from '@/types';
 
 interface AppointmentDetailSheetProps {
   appointment: Appointment;
   onClose: () => void;
+  onStatusChange?: (updated: Appointment) => void;
 }
 
 export function AppointmentDetailSheet({
   appointment,
   onClose,
+  onStatusChange,
 }: AppointmentDetailSheetProps) {
   const [activeStatus, setActiveStatus] = useState(appointment.status);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -34,16 +38,38 @@ export function AppointmentDetailSheet({
 
   const handleStatusChange = async (newStatus: string) => {
     setIsUpdating(true);
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    setActiveStatus(newStatus as Appointment['status']);
-    setIsUpdating(false);
+    try {
+      const { data } = await api.put<Appointment>(
+        `/appointments/${appointment.id}`,
+        { status: newStatus }
+      );
+      setActiveStatus(data.status);
+      onStatusChange?.(data);
+      toast.success('Estado actualizado');
+    } catch {
+      toast.error('No se pudo actualizar el estado');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const statusColors: Record<string, { bg: string; border: string }> = {
-    pending: { bg: 'bg-amber-50', border: 'border-amber-200' },
-    confirmed: { bg: 'bg-sky-50', border: 'border-sky-200' },
-    completed: { bg: 'bg-emerald-50', border: 'border-emerald-200' },
-    cancelled: { bg: 'bg-neutral-50', border: 'border-neutral-200' },
+    pending: {
+      bg: 'bg-amber-50 dark:bg-amber-950/60',
+      border: 'border-amber-200 dark:border-amber-800/60',
+    },
+    confirmed: {
+      bg: 'bg-sky-50 dark:bg-sky-950/60',
+      border: 'border-sky-200 dark:border-sky-800/60',
+    },
+    completed: {
+      bg: 'bg-emerald-50 dark:bg-emerald-950/60',
+      border: 'border-emerald-200 dark:border-emerald-800/60',
+    },
+    cancelled: {
+      bg: 'bg-neutral-50 dark:bg-neutral-900/60',
+      border: 'border-neutral-200 dark:border-neutral-700/60',
+    },
   };
 
   const headerStyle = statusColors[activeStatus] ?? statusColors.pending;

@@ -7,12 +7,7 @@ import { requireRole } from '../middleware/requireRole.js';
 const router = Router();
 const professionalOnly = [authenticate, requireRole('professional')];
 
-const statusEnum = z.enum([
-  'pending',
-  'confirmed',
-  'completed',
-  'cancelled',
-]);
+const statusEnum = z.enum(['pending', 'confirmed', 'completed', 'cancelled']);
 
 const createAppointmentSchema = z.object({
   patient_id: z.string().uuid(),
@@ -148,4 +143,3 @@ router.delete(
 );
 
 export default router;
-

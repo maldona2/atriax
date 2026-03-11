@@ -188,6 +188,10 @@ export function AppointmentsPage() {
             <AppointmentDetailSheet
               appointment={selectedAppointment}
               onClose={() => setSheetOpen(false)}
+              onStatusChange={(updated) => {
+                setSelectedAppointment(updated);
+                refetch({ silent: true });
+              }}
             />
           ) : (
             <NewAppointmentSheet

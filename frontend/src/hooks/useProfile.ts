@@ -11,7 +11,11 @@ export interface UpdateProfileInput {
   licenseNumber?: string | null;
   address?: string | null;
   bio?: string | null;
-  education?: Array<{ degree: string; institution: string; year: number }> | null;
+  education?: Array<{
+    degree: string;
+    institution: string;
+    year: number;
+  }> | null;
   workingHours?: { start: string; end: string; days: string[] } | null;
   appointmentDuration?: number | null;
   avatarUrl?: string | null;
@@ -35,7 +39,10 @@ export function useProfile() {
         toast.success('Perfil actualizado');
       } catch (err: unknown) {
         const data =
-          err && typeof err === 'object' && 'response' in err && (err as { response?: { data?: unknown } }).response?.data;
+          err &&
+          typeof err === 'object' &&
+          'response' in err &&
+          (err as { response?: { data?: unknown } }).response?.data;
         const message =
           data && typeof data === 'object' && data !== null && 'error' in data
             ? (data as { error?: { message?: string } }).error?.message
@@ -56,7 +63,10 @@ export function useProfile() {
       toast.success('Contraseña actualizada');
     } catch (err: unknown) {
       const data =
-        err && typeof err === 'object' && 'response' in err && (err as { response?: { data?: unknown } }).response?.data;
+        err &&
+        typeof err === 'object' &&
+        'response' in err &&
+        (err as { response?: { data?: unknown } }).response?.data;
       const message =
         data && typeof data === 'object' && data !== null && 'error' in data
           ? (data as { error?: { message?: string } }).error?.message

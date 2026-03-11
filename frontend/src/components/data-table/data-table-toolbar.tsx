@@ -11,7 +11,9 @@ import { Input } from '@/components/ui/input';
 import { DataTableFacetedFilter } from '@/components/data-table/data-table-faceted-filter';
 import { DataTableViewOptions } from '@/components/data-table/data-table-view-options';
 
-interface DataTableToolbarProps<TData> extends React.HTMLAttributes<HTMLDivElement> {
+interface DataTableToolbarProps<
+  TData,
+> extends React.HTMLAttributes<HTMLDivElement> {
   table: Table<TData>;
   filterFields?: DataTableFilterField<TData>[];
   pdfTable?: boolean;
@@ -27,17 +29,19 @@ export function DataTableToolbar<TData>({
 }: DataTableToolbarProps<TData>) {
   const { searchableColumns, filterableColumns } = React.useMemo(() => {
     return {
-      searchableColumns: filterFields.filter(field => !field.options),
-      filterableColumns: filterFields.filter(field => field.options),
+      searchableColumns: filterFields.filter((field) => !field.options),
+      filterableColumns: filterFields.filter((field) => field.options),
     };
   }, [filterFields]);
 
   // Estado local para inputs de búsqueda
-  const [searchValues, setSearchValues] = React.useState<Record<string, string>>({});
+  const [searchValues, setSearchValues] = React.useState<
+    Record<string, string>
+  >({});
 
   // Manejo de cambios en los inputs
   const handleInputChange = (columnId: string, value: string) => {
-    setSearchValues(prev => ({ ...prev, [columnId]: value }));
+    setSearchValues((prev) => ({ ...prev, [columnId]: value }));
   };
 
   // Aplicar filtros al presionar el botón de "Buscar"
@@ -52,7 +56,9 @@ export function DataTableToolbar<TData>({
     table.resetColumnFilters();
   };
 
-  const hasSearchValues = Object.values(searchValues).some(value => value.trim().length > 1);
+  const hasSearchValues = Object.values(searchValues).some(
+    (value) => value.trim().length > 1
+  );
 
   return (
     <div
@@ -65,14 +71,19 @@ export function DataTableToolbar<TData>({
       <div className="flex flex-1 items-center space-x-2">
         {searchableColumns.length > 0 &&
           searchableColumns.map(
-            column =>
+            (column) =>
               table.getColumn(column.value ? String(column.value) : '') && (
                 <>
                   <Input
                     key={String(column.value)}
                     placeholder={column.placeholder}
                     value={searchValues[String(column.value) ?? ''] ?? ''}
-                    onChange={event => handleInputChange(String(column.value), event.target.value)}
+                    onChange={(event) =>
+                      handleInputChange(
+                        String(column.value),
+                        event.target.value
+                      )
+                    }
                     className="h-8 w-40 lg:w-64"
                   />
                   <Button
@@ -88,11 +99,13 @@ export function DataTableToolbar<TData>({
           )}
         {filterableColumns.length > 0 &&
           filterableColumns.map(
-            column =>
+            (column) =>
               table.getColumn(column.value ? String(column.value) : '') && (
                 <DataTableFacetedFilter
                   key={String(column.value)}
-                  column={table.getColumn(column.value ? String(column.value) : '')}
+                  column={table.getColumn(
+                    column.value ? String(column.value) : ''
+                  )}
                   title={column.label}
                   options={column.options ?? []}
                 />

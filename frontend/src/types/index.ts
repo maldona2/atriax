@@ -9,7 +9,11 @@ export interface AuthUser {
   licenseNumber?: string | null;
   address?: string | null;
   bio?: string | null;
-  education?: Array<{ degree: string; institution: string; year: number }> | null;
+  education?: Array<{
+    degree: string;
+    institution: string;
+    year: number;
+  }> | null;
   workingHours?: { start: string; end: string; days: string[] } | null;
   appointmentDuration?: number | null;
   avatarUrl?: string | null;

@@ -72,7 +72,10 @@ export async function list(
 export async function getById(
   tenantId: string,
   id: string
-): Promise<{ patient: PatientRow; appointments: AppointmentWithSession[] } | null> {
+): Promise<{
+  patient: PatientRow;
+  appointments: AppointmentWithSession[];
+} | null> {
   const [patient] = await db
     .select()
     .from(patients)
@@ -92,10 +95,7 @@ export async function getById(
     .from(appointments)
     .leftJoin(sessions, eq(sessions.appointmentId, appointments.id))
     .where(
-      and(
-        eq(appointments.patientId, id),
-        eq(appointments.tenantId, tenantId)
-      )
+      and(eq(appointments.patientId, id), eq(appointments.tenantId, tenantId))
     )
     .orderBy(desc(appointments.scheduledAt));
 
@@ -141,7 +141,8 @@ export async function update(
   if (input.last_name !== undefined) setValue.lastName = input.last_name;
   if (input.phone !== undefined) setValue.phone = input.phone ?? null;
   if (input.email !== undefined) setValue.email = input.email ?? null;
-  if (input.date_of_birth !== undefined) setValue.dateOfBirth = input.date_of_birth ?? null;
+  if (input.date_of_birth !== undefined)
+    setValue.dateOfBirth = input.date_of_birth ?? null;
   if (input.notes !== undefined) setValue.notes = input.notes ?? null;
 
   if (Object.keys(setValue).length === 0) {
