@@ -2,6 +2,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -38,6 +39,21 @@ export const users = pgTable(
     role: text('role', { enum: ['super_admin', 'professional'] })
       .notNull()
       .default('professional'),
+    phone: text('phone'),
+    specialty: text('specialty'),
+    licenseNumber: text('license_number'),
+    address: text('address'),
+    bio: text('bio'),
+    education: jsonb('education').$type<
+      Array<{ degree: string; institution: string; year: number }>
+    >(),
+    workingHours: jsonb('working_hours').$type<{
+      start: string;
+      end: string;
+      days: string[];
+    }>(),
+    appointmentDuration: integer('appointment_duration').default(30),
+    avatarUrl: text('avatar_url'),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),

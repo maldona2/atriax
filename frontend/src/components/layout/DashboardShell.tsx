@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { ChevronLeft, LogOut, Menu } from 'lucide-react';
+import { ChevronLeft, LogOut, Menu, User } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -151,6 +151,13 @@ function UserMenu({
             <DropdownMenuSeparator />
           </>
         )}
+        <DropdownMenuItem asChild>
+          <Link to="/app/profile">
+            <User className="size-4" />
+            Mi perfil
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onLogout} variant="destructive">
           <LogOut className="size-4" />
           Cerrar sesión

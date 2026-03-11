@@ -4,6 +4,7 @@ import {
   Route,
   Navigate,
 } from 'react-router-dom';
+import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { AdminLayout } from '@/components/layout/AdminLayout';
@@ -15,11 +16,13 @@ import { AppointmentsPage } from '@/pages/AppointmentsPage';
 import { AppointmentDetailPage } from '@/pages/AppointmentDetailPage';
 import { PatientsPage } from '@/pages/PatientsPage';
 import { PatientDetailPage } from '@/pages/PatientDetailPage';
+import { ProfilePage } from '@/pages/ProfilePage';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <AuthProvider>
+        <Router>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
@@ -48,6 +51,7 @@ function App() {
             />
             <Route path="patients" element={<PatientsPage />} />
             <Route path="patients/:id" element={<PatientDetailPage />} />
+            <Route path="profile" element={<ProfilePage />} />
             <Route
               index
               element={<Navigate to="/app/appointments" replace />}
@@ -55,10 +59,11 @@ function App() {
           </Route>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-      <Toaster />
-    </AuthProvider>
+          </Routes>
+        </Router>
+        <Toaster />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

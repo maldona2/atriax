@@ -20,6 +20,7 @@ interface AuthState {
 interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<AuthUser>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   role: AuthUser['role'] | null;
   tenantId: string | null;
 }
@@ -51,6 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ user: null, token: null, isLoading: false });
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    if (!state.token) return;
+    const { data } = await api.get<AuthUser>('/auth/me');
+    setState((s) => ({ ...s, user: data }));
+  }, [state.token]);
+
   useEffect(() => {
     if (!state.token) {
       setState((s) => ({ ...s, isLoading: false }));
@@ -72,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ...state,
     login,
     logout,
+    refreshUser,
     role: state.user?.role ?? null,
     tenantId: state.user?.tenantId ?? null,
   };
