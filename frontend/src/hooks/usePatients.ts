@@ -40,6 +40,16 @@ export function usePatient(id: string | undefined) {
   const [detail, setDetail] = useState<PatientDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const refetch = useCallback(async () => {
+    if (!id) return;
+    try {
+      const { data } = await api.get<PatientDetail>(`/patients/${id}`);
+      setDetail(data);
+    } catch {
+      setDetail(null);
+    }
+  }, [id]);
+
   useEffect(() => {
     if (!id) {
       setDetail(null);
@@ -54,5 +64,5 @@ export function usePatient(id: string | undefined) {
       .finally(() => setLoading(false));
   }, [id]);
 
-  return { detail, loading };
+  return { detail, loading, refetch };
 }
