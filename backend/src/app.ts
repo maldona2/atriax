@@ -52,11 +52,13 @@ import adminRoutes from './routes/admin.js';
 import patientsRoutes from './routes/patients.js';
 import appointmentsRoutes from './routes/appointments.js';
 import sessionsRoutes from './routes/sessions.js';
+import treatmentsRoutes from './routes/treatments.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/patients', patientsRoutes);
 app.use('/api/appointments', appointmentsRoutes);
+app.use('/api/treatments', treatmentsRoutes);
 app.use('/api/sessions', sessionsRoutes);
 
 // Error handler (must be last)
