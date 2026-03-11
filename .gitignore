@@ -32,3 +32,4 @@ Thumbs.db
 # Uploads
 backend/uploads/*
 !backend/uploads/.gitkeep
+sendgrid.env

@@ -14,5 +14,7 @@ export default {
     ],
   },
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
+  testPathIgnorePatterns: ['/node_modules/', 'setup\\.ts$'],
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
+  setupFiles: ['<rootDir>/src/__tests__/setup.ts'],
 };
