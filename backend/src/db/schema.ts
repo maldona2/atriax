@@ -313,6 +313,124 @@ export const allergies = pgTable(
 export type Allergy = typeof allergies.$inferSelect;
 export type NewAllergy = typeof allergies.$inferInsert;
 
+// ─── google_calendar_tokens ───────────────────────────────────────────────────
+
+export const googleCalendarTokens = pgTable(
+  'google_calendar_tokens',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    userId: uuid('user_id')
+      .notNull()
+      .unique()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    encryptedAccessToken: text('encrypted_access_token').notNull(),
+    encryptedRefreshToken: text('encrypted_refresh_token'),
+    tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true }),
+    scope: text('scope'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_google_calendar_tokens_user').on(table.userId),
+    index('idx_google_calendar_tokens_tenant').on(table.tenantId),
+  ]
+);
+
+export type GoogleCalendarToken = typeof googleCalendarTokens.$inferSelect;
+export type NewGoogleCalendarToken = typeof googleCalendarTokens.$inferInsert;
+
+// ─── calendar_sync_status ─────────────────────────────────────────────────────
+
+export const calendarSyncStatus = pgTable(
+  'calendar_sync_status',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    appointmentId: uuid('appointment_id')
+      .notNull()
+      .unique()
+      .references(() => appointments.id, { onDelete: 'cascade' }),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    googleEventId: text('google_event_id'),
+    status: text('status', {
+      enum: ['synced', 'pending', 'failed', 'unsynced'],
+    })
+      .notNull()
+      .default('unsynced'),
+    lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }),
+    errorMessage: text('error_message'),
+    retryCount: integer('retry_count').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_calendar_sync_status_appointment').on(table.appointmentId),
+    index('idx_calendar_sync_status_tenant').on(table.tenantId),
+    index('idx_calendar_sync_status_user').on(table.userId),
+    index('idx_calendar_sync_status_status').on(table.status),
+  ]
+);
+
+export type CalendarSyncStatus = typeof calendarSyncStatus.$inferSelect;
+export type NewCalendarSyncStatus = typeof calendarSyncStatus.$inferInsert;
+
+// ─── calendar_sync_queue ──────────────────────────────────────────────────────
+
+export const calendarSyncQueue = pgTable(
+  'calendar_sync_queue',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    appointmentId: uuid('appointment_id').references(() => appointments.id, {
+      onDelete: 'cascade',
+    }),
+    operation: text('operation', {
+      enum: ['create', 'update', 'delete', 'batch_sync'],
+    }).notNull(),
+    priority: integer('priority').notNull().default(5),
+    status: text('status', {
+      enum: ['pending', 'processing', 'completed', 'failed'],
+    })
+      .notNull()
+      .default('pending'),
+    retryCount: integer('retry_count').notNull().default(0),
+    maxRetries: integer('max_retries').notNull().default(5),
+    nextRetryAt: timestamp('next_retry_at', { withTimezone: true }),
+    payload: jsonb('payload'),
+    errorMessage: text('error_message'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_calendar_sync_queue_tenant').on(table.tenantId),
+    index('idx_calendar_sync_queue_user').on(table.userId),
+    index('idx_calendar_sync_queue_status').on(table.status),
+    index('idx_calendar_sync_queue_priority').on(table.priority),
+    index('idx_calendar_sync_queue_next_retry').on(table.nextRetryAt),
+  ]
+);
+
+export type CalendarSyncQueue = typeof calendarSyncQueue.$inferSelect;
+export type NewCalendarSyncQueue = typeof calendarSyncQueue.$inferInsert;
+
 // ─── relations ───────────────────────────────────────────────────────────────
 
 export const tenantsRelations = relations(tenants, ({ many }) => ({
@@ -324,6 +442,9 @@ export const tenantsRelations = relations(tenants, ({ many }) => ({
   medicalConditions: many(medicalConditions),
   medications: many(medications),
   allergies: many(allergies),
+  googleCalendarTokens: many(googleCalendarTokens),
+  calendarSyncStatus: many(calendarSyncStatus),
+  calendarSyncQueue: many(calendarSyncQueue),
 }));
 
 export const usersRelations = relations(users, ({ one }) => ({
@@ -432,3 +553,53 @@ export const allergiesRelations = relations(allergies, ({ one }) => ({
     references: [patients.id],
   }),
 }));
+
+export const googleCalendarTokensRelations = relations(
+  googleCalendarTokens,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [googleCalendarTokens.userId],
+      references: [users.id],
+    }),
+    tenant: one(tenants, {
+      fields: [googleCalendarTokens.tenantId],
+      references: [tenants.id],
+    }),
+  })
+);
+
+export const calendarSyncStatusRelations = relations(
+  calendarSyncStatus,
+  ({ one }) => ({
+    appointment: one(appointments, {
+      fields: [calendarSyncStatus.appointmentId],
+      references: [appointments.id],
+    }),
+    tenant: one(tenants, {
+      fields: [calendarSyncStatus.tenantId],
+      references: [tenants.id],
+    }),
+    user: one(users, {
+      fields: [calendarSyncStatus.userId],
+      references: [users.id],
+    }),
+  })
+);
+
+export const calendarSyncQueueRelations = relations(
+  calendarSyncQueue,
+  ({ one }) => ({
+    tenant: one(tenants, {
+      fields: [calendarSyncQueue.tenantId],
+      references: [tenants.id],
+    }),
+    user: one(users, {
+      fields: [calendarSyncQueue.userId],
+      references: [users.id],
+    }),
+    appointment: one(appointments, {
+      fields: [calendarSyncQueue.appointmentId],
+      references: [appointments.id],
+    }),
+  })
+);

@@ -29,6 +29,13 @@
       "when": 1773263539249,
       "tag": "0003_empty_rage",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1773428827337,
+      "tag": "0004_google_calendar_sync",
+      "breakpoints": true
     }
   ]
 }

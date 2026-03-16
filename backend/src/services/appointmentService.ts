@@ -13,6 +13,48 @@ import {
   sendAppointmentConfirmed,
   sendAppointmentCancelled,
 } from './mailService.js';
+import { syncQueue } from './syncQueue.js';
+import { googleAuthService } from './googleAuthService.js';
+
+async function enqueueSyncIfConnected(
+  tenantId: string,
+  operation: 'create' | 'update' | 'delete',
+  appointmentId: string
+): Promise<void> {
+  const [professional] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.tenantId, tenantId))
+    .limit(1);
+
+  if (!professional) {
+    console.log('[Calendar Sync] No professional found for tenant:', tenantId);
+    return;
+  }
+
+  const connected = await googleAuthService.isConnected(professional.id);
+  if (!connected) {
+    console.log(
+      '[Calendar Sync] Doctor not connected to Google Calendar, skipping sync for appointment:',
+      appointmentId
+    );
+    return;
+  }
+
+  console.log(
+    '[Calendar Sync] Enqueueing sync operation:',
+    operation,
+    'for appointment:',
+    appointmentId
+  );
+  await syncQueue.enqueue({
+    tenantId,
+    userId: professional.id,
+    appointmentId,
+    operation,
+    priority: 1,
+  });
+}
 
 export type AppointmentStatus =
   | 'pending'
@@ -410,6 +452,15 @@ export async function update(
     });
   }
 
+  // fire-and-forget calendar sync
+  if (data.status === 'confirmed') {
+    void enqueueSyncIfConnected(tenantId, 'create', row.id);
+  } else if (data.status === 'cancelled') {
+    void enqueueSyncIfConnected(tenantId, 'delete', row.id);
+  } else if (data.status === undefined) {
+    void enqueueSyncIfConnected(tenantId, 'update', row.id);
+  }
+
   return toRow(row);
 }
 
@@ -444,6 +495,8 @@ export async function cancel(
       );
     }
   });
+
+  void enqueueSyncIfConnected(tenantId, 'delete', row.id);
 
   return toRow(row);
 }

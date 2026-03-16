@@ -56,6 +56,7 @@ import treatmentsRoutes from './routes/treatments.js';
 import medicalConditionsRoutes from './routes/medicalConditions.js';
 import medicationsRoutes from './routes/medications.js';
 import allergiesRoutes from './routes/allergies.js';
+import googleCalendarRoutes from './routes/googleCalendar.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -66,6 +67,7 @@ app.use('/api/patients', allergiesRoutes);
 app.use('/api/appointments', appointmentsRoutes);
 app.use('/api/treatments', treatmentsRoutes);
 app.use('/api/sessions', sessionsRoutes);
+app.use('/api', googleCalendarRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);

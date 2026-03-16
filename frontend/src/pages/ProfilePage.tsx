@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { GoogleCalendarSettings } from '@/components/settings/GoogleCalendarSettings';
 import {
   Card,
   CardContent,
@@ -843,6 +844,8 @@ export function ProfilePage() {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
+            <GoogleCalendarSettings />
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">

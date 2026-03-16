@@ -3,6 +3,10 @@ import cron from 'node-cron';
 import app from './app.js';
 import logger from './utils/logger.js';
 import { sendReminders } from './jobs/reminderJob.js';
+import {
+  startCalendarSyncWorker,
+  stopCalendarSyncWorker,
+} from './workers/calendarSyncWorker.js';
 
 dotenv.config();
 
@@ -17,3 +21,14 @@ cron.schedule('0 9 * * *', () => {
   logger.info('Cron: running appointment reminder job');
   void sendReminders();
 });
+
+startCalendarSyncWorker();
+
+const shutdown = async () => {
+  logger.info('Shutting down...');
+  await stopCalendarSyncWorker();
+  process.exit(0);
+};
+
+process.on('SIGTERM', () => void shutdown());
+process.on('SIGINT', () => void shutdown());

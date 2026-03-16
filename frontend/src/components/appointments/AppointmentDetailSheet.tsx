@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import api from '@/lib/api';
 import { statusConfig } from './constants';
+import { CalendarSyncStatus } from './CalendarSyncStatus';
 import type {
   Appointment,
   AppointmentDetail,
@@ -173,13 +174,19 @@ export function AppointmentDetailSheet({
               </div>
             </div>
           </div>
-          <Badge
-            variant="outline"
-            className={cn('shrink-0 gap-1.5 px-3 py-1', config.className)}
-          >
-            <span className={cn('h-2 w-2 rounded-full', config.dotColor)} />
-            {config.label}
-          </Badge>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <Badge
+              variant="outline"
+              className={cn('gap-1.5 px-3 py-1', config.className)}
+            >
+              <span className={cn('h-2 w-2 rounded-full', config.dotColor)} />
+              {config.label}
+            </Badge>
+            <CalendarSyncStatus
+              appointmentId={appointment.id}
+              appointmentStatus={activeStatus}
+            />
+          </div>
         </div>
       </div>
 
