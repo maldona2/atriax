@@ -60,12 +60,27 @@ export const users = pgTable(
     appointmentDuration: integer('appointment_duration').default(30),
     avatarUrl: text('avatar_url'),
     isActive: boolean('is_active').notNull().default(true),
+
+    // Subscription information
+    subscriptionPlan: text('subscription_plan', {
+      enum: ['pro', 'gold'],
+    })
+      .notNull()
+      .default('pro'),
+    subscriptionStatus: text('subscription_status', {
+      enum: ['active', 'paused', 'cancelled'],
+    })
+      .notNull()
+      .default('active'),
+
+    // Tracking timestamps
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   },
   (table) => [
     index('idx_users_tenant').on(table.tenantId),
     index('idx_users_email').on(sql`lower(${table.email})`),
+    index('idx_users_subscription_plan').on(table.subscriptionPlan),
   ]
 );
 
@@ -603,3 +618,107 @@ export const calendarSyncQueueRelations = relations(
     }),
   })
 );
+
+// ─── subscriptions ───────────────────────────────────────────────────────────
+
+export const subscriptions = pgTable(
+  'subscriptions',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    preapprovalId: text('preapproval_id').unique().notNull(),
+    plan: text('plan', { enum: ['pro', 'gold'] }).notNull(),
+    status: text('status', {
+      enum: ['authorized', 'cancelled', 'paused', 'failed'],
+    }).notNull(),
+    billingPeriodStart: timestamp('billing_period_start', {
+      withTimezone: true,
+    }).notNull(),
+    billingPeriodEnd: timestamp('billing_period_end', {
+      withTimezone: true,
+    }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_subscriptions_user_id').on(table.userId),
+    index('idx_subscriptions_preapproval_id').on(table.preapprovalId),
+    index('idx_subscriptions_status').on(table.status),
+  ]
+);
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type NewSubscription = typeof subscriptions.$inferInsert;
+
+// ─── webhook_events ──────────────────────────────────────────────────────────
+
+export const webhookEvents = pgTable(
+  'webhook_events',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    webhookId: text('webhook_id').unique().notNull(),
+    webhookType: text('webhook_type', {
+      enum: ['payment', 'preapproval'],
+    }).notNull(),
+    payload: jsonb('payload').notNull(),
+    processedAt: timestamp('processed_at', {
+      withTimezone: true,
+    }).defaultNow(),
+    userId: uuid('user_id').references(() => users.id),
+    action: text('action'),
+    signatureValid: boolean('signature_valid').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_webhook_events_webhook_id').on(table.webhookId),
+    index('idx_webhook_events_user_id').on(table.userId),
+    index('idx_webhook_events_created_at').on(table.createdAt),
+  ]
+);
+
+export type WebhookEvent = typeof webhookEvents.$inferSelect;
+export type NewWebhookEvent = typeof webhookEvents.$inferInsert;
+
+// ─── model_pricing ───────────────────────────────────────────────────────────
+
+export const modelPricing = pgTable(
+  'model_pricing',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    modelName: text('model_name').unique().notNull(),
+    inputTokenPriceUsd: text('input_token_price_usd').notNull(), // Stored as string for precision
+    outputTokenPriceUsd: text('output_token_price_usd').notNull(), // Stored as string for precision
+    effectiveDate: timestamp('effective_date', {
+      withTimezone: true,
+    }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [index('idx_model_pricing_model_name').on(table.modelName)]
+);
+
+export type ModelPricing = typeof modelPricing.$inferSelect;
+export type NewModelPricing = typeof modelPricing.$inferInsert;
+
+// ─── subscription relations ──────────────────────────────────────────────────
+
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [subscriptions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const webhookEventsRelations = relations(webhookEvents, ({ one }) => ({
+  user: one(users, {
+    fields: [webhookEvents.userId],
+    references: [users.id],
+  }),
+}));

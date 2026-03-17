@@ -19,6 +19,11 @@ import {
   Plus,
   Pencil,
   Trash2,
+  CreditCard,
+  Check,
+  Sparkles,
+  Building2,
+  Zap,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -59,7 +64,10 @@ import { useProfile } from '@/hooks/useProfile';
 import { useAppointments } from '@/hooks/useAppointments';
 import { usePatients } from '@/hooks/usePatients';
 import { useTreatments } from '@/hooks/useTreatments';
+import { useSubscription } from '@/hooks/useSubscription';
 import { TreatmentFormDialog } from '@/components/treatments';
+import { SubscriptionCard } from '@/components/subscriptions/SubscriptionCard';
+import { FeatureStatus } from '@/components/subscriptions/FeatureStatus';
 
 interface ProfileDoctor {
   firstName: string;
@@ -147,6 +155,15 @@ export function ProfilePage() {
     update: updateTreatment,
     remove: removeTreatment,
   } = useTreatments();
+  const {
+    loading: subscriptionLoading,
+    plans,
+    status: subscriptionStatus,
+    createSubscription,
+    cancelSubscription,
+    pauseSubscription,
+    resumeSubscription,
+  } = useSubscription();
   const [doctor, setDoctor] = useState<ProfileDoctor>(() =>
     user ? userToDoctor(user) : userToDoctor({ email: '', fullName: null })
   );
@@ -291,36 +308,56 @@ export function ProfilePage() {
 
       <main className="mx-auto max-w-5xl px-4 py-8">
         <Tabs defaultValue="profile" className="space-y-8 flex flex-col">
-          <TabsList className="grid w-full max-w-2xl grid-cols-2 sm:grid-cols-4">
-            <TabsTrigger value="profile" className="gap-2">
+          <TabsList className="grid h-auto w-full max-w-2xl grid-cols-3 gap-1 rounded-xl bg-muted/50 p-1 sm:grid-cols-5">
+            <TabsTrigger
+              value="profile"
+              className="gap-2 rounded-lg px-3 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Perfil</span>
             </TabsTrigger>
-            <TabsTrigger value="schedule" className="gap-2">
+            <TabsTrigger
+              value="schedule"
+              className="gap-2 rounded-lg px-3 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <Clock className="h-4 w-4" />
               <span className="hidden sm:inline">Horarios</span>
             </TabsTrigger>
-            <TabsTrigger value="treatments" className="gap-2">
+            <TabsTrigger
+              value="treatments"
+              className="gap-2 rounded-lg px-3 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <Syringe className="h-4 w-4" />
               <span className="hidden sm:inline">Tratamientos</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2">
+            <TabsTrigger
+              value="subscription"
+              className="gap-2 rounded-lg px-3 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <CreditCard className="h-4 w-4" />
+              <span className="hidden sm:inline">Suscripción</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="settings"
+              className="gap-2 rounded-lg px-3 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">Ajustes</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
-            <Card>
-              <CardContent className="pt-6">
+            <div className="relative overflow-hidden rounded-2xl border bg-card shadow-sm">
+              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-primary/5 via-primary/10 to-transparent" />
+              <div className="relative px-6 pb-6 pt-8">
                 <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
                   <div className="relative">
-                    <Avatar className="h-28 w-28 border-4 border-background shadow-lg">
+                    <Avatar className="h-28 w-28 border-4 border-background shadow-xl ring-4 ring-primary/5">
                       <AvatarImage
                         src={doctor.avatarUrl}
                         alt={`${doctor.firstName} ${doctor.lastName}`}
                       />
-                      <AvatarFallback className="bg-primary/10 text-2xl font-semibold text-primary">
+                      <AvatarFallback className="bg-primary text-2xl font-semibold text-primary-foreground">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
@@ -328,7 +365,7 @@ export function ProfilePage() {
                       <Button
                         size="icon"
                         variant="secondary"
-                        className="absolute -bottom-1 -right-1 h-9 w-9 rounded-full shadow-md"
+                        className="absolute -bottom-1 -right-1 h-9 w-9 rounded-full shadow-lg ring-2 ring-background"
                       >
                         <Camera className="h-4 w-4" />
                       </Button>
@@ -361,15 +398,21 @@ export function ProfilePage() {
                           {doctor.firstName} {doctor.lastName}
                         </h2>
                       )}
-                      <div className="mt-1 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                      <div className="mt-2 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                         {doctor.specialty && (
-                          <Badge variant="secondary" className="gap-1.5">
+                          <Badge
+                            variant="secondary"
+                            className="gap-1.5 px-3 py-1"
+                          >
                             <Briefcase className="h-3 w-3" />
                             {doctor.specialty}
                           </Badge>
                         )}
                         {doctor.licenseNumber && (
-                          <Badge variant="outline" className="gap-1.5">
+                          <Badge
+                            variant="outline"
+                            className="gap-1.5 px-3 py-1"
+                          >
                             <FileText className="h-3 w-3" />
                             {doctor.licenseNumber}
                           </Badge>
@@ -383,8 +426,8 @@ export function ProfilePage() {
                     ) : null}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             <Card>
               <CardHeader>
@@ -682,57 +725,56 @@ export function ProfilePage() {
             </Card>
 
             <div className="grid gap-4 sm:grid-cols-3">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-100">
-                      <Calendar className="h-6 w-6 text-sky-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">
-                        {appointmentsThisMonth.length}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Turnos este mes
-                      </p>
-                    </div>
+              <div className="group relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm transition-all hover:shadow-md">
+                <div className="absolute right-0 top-0 h-20 w-20 translate-x-6 -translate-y-6 rounded-full bg-sky-500/10 transition-transform group-hover:scale-110" />
+                <div className="relative flex items-center gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-500/10">
+                    <Calendar className="h-6 w-6 text-sky-600" />
                   </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-                      <User className="h-6 w-6 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{patients.length}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Pacientes activos
-                      </p>
-                    </div>
+                  <div>
+                    <p className="text-3xl font-bold tracking-tight">
+                      {appointmentsThisMonth.length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Turnos este mes
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-100">
-                      <Clock className="h-6 w-6 text-amber-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">
-                        {hoursAttended % 1 === 0
-                          ? hoursAttended
-                          : hoursAttended.toFixed(1)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Horas atendidas
-                      </p>
-                    </div>
+                </div>
+              </div>
+              <div className="group relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm transition-all hover:shadow-md">
+                <div className="absolute right-0 top-0 h-20 w-20 translate-x-6 -translate-y-6 rounded-full bg-emerald-500/10 transition-transform group-hover:scale-110" />
+                <div className="relative flex items-center gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10">
+                    <User className="h-6 w-6 text-emerald-600" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <p className="text-3xl font-bold tracking-tight">
+                      {patients.length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Pacientes activos
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="group relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm transition-all hover:shadow-md">
+                <div className="absolute right-0 top-0 h-20 w-20 translate-x-6 -translate-y-6 rounded-full bg-amber-500/10 transition-transform group-hover:scale-110" />
+                <div className="relative flex items-center gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
+                    <Clock className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold tracking-tight">
+                      {hoursAttended % 1 === 0
+                        ? hoursAttended
+                        : hoursAttended.toFixed(1)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Horas atendidas
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </TabsContent>
 
@@ -841,6 +883,289 @@ export function ProfilePage() {
                 }
               }}
             />
+          </TabsContent>
+
+          <TabsContent value="subscription" className="space-y-8">
+            {/* Current Subscription Status */}
+            {subscriptionStatus && (
+              <div className="relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm">
+                <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-primary/5" />
+                <div className="absolute right-12 top-12 h-16 w-16 rounded-full bg-primary/10" />
+                <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
+                      <CreditCard className="h-7 w-7 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Plan actual
+                      </p>
+                      <p className="text-2xl font-bold capitalize tracking-tight">
+                        {subscriptionStatus.plan}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Badge
+                      variant={
+                        subscriptionStatus.status === 'active'
+                          ? 'default'
+                          : subscriptionStatus.status === 'paused'
+                            ? 'secondary'
+                            : 'destructive'
+                      }
+                      className="px-3 py-1 text-sm"
+                    >
+                      {subscriptionStatus.status === 'active' && 'Activo'}
+                      {subscriptionStatus.status === 'paused' && 'Pausado'}
+                      {subscriptionStatus.status === 'cancelled' && 'Cancelado'}
+                      {subscriptionStatus.status === 'failed' && 'Fallido'}
+                    </Badge>
+                    {subscriptionStatus.plan !== 'free' && (
+                      <>
+                        {subscriptionStatus.status === 'active' && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => pauseSubscription()}
+                              disabled={subscriptionLoading}
+                            >
+                              Pausar
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => {
+                                if (
+                                  confirm(
+                                    '¿Estás seguro de que quieres cancelar tu suscripción?'
+                                  )
+                                ) {
+                                  void cancelSubscription();
+                                }
+                              }}
+                              disabled={subscriptionLoading}
+                            >
+                              Cancelar
+                            </Button>
+                          </>
+                        )}
+                        {subscriptionStatus.status === 'paused' && (
+                          <Button
+                            size="sm"
+                            onClick={() => resumeSubscription()}
+                            disabled={subscriptionLoading}
+                          >
+                            Reanudar
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Feature Status */}
+            {subscriptionStatus && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Zap className="h-5 w-5 text-amber-500" />
+                    Estado de funciones
+                  </CardTitle>
+                  <CardDescription>
+                    Funciones disponibles en tu plan actual
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <FeatureStatus status={subscriptionStatus} />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Subscription Plans */}
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold tracking-tight">
+                  Elige tu plan
+                </h2>
+                <p className="mt-2 text-muted-foreground">
+                  Selecciona el plan que mejor se adapte a tus necesidades
+                </p>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-3">
+                {/* Free Plan */}
+                <div className="relative flex flex-col rounded-2xl border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+                  <div className="mb-6">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
+                      <User className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <h3 className="mt-4 text-xl font-bold">Gratis</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Ideal para comenzar
+                    </p>
+                  </div>
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold tracking-tight">
+                      $0
+                    </span>
+                    <span className="text-muted-foreground">/mes</span>
+                  </div>
+                  <ul className="mb-8 flex-1 space-y-3">
+                    {[
+                      'Hasta 50 pacientes',
+                      'Calendario básico',
+                      'Recordatorios por email',
+                    ].map((feature) => (
+                      <li key={feature} className="flex items-start gap-3">
+                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                          <Check className="h-3 w-3 text-primary" />
+                        </div>
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={
+                      subscriptionStatus?.plan === 'free' || subscriptionLoading
+                    }
+                    onClick={() => createSubscription('free')}
+                  >
+                    {subscriptionStatus?.plan === 'free'
+                      ? 'Plan actual'
+                      : 'Seleccionar'}
+                  </Button>
+                </div>
+
+                {/* Pro Plan - Highlighted */}
+                <div className="relative flex flex-col rounded-2xl border-2 border-primary bg-card p-6 shadow-lg transition-all hover:shadow-xl lg:scale-105">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-primary px-3 py-1 text-primary-foreground shadow-md">
+                      <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                      Recomendado
+                    </Badge>
+                  </div>
+                  <div className="mb-6">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                      <Sparkles className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3 className="mt-4 text-xl font-bold">Pro</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Para profesionales activos
+                    </p>
+                  </div>
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold tracking-tight">
+                      $29
+                    </span>
+                    <span className="text-muted-foreground">/mes</span>
+                  </div>
+                  <ul className="mb-8 flex-1 space-y-3">
+                    {[
+                      'Pacientes ilimitados',
+                      'Sincronización con Google Calendar',
+                      'Recordatorios SMS + Email',
+                      'Reportes avanzados',
+                      'Soporte prioritario',
+                    ].map((feature) => (
+                      <li key={feature} className="flex items-start gap-3">
+                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                          <Check className="h-3 w-3 text-primary" />
+                        </div>
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    className="w-full"
+                    disabled={
+                      subscriptionStatus?.plan === 'pro' || subscriptionLoading
+                    }
+                    onClick={() => createSubscription('pro')}
+                  >
+                    {subscriptionStatus?.plan === 'pro'
+                      ? 'Plan actual'
+                      : 'Comenzar ahora'}
+                  </Button>
+                </div>
+
+                {/* Enterprise Plan */}
+                <div className="relative flex flex-col rounded-2xl border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+                  <div className="mb-6">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
+                      <Building2 className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <h3 className="mt-4 text-xl font-bold">Enterprise</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Para clínicas y equipos
+                    </p>
+                  </div>
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold tracking-tight">
+                      $99
+                    </span>
+                    <span className="text-muted-foreground">/mes</span>
+                  </div>
+                  <ul className="mb-8 flex-1 space-y-3">
+                    {[
+                      'Todo en Pro',
+                      'Múltiples profesionales',
+                      'API personalizada',
+                      'Integraciones avanzadas',
+                      'Soporte dedicado 24/7',
+                      'Facturación personalizada',
+                    ].map((feature) => (
+                      <li key={feature} className="flex items-start gap-3">
+                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                          <Check className="h-3 w-3 text-primary" />
+                        </div>
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={
+                      subscriptionStatus?.plan === 'enterprise' ||
+                      subscriptionLoading
+                    }
+                    onClick={() => createSubscription('enterprise')}
+                  >
+                    {subscriptionStatus?.plan === 'enterprise'
+                      ? 'Plan actual'
+                      : 'Contactar ventas'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Enterprise CTA */}
+              <div className="rounded-2xl bg-primary p-6 text-primary-foreground sm:p-8">
+                <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-foreground/10">
+                    <Building2 className="h-7 w-7" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold">
+                      ¿Necesitas una solución personalizada?
+                    </h3>
+                    <p className="mt-1 text-sm text-primary-foreground/80">
+                      Contacta con nuestro equipo para obtener un plan adaptado
+                      a las necesidades de tu clínica.
+                    </p>
+                  </div>
+                  <Button variant="secondary" className="shrink-0">
+                    Hablar con ventas
+                  </Button>
+                </div>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
