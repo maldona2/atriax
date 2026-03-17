@@ -69,13 +69,17 @@ export function useSubscription() {
 
       setLoading(true);
       try {
-        const { data } = await api.post<{ initUrl: string }>('/subscriptions', {
+        const { data } = await api.post<{
+          preApprovalId: string;
+          initializationUrl: string;
+          status: string;
+        }>('/subscriptions', {
           userId: user.id,
           plan: planName,
         });
 
-        // Redirect to Mercado Pago checkout
-        window.location.href = data.initUrl;
+        // Redirect to Mercado Pago checkout using initialization URL
+        window.location.href = data.initializationUrl;
       } catch (err: unknown) {
         const errorData =
           err &&

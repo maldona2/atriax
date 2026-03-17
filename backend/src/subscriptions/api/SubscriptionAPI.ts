@@ -97,7 +97,11 @@ export class SubscriptionAPI {
   ): Promise<void> {
     const payload = req.body as { type?: string } | undefined;
 
-    if (!payload || typeof payload !== 'object' || typeof payload.type !== 'string') {
+    if (
+      !payload ||
+      typeof payload !== 'object' ||
+      typeof payload.type !== 'string'
+    ) {
       logger.warn(
         {
           payload,
@@ -965,7 +969,13 @@ export class SubscriptionAPI {
   private isValidPreApprovalWebhook(
     payload: any
   ): payload is PreApprovalWebhook {
-    const validActions = ['authorized', 'cancelled', 'paused', 'failed', 'updated'];
+    const validActions = [
+      'authorized',
+      'cancelled',
+      'paused',
+      'failed',
+      'updated',
+    ];
     return (
       payload &&
       typeof payload === 'object' &&
