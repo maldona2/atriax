@@ -3,9 +3,9 @@ import { ChevronRight } from 'lucide-react';
 const steps = [
   {
     step: '01',
-    title: 'Configura tu clínica',
+    title: 'Configura tu práctica',
     description:
-      'Crea tu cuenta, añade la información de tu clínica, proveedores y salas. Te guiamos en cada paso del proceso.',
+      'Crea tu cuenta, añade la información de tu consultorio o clínica, médicos y espacios. Te guiamos en cada paso del proceso.',
   },
   {
     step: '02',

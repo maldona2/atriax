@@ -6,11 +6,11 @@ export function CTASection() {
     <section className="py-20 bg-primary">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4 text-balance">
-          Transforma la gestión de tu clínica hoy
+          Transforma la gestión de tu práctica médica hoy
         </h2>
         <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
           No pierdas otro día con operaciones desorganizadas. Únete a cientos de
-          clínicas que ya confían en Atriax.
+          médicos y clínicas que ya confían en Atriax.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" variant="secondary" className="gap-2">

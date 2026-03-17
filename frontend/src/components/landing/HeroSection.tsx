@@ -8,11 +8,12 @@ export function HeroSection() {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="text-center lg:text-left">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground text-balance">
-              Gestiona tu clínica estética con claridad total
+              Gestiona tu consultorio médico con claridad total
             </h1>
             <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
-              La plataforma integral para profesionales de medicina estética.
-              Organiza citas, historiales y operaciones en un solo lugar.
+              La plataforma integral para médicos y profesionales de la salud.
+              Organiza citas, historiales clínicos y operaciones en un solo
+              lugar.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Button size="lg" className="gap-2">
@@ -34,7 +35,7 @@ export function HeroSection() {
               </div>
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-accent" />
-                <span>Diseñado para estética</span>
+                <span>Para toda especialidad médica</span>
               </div>
             </div>
           </div>

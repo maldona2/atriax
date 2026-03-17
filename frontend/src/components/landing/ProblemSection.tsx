@@ -34,10 +34,10 @@ export function ProblemSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground text-balance">
-            El caos diario en clínicas estéticas
+            El caos diario en consultorios médicos
           </h2>
           <p className="mt-4 text-muted-foreground text-lg">
-            Reconoces estos problemas? No estás solo.
+            ¿Reconoces estos problemas? No estás solo.
           </p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">

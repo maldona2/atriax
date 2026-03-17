@@ -24,7 +24,7 @@ const faqs = [
   },
   {
     q: '¿Cuál es la diferencia entre prueba gratis y plan de pago?',
-    a: 'La prueba gratis incluye todas las funcionalidades durante 14 días. Al terminar, eliges el plan que mejor se adapte a tu clínica. Sin compromiso.',
+    a: 'La prueba gratis incluye todas las funcionalidades durante 14 días. Al terminar, eliges el plan que mejor se adapte a tu práctica. Sin compromiso.',
   },
   {
     q: '¿Soportan múltiples clínicas o sedes?',

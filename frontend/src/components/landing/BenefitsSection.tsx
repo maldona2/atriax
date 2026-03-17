@@ -10,12 +10,12 @@ import {
 const benefits = [
   {
     icon: Calendar,
-    title: 'Un calendario para toda la clínica',
+    title: 'Un calendario para todo el equipo',
     description:
-      'Visualiza la disponibilidad de todos tus proveedores y salas en tiempo real. Evita conflictos y optimiza cada hora.',
+      'Visualiza la disponibilidad de todos tus médicos y consultorios en tiempo real. Evita conflictos y optimiza cada hora.',
     bullets: [
-      'Vista unificada multi-proveedor',
-      'Gestión de salas y equipos',
+      'Vista unificada multi-médico',
+      'Gestión de consultorios y recursos',
       'Recordatorios automáticos',
     ],
   },
@@ -23,18 +23,18 @@ const benefits = [
     icon: Users,
     title: 'Cada detalle del paciente en un lugar',
     description:
-      'Perfiles completos con historial, fotos antes/después, consentimientos y planes de tratamiento.',
+      'Perfiles completos con historial clínico, estudios, consentimientos y planes de tratamiento para cualquier especialidad.',
     bullets: [
-      'Fotos antes/después organizadas',
+      'Historial clínico digitalizado',
       'Formularios de consentimiento digitales',
       'Notas y etiquetas personalizadas',
     ],
   },
   {
     icon: BarChart3,
-    title: 'Visibilidad clara para dueños',
+    title: 'Visibilidad clara para directores',
     description:
-      'Dashboard con métricas clave: ocupación, ingresos, no-shows. Toma decisiones basadas en datos.',
+      'Dashboard con métricas clave: ocupación, ingresos, no-shows. Toma decisiones basadas en datos reales.',
     bullets: [
       'Métricas de rendimiento en tiempo real',
       'Reportes exportables',
@@ -43,12 +43,12 @@ const benefits = [
   },
   {
     icon: Sparkles,
-    title: 'Diseñado para flujos estéticos',
+    title: 'Adaptado a tu especialidad',
     description:
-      'No es un software genérico. Cada función está pensada para cómo trabajan las clínicas de estética.',
+      'No es un software genérico. Configura flujos y plantillas según las necesidades de tu práctica médica.',
     bullets: [
-      'Planes de tratamiento estructurados',
-      'Seguimiento de resultados',
+      'Plantillas por especialidad',
+      'Seguimiento de evolución del paciente',
       'Integración con tu flujo actual',
     ],
   },
@@ -63,8 +63,8 @@ export function BenefitsSection() {
             Por qué elegir Atriax
           </h2>
           <p className="mt-4 text-muted-foreground text-lg">
-            Construido específicamente para las necesidades de medicina
-            estética.
+            Construido para las necesidades reales de médicos y profesionales de
+            la salud, sin importar la especialidad.
           </p>
         </div>
         <div className="grid md:grid-cols-2 gap-8">

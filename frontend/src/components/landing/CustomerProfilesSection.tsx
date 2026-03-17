@@ -4,21 +4,21 @@ import { Building2, Users, BarChart3 } from 'lucide-react';
 const profiles = [
   {
     icon: Building2,
-    title: 'Clínicas individuales',
+    title: 'Consultorios individuales',
     description:
-      'Consultorios y clínicas con uno o pocos proveedores que buscan profesionalizar su gestión.',
+      'Médicos independientes de cualquier especialidad que buscan profesionalizar y digitalizar su gestión diaria.',
   },
   {
     icon: Users,
-    title: 'Clínicas multi-proveedor',
+    title: 'Clínicas multi-especialidad',
     description:
-      'Centros con varios especialistas que necesitan coordinar agendas y compartir información de pacientes.',
+      'Centros con varios médicos y especialistas que necesitan coordinar agendas y compartir información de pacientes.',
   },
   {
     icon: BarChart3,
-    title: 'Grupos y cadenas',
+    title: 'Grupos y redes médicas',
     description:
-      'Organizaciones con múltiples sedes que requieren visibilidad centralizada y control unificado.',
+      'Organizaciones con múltiples sedes o franquicias que requieren visibilidad centralizada y control unificado.',
   },
 ];
 
@@ -30,6 +30,10 @@ export function CustomerProfilesSection() {
           <h2 className="text-3xl md:text-4xl font-bold text-foreground text-balance">
             ¿Para quién es Atriax?
           </h2>
+          <p className="mt-4 text-muted-foreground text-lg">
+            Para médicos de cualquier especialidad: clínica general, pediatría,
+            cardiología, traumatología, dermatología, y más.
+          </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           {profiles.map((item, i) => (

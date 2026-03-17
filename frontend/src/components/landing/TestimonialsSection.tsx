@@ -3,24 +3,24 @@ import { Card, CardContent } from '@/components/ui/card';
 const testimonials = [
   {
     quote:
-      'Desde que usamos Atriax, redujimos los no-shows en un 35%. La organización de la clínica mejoró completamente.',
+      'Desde que usamos Atriax, redujimos los no-shows en un 35%. La organización del consultorio mejoró completamente.',
     name: 'Dra. Carmen Vidal',
-    role: 'Directora, Clínica Estética Belleza Natural',
+    role: 'Médica Clínica General, Centro de Salud Integral',
     metric: '-35% no-shows',
   },
   {
     quote:
-      'Por fin tengo toda la información de mis pacientes en un solo lugar. Las fotos antes/después son invaluables para el seguimiento.',
+      'Por fin tengo toda la información de mis pacientes en un solo lugar. El historial clínico digital es invaluable para el seguimiento.',
     name: 'Dr. Miguel Fernández',
-    role: 'Cirujano Plástico, Centro Médico Aurora',
+    role: 'Traumatólogo, Centro Médico Aurora',
     metric: '100% historiales digitalizados',
   },
   {
     quote:
-      'Gestionar 3 clínicas era un caos. Ahora con el panel multi-sede de Atriax, tengo control total desde cualquier lugar.',
+      'Gestionar 3 consultorios de distintas especialidades era un caos. Ahora con Atriax, tengo control total desde cualquier lugar.',
     name: 'Laura Martínez',
-    role: 'Gerente de Operaciones, Grupo Dermis',
-    metric: '3 clínicas unificadas',
+    role: 'Directora de Operaciones, Grupo Médico Salud+',
+    metric: '3 consultorios unificados',
   },
 ];
 
