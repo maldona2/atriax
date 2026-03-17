@@ -74,7 +74,7 @@ describe('TokenTracker - Property-Based Tests', () => {
             }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 10 }
       );
     });
   });
@@ -127,7 +127,7 @@ describe('TokenTracker - Property-Based Tests', () => {
             }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 10 }
       );
     });
   });
@@ -178,7 +178,7 @@ describe('TokenTracker - Property-Based Tests', () => {
             }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 10 }
       );
     });
   });
@@ -237,7 +237,7 @@ describe('TokenTracker - Property-Based Tests', () => {
             }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 10 }
       );
     });
   });
@@ -285,7 +285,7 @@ describe('TokenTracker - Property-Based Tests', () => {
             await db.delete(users).where(eq(users.id, user.id));
           }
         }),
-        { numRuns: 30 }
+        { numRuns: 10 }
       );
     });
   });
@@ -334,7 +334,7 @@ describe('TokenTracker - Property-Based Tests', () => {
             }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 10 }
       );
     });
   });

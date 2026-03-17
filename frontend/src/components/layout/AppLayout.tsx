@@ -4,19 +4,24 @@ import { Calendar, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardShell } from './DashboardShell';
 import { useAppointmentNotifications } from '@/hooks/useAppointmentNotifications';
-
-const SIDEBAR_ITEMS = [
-  { to: '/app/appointments', label: 'Turnos', icon: Calendar },
-  { to: '/app/patients', label: 'Pacientes', icon: Users },
-] as const;
+import { useSubscription } from '@/hooks/useSubscription';
 
 export function AppLayout() {
   const { user, logout } = useAuth();
+  const { status } = useSubscription();
   useAppointmentNotifications();
+
+  const sidebarItems =
+    status?.features?.appointments === false
+      ? ([{ to: '/app/patients', label: 'Pacientes', icon: Users }] as const)
+      : ([
+          { to: '/app/appointments', label: 'Turnos', icon: Calendar },
+          { to: '/app/patients', label: 'Pacientes', icon: Users },
+        ] as const);
 
   return (
     <DashboardShell
-      sidebarItems={SIDEBAR_ITEMS}
+      sidebarItems={sidebarItems}
       onLogout={logout}
       userEmail={user?.email}
       userName={user?.fullName}

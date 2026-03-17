@@ -3,9 +3,11 @@ import { z } from 'zod';
 import * as patientService from '../services/patientService.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireRole } from '../middleware/requireRole.js';
+import { LimitEnforcementService } from '../registration/services/LimitEnforcementService.js';
 
 const router = Router();
 const professionalOnly = [authenticate, requireRole('professional')];
+const limitEnforcer = new LimitEnforcementService();
 
 const createPatientSchema = z.object({
   first_name: z.string().min(1),
@@ -60,8 +62,25 @@ router.post(
         email: parsed.data.email || null,
         date_of_birth: parsed.data.date_of_birth || null,
       };
+      const userId = req.user?.id;
+      if (!userId) {
+        const err = new Error('Unauthorized');
+        (err as Error & { statusCode?: number }).statusCode = 401;
+        return next(err);
+      }
+
+      const canCreate = await limitEnforcer.canCreatePatient(userId);
+      if (!canCreate) {
+        const err = new Error(
+          'Has alcanzado el límite de pacientes de tu plan actual. Actualiza tu suscripción para agregar más pacientes.'
+        );
+        (err as Error & { statusCode?: number }).statusCode = 403;
+        return next(err);
+      }
+
       const tenantId = getTenantId(req);
       const patient = await patientService.create(tenantId, data);
+      await limitEnforcer.incrementPatientCount(userId);
       res.status(201).json(patient);
     } catch (e) {
       next(e);
@@ -135,6 +154,10 @@ router.delete(
         const err = new Error('Patient not found');
         (err as Error & { statusCode?: number }).statusCode = 404;
         return next(err);
+      }
+      const userId = req.user?.id;
+      if (userId) {
+        await limitEnforcer.decrementPatientCount(userId);
       }
       res.status(204).send();
     } catch (e) {

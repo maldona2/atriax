@@ -60,13 +60,14 @@ export const users = pgTable(
     appointmentDuration: integer('appointment_duration').default(30),
     avatarUrl: text('avatar_url'),
     isActive: boolean('is_active').notNull().default(true),
+    isVerified: boolean('is_verified').notNull().default(false),
 
     // Subscription information
     subscriptionPlan: text('subscription_plan', {
-      enum: ['pro', 'gold'],
+      enum: ['free', 'pro', 'gold'],
     })
       .notNull()
-      .default('pro'),
+      .default('free'),
     subscriptionStatus: text('subscription_status', {
       enum: ['active', 'paused', 'cancelled'],
     })
@@ -81,6 +82,7 @@ export const users = pgTable(
     index('idx_users_tenant').on(table.tenantId),
     index('idx_users_email').on(sql`lower(${table.email})`),
     index('idx_users_subscription_plan').on(table.subscriptionPlan),
+    index('idx_users_is_verified').on(table.isVerified),
   ]
 );
 
@@ -707,6 +709,51 @@ export const modelPricing = pgTable(
 export type ModelPricing = typeof modelPricing.$inferSelect;
 export type NewModelPricing = typeof modelPricing.$inferInsert;
 
+// ─── verification_tokens ─────────────────────────────────────────────────────
+
+export const verificationTokens = pgTable(
+  'verification_tokens',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    token: text('token').unique().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    used: boolean('used').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_verification_tokens_user_id').on(table.userId),
+    index('idx_verification_tokens_token').on(table.token),
+    index('idx_verification_tokens_expires_at').on(table.expiresAt),
+  ]
+);
+
+export type VerificationToken = typeof verificationTokens.$inferSelect;
+export type NewVerificationToken = typeof verificationTokens.$inferInsert;
+
+// ─── patient_counts ──────────────────────────────────────────────────────────
+
+export const patientCounts = pgTable(
+  'patient_counts',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    count: integer('count').notNull().default(0),
+    lastUpdated: timestamp('last_updated', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_patient_counts_user_id').on(table.userId),
+  ]
+);
+
+export type PatientCount = typeof patientCounts.$inferSelect;
+export type NewPatientCount = typeof patientCounts.$inferInsert;
+
 // ─── subscription relations ──────────────────────────────────────────────────
 
 export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
@@ -719,6 +766,20 @@ export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
 export const webhookEventsRelations = relations(webhookEvents, ({ one }) => ({
   user: one(users, {
     fields: [webhookEvents.userId],
+    references: [users.id],
+  }),
+}));
+
+export const verificationTokensRelations = relations(verificationTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [verificationTokens.userId],
+    references: [users.id],
+  }),
+}));
+
+export const patientCountsRelations = relations(patientCounts, ({ one }) => ({
+  user: one(users, {
+    fields: [patientCounts.userId],
     references: [users.id],
   }),
 }));

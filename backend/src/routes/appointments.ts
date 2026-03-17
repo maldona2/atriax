@@ -3,9 +3,11 @@ import { z } from 'zod';
 import * as appointmentService from '../services/appointmentService.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireRole } from '../middleware/requireRole.js';
+import { LimitEnforcementService } from '../registration/services/LimitEnforcementService.js';
 
 const router = Router();
 const professionalOnly = [authenticate, requireRole('professional')];
+const limitEnforcer = new LimitEnforcementService();
 
 const statusEnum = z.enum(['pending', 'confirmed', 'completed', 'cancelled']);
 const paymentStatusEnum = z.enum(['unpaid', 'paid', 'partial', 'refunded']);
@@ -46,6 +48,14 @@ router.get(
   professionalOnly,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const userId = req.user?.id;
+      if (!userId || !(await limitEnforcer.canAccessCalendar(userId))) {
+        const err = new Error(
+          'Tu plan actual no incluye acceso al calendario. Actualiza tu suscripción para usar esta funcionalidad.'
+        );
+        (err as Error & { statusCode?: number }).statusCode = 403;
+        return next(err);
+      }
       const tenantId = getTenantId(req);
       const { date, status, patientId } = req.query;
 
@@ -75,6 +85,14 @@ router.post(
       if (!parsed.success) {
         const err = new Error('Invalid appointment data');
         (err as Error & { statusCode?: number }).statusCode = 400;
+        return next(err);
+      }
+      const userId = req.user?.id;
+      if (!userId || !(await limitEnforcer.canAccessCalendar(userId))) {
+        const err = new Error(
+          'Tu plan actual no incluye acceso al calendario. Actualiza tu suscripción para crear turnos.'
+        );
+        (err as Error & { statusCode?: number }).statusCode = 403;
         return next(err);
       }
       const tenantId = getTenantId(req);

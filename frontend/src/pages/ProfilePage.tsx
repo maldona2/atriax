@@ -1017,9 +1017,9 @@ export function ProfilePage() {
                   </div>
                   <ul className="mb-8 flex-1 space-y-3">
                     {[
-                      'Hasta 50 pacientes',
-                      'Calendario básico',
-                      'Recordatorios por email',
+                      'Hasta 5 pacientes',
+                      'Sin acceso a calendario',
+                      'Recordatorios por email básicos',
                     ].map((feature) => (
                       <li key={feature} className="flex items-start gap-3">
                         <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">

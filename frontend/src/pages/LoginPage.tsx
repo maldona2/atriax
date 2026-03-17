@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,7 +116,10 @@ export function LoginPage() {
       </Card>
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        Software exclusivo para profesionales autorizados
+        ¿Aún no tienes cuenta?{' '}
+        <Link to="/register" className="font-medium underline">
+          Crea una cuenta gratis
+        </Link>
       </p>
     </div>
   );

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 
@@ -13,9 +14,16 @@ export function CTASection() {
           médicos y clínicas que ya confían en Atriax.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" variant="secondary" className="gap-2">
-            Comenzar prueba gratis
-            <ArrowRight className="h-4 w-4" />
+          <Button
+            size="lg"
+            variant="secondary"
+            className="gap-2"
+            asChild
+          >
+            <Link to="/register">
+              Comenzar prueba gratis
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </Button>
           <Button
             size="lg"

@@ -681,22 +681,55 @@ export class SubscriptionAPI {
 
       logger.info({ userId }, 'Getting subscription status');
 
-      // Get subscription from database
-      const subscription = await db
+      // Get user record to determine current plan
+      const userRows = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (userRows.length === 0) {
+        logger.warn({ userId }, 'User not found');
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      const user = userRows[0];
+
+      // Look for an active paid subscription if any
+      const subscriptionRows = await db
         .select()
         .from(subscriptions)
         .where(eq(subscriptions.userId, userId))
         .limit(1);
 
-      if (subscription.length === 0) {
-        logger.warn({ userId }, 'Subscription not found');
-        res.status(404).json({ error: 'Subscription not found' });
+      if (subscriptionRows.length === 0 || user.subscriptionPlan === 'free') {
+        // Free tier: derive features from implicit free plan
+        logger.info(
+          { userId },
+          'Free tier subscription status retrieved successfully'
+        );
+
+        res.json({
+          userId: user.id,
+          plan: 'free',
+          status: user.subscriptionStatus,
+          preApprovalId: null,
+          billingPeriodStart: null,
+          features: {
+            appointments: false,
+            calendarSync: false,
+            patientDatabase: true,
+            aiFeatures: false,
+            whatsappIntegration: false,
+          },
+        });
         return;
       }
 
-      const sub = subscription[0];
+      const sub = subscriptionRows[0];
 
-      // Get plan details from PlanManager
+      // Get plan details from PlanManager for paid plans
       const planDetails = this.planManager.getPlan(sub.plan);
       if (!planDetails) {
         logger.error(
@@ -707,22 +740,6 @@ export class SubscriptionAPI {
         return;
       }
 
-      // Get current usage from user record
-      const user = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
-
-      if (user.length === 0) {
-        logger.warn({ userId }, 'User not found');
-        res.status(404).json({ error: 'User not found' });
-        return;
-      }
-
-      const userData = user[0];
-
-      // Return subscription status with usage
       logger.info(
         { userId, plan: sub.plan, status: sub.status },
         'Subscription status retrieved successfully'

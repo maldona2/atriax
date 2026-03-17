@@ -38,7 +38,7 @@ router.get(
         logger.warn({ error }, 'Google OAuth callback returned error');
         const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
         return res.redirect(
-          `${frontendUrl}/settings?calendar_error=${encodeURIComponent(error)}`
+          `${frontendUrl}/app/profile?calendar_error=${encodeURIComponent(error)}`
         );
       }
 
@@ -84,7 +84,7 @@ router.get(
       logger.info({ userId }, 'Google Calendar connected, batch sync queued');
 
       const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
-      res.redirect(`${frontendUrl}/settings?calendar_connected=true`);
+      res.redirect(`${frontendUrl}/app/profile?calendar_connected=true`);
     } catch (err) {
       next(err);
     }

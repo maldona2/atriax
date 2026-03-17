@@ -12,6 +12,8 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Toaster } from '@/components/ui/sonner';
 import { LoginPage } from '@/pages/LoginPage';
 import LandingPage from '@/pages/LandingPage';
+import { RegistrationPage } from '@/pages/RegistrationPage';
+import { VerifyEmailPage } from '@/pages/VerifyEmailPage';
 import { TenantsPage } from '@/pages/admin/TenantsPage';
 import { AppointmentsPage } from '@/pages/AppointmentsPage';
 import { AppointmentDetailPage } from '@/pages/AppointmentDetailPage';
@@ -26,6 +28,8 @@ function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegistrationPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route
               path="/admin"
               element={

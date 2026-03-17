@@ -411,7 +411,7 @@ export class WebhookHandler {
       }
 
       const userId = subscription[0].userId;
-      const action = webhook.action;
+      const action = webhook.action as string;
 
       logger.info(
         {

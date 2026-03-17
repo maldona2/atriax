@@ -13,6 +13,7 @@ export interface LoginResult {
     fullName: string | null;
     role: string;
     tenantId: string | null;
+    isVerified: boolean;
   };
 }
 
@@ -30,6 +31,12 @@ export async function login(
 
   if (!user) {
     const err = new Error('Invalid credentials');
+    (err as Error & { statusCode?: number }).statusCode = 401;
+    throw err;
+  }
+
+  if (!user.isVerified) {
+    const err = new Error('Email no verificado. Revisa tu bandeja de entrada para verificar tu cuenta.');
     (err as Error & { statusCode?: number }).statusCode = 401;
     throw err;
   }
@@ -63,6 +70,7 @@ export async function login(
       fullName: user.fullName,
       role: user.role,
       tenantId: user.tenantId,
+      isVerified: user.isVerified,
     },
   };
 }
@@ -73,6 +81,7 @@ export interface UserProfile {
   fullName: string | null;
   role: string;
   tenantId: string | null;
+  isVerified?: boolean;
   phone?: string | null;
   specialty?: string | null;
   licenseNumber?: string | null;
@@ -104,6 +113,7 @@ function toProfile(user: typeof users.$inferSelect): UserProfile {
     workingHours: user.workingHours ?? null,
     appointmentDuration: user.appointmentDuration ?? null,
     avatarUrl: user.avatarUrl ?? null,
+    isVerified: user.isVerified,
   };
 }
 

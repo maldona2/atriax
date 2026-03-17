@@ -58,6 +58,7 @@ import medicationsRoutes from './routes/medications.js';
 import allergiesRoutes from './routes/allergies.js';
 import googleCalendarRoutes from './routes/googleCalendar.js';
 import subscriptionRoutes from './subscriptions/api/routes.js';
+import registrationRoutes from './registration/api/routes.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -70,6 +71,7 @@ app.use('/api/treatments', treatmentsRoutes);
 app.use('/api/sessions', sessionsRoutes);
 app.use('/api', googleCalendarRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/registration', registrationRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
