@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -77,12 +77,15 @@ export function RegistrationPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 px-4 py-12">
-      <div className="mb-8 flex flex-col items-center gap-2">
+      <Link
+        to="/"
+        className="mb-8 flex flex-col items-center gap-2 hover:opacity-80 transition-opacity"
+      >
         <AtriaxLogo />
         <span className="text-lg font-semibold tracking-tight text-foreground">
           Atriax
         </span>
-      </div>
+      </Link>
 
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
@@ -176,7 +179,14 @@ export function RegistrationPage() {
                     htmlFor="terms"
                     className="text-xs text-muted-foreground leading-snug"
                   >
-                    Acepto los términos de servicio
+                    Acepto los{' '}
+                    <Link
+                      to="/terms"
+                      target="_blank"
+                      className="underline underline-offset-2 hover:text-foreground transition-colors"
+                    >
+                      términos y condiciones
+                    </Link>
                   </label>
                 </div>
                 <div className="flex items-start gap-2">
@@ -194,7 +204,14 @@ export function RegistrationPage() {
                     htmlFor="privacy"
                     className="text-xs text-muted-foreground leading-snug"
                   >
-                    Acepto la política de privacidad
+                    Acepto la{' '}
+                    <Link
+                      to="/privacy"
+                      target="_blank"
+                      className="underline underline-offset-2 hover:text-foreground transition-colors"
+                    >
+                      política de privacidad
+                    </Link>
                   </label>
                 </div>
               </div>
