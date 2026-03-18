@@ -3,6 +3,10 @@ import { eq } from 'drizzle-orm';
 import { db, verificationTokens } from '../../db/client.js';
 import type { EmailService } from '../interfaces/EmailService.js';
 import type { TokenValidation } from '../models/index.js';
+import {
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from '../../services/mailService.js';
 
 /**
  * Simple EmailService implementation.
@@ -26,10 +30,7 @@ export class EmailVerificationService implements EmailService {
       token
     )}`;
 
-    // eslint-disable-next-line no-console
-    console.log(
-      `[EmailVerificationService] Sending verification email to ${email} for ${firstName}. Link: ${verifyUrl}`
-    );
+    await sendVerificationEmail(email, firstName, verifyUrl);
   }
 
   async generateVerificationToken(userId: string): Promise<string> {
@@ -82,10 +83,7 @@ export class EmailVerificationService implements EmailService {
   }
 
   async sendWelcomeEmail(email: string, firstName: string): Promise<void> {
-    // eslint-disable-next-line no-console
-    console.log(
-      `[EmailVerificationService] Sending welcome email to ${email} for ${firstName}.`
-    );
+    await sendWelcomeEmail(email, firstName);
   }
 
   async markTokenAsUsed(token: string): Promise<void> {

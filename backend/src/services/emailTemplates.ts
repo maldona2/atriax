@@ -165,3 +165,56 @@ export function reminderTemplate(data: AppointmentEmailData): {
 
   return { subject, html, text };
 }
+
+export function verificationTemplate(
+  firstName: string,
+  verifyUrl: string
+): { subject: string; html: string; text: string } {
+  const subject = 'Verificá tu cuenta';
+
+  const html = baseHtml(
+    subject,
+    `<div class="header"><h1>Verificá tu cuenta</h1></div>
+     <div class="body">
+       <p>Hola <strong>${firstName}</strong>,</p>
+       <p>Gracias por registrarte. Hacé clic en el botón para verificar tu cuenta:</p>
+       <p style="text-align:center;margin:28px 0">
+         <a href="${verifyUrl}"
+            style="background:#1a1a2e;color:#fff;padding:12px 28px;border-radius:6px;
+                   text-decoration:none;font-weight:600;display:inline-block">
+           Verificar cuenta
+         </a>
+       </p>
+       <p style="font-size:13px;color:#666">
+         O copiá este enlace en tu navegador:<br/>
+         <a href="${verifyUrl}">${verifyUrl}</a>
+       </p>
+       <p style="font-size:13px;color:#666">El enlace expira en 24 horas.</p>
+     </div>`
+  );
+
+  const text = `Hola ${firstName},\n\nVerificá tu cuenta siguiendo este enlace:\n${verifyUrl}\n\nEl enlace expira en 24 horas.`;
+
+  return { subject, html, text };
+}
+
+export function welcomeTemplate(firstName: string): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = '¡Bienvenido/a!';
+
+  const html = baseHtml(
+    subject,
+    `<div class="header" style="background:#166534"><h1>¡Bienvenido/a!</h1></div>
+     <div class="body">
+       <p>Hola <strong>${firstName}</strong>,</p>
+       <p>Tu cuenta ha sido verificada exitosamente. ¡Ya podés empezar a usar la plataforma!</p>
+     </div>`
+  );
+
+  const text = `Hola ${firstName},\n\nTu cuenta ha sido verificada exitosamente. ¡Ya podés empezar a usar la plataforma!`;
+
+  return { subject, html, text };
+}

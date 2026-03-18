@@ -5,6 +5,8 @@ import {
   confirmedTemplate,
   cancelledTemplate,
   reminderTemplate,
+  verificationTemplate,
+  welcomeTemplate,
   type AppointmentEmailData,
 } from './emailTemplates.js';
 import { generateICS, type ICSGeneratorOptions } from './icsGenerator.js';
@@ -143,4 +145,21 @@ export function sendAppointmentReminder(
   const attachment = generateICSAttachment(appointmentId, to, data, false);
   const attachments = attachment ? [attachment] : undefined;
   void send(to, tpl.subject, tpl.html, tpl.text, attachments);
+}
+
+export async function sendVerificationEmail(
+  email: string,
+  firstName: string,
+  verifyUrl: string
+): Promise<void> {
+  const tpl = verificationTemplate(firstName, verifyUrl);
+  await send(email, tpl.subject, tpl.html, tpl.text);
+}
+
+export async function sendWelcomeEmail(
+  email: string,
+  firstName: string
+): Promise<void> {
+  const tpl = welcomeTemplate(firstName);
+  await send(email, tpl.subject, tpl.html, tpl.text);
 }
