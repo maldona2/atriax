@@ -192,7 +192,7 @@ export function AppointmentDetailSheet({
 
       <ScrollArea className="flex-1">
         <div className="space-y-6 p-6">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="group rounded-xl border bg-card p-4 transition-colors hover:bg-muted/50">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <CalendarIcon className="h-4 w-4" />
@@ -269,7 +269,7 @@ export function AppointmentDetailSheet({
                       disabled={isUpdating || activePayment === key}
                       onClick={() => handlePaymentChange(key)}
                       className={cn(
-                        'h-9',
+                        'h-9 flex-1 sm:flex-none',
                         activePayment === key && cfg.className
                       )}
                     >
@@ -300,7 +300,7 @@ export function AppointmentDetailSheet({
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Cambiar estado
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {Object.entries(statusConfig).map(([key, cfg]) => (
                 <Button
                   key={key}

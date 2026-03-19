@@ -141,7 +141,7 @@ export function LandingHeader() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="hidden sm:inline-flex"
+                  className="inline-flex"
                   asChild
                 >
                   <Link to="/login">Iniciar sesión</Link>

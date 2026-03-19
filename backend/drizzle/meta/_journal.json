@@ -62,7 +62,14 @@
       "idx": 8,
       "version": "7",
       "when": 1742256000000,
-      "tag": "0008_patient_treatment_completed_at",
+      "tag": "0008_treatment_protocol",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1742256060000,
+      "tag": "0009_patient_treatment_completed_at",
       "breakpoints": true
     }
   ]
