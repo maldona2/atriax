@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import { ChevronLeft, LogOut, Menu, User } from 'lucide-react';
 
@@ -108,6 +108,24 @@ function SidebarNav({
   onItemClick?: () => void;
 }) {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  function isItemActive(to: string) {
+    const qIndex = to.indexOf('?');
+    if (qIndex !== -1) {
+      const toPathname = to.slice(0, qIndex);
+      const toSearch = new URLSearchParams(to.slice(qIndex + 1));
+      if (location.pathname !== toPathname) return false;
+      for (const [key, value] of toSearch.entries()) {
+        if (searchParams.get(key) !== value) return false;
+      }
+      return true;
+    }
+    return (
+      location.pathname === to ||
+      (to !== '/' && location.pathname.startsWith(to + '/'))
+    );
+  }
 
   return (
     <nav className="flex flex-col gap-1 px-2">
@@ -115,10 +133,7 @@ function SidebarNav({
         <NavItem
           key={item.to}
           item={item}
-          isActive={
-            location.pathname === item.to ||
-            (item.to !== '/' && location.pathname.startsWith(item.to + '/'))
-          }
+          isActive={isItemActive(item.to)}
           collapsed={collapsed}
           onClick={onItemClick}
         />

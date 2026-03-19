@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   User,
   Mail,
@@ -144,6 +144,7 @@ const WEEK_DAYS = [
 ];
 
 export function ProfilePage() {
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const { saving, updateProfile, changePassword } = useProfile();
@@ -306,7 +307,10 @@ export function ProfilePage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-8">
-        <Tabs defaultValue="profile" className="space-y-8 flex flex-col">
+        <Tabs
+          defaultValue={searchParams.get('tab') ?? 'profile'}
+          className="space-y-8 flex flex-col"
+        >
           <TabsList className="grid h-auto w-full max-w-2xl grid-cols-3 gap-1 rounded-xl bg-muted/50 p-1 sm:grid-cols-5">
             <TabsTrigger
               value="profile"
