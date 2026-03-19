@@ -243,7 +243,9 @@ export function TreatmentFormDialog({
                 )}
 
                 {/* Live summary */}
-                {(initialFrequency || initialSessions || maintenanceFrequency) && (
+                {(initialFrequency ||
+                  initialSessions ||
+                  maintenanceFrequency) && (
                   <div className="flex items-center gap-1.5 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
                     <ArrowRight className="h-3.5 w-3.5 shrink-0" />
                     <span>
@@ -251,7 +253,9 @@ export function TreatmentFormDialog({
                       {initialSessions
                         ? `${initialSessions} sesión${parseInt(initialSessions, 10) !== 1 ? 'es' : ''}`
                         : '—'}{' '}
-                      {initialFrequency ? `cada ${initialFrequency} semana${parseInt(initialFrequency, 10) !== 1 ? 's' : ''}` : ''}
+                      {initialFrequency
+                        ? `cada ${initialFrequency} semana${parseInt(initialFrequency, 10) !== 1 ? 's' : ''}`
+                        : ''}
                       {maintenanceFrequency
                         ? ` → luego cada ${maintenanceFrequency} semana${parseInt(maintenanceFrequency, 10) !== 1 ? 's' : ''}`
                         : ''}

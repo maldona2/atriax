@@ -20,6 +20,7 @@ export interface PatientTreatment {
   started_at: string | null;
   last_appointment_id: string | null;
   is_active: boolean;
+  completed_at: string | null;
   created_at: string | null;
   updated_at: string | null;
   treatment?: Treatment | null;

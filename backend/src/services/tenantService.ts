@@ -86,12 +86,22 @@ export async function updateTenantSubscription(
 ): Promise<{ subscription_plan: string; subscription_status: string } | null> {
   const [updated] = await db
     .update(users)
-    .set({ subscriptionPlan: plan, subscriptionStatus: status, updatedAt: new Date() })
+    .set({
+      subscriptionPlan: plan,
+      subscriptionStatus: status,
+      updatedAt: new Date(),
+    })
     .where(and(eq(users.tenantId, tenantId), eq(users.role, 'professional')))
-    .returning({ subscriptionPlan: users.subscriptionPlan, subscriptionStatus: users.subscriptionStatus });
+    .returning({
+      subscriptionPlan: users.subscriptionPlan,
+      subscriptionStatus: users.subscriptionStatus,
+    });
 
   if (!updated) return null;
-  return { subscription_plan: updated.subscriptionPlan, subscription_status: updated.subscriptionStatus };
+  return {
+    subscription_plan: updated.subscriptionPlan,
+    subscription_status: updated.subscriptionStatus,
+  };
 }
 
 export async function getTenantById(id: string): Promise<TenantRow | null> {

@@ -16,6 +16,7 @@ export interface PatientTreatmentRow {
   started_at: Date | null;
   last_appointment_id: string | null;
   is_active: boolean;
+  completed_at: Date | null;
   created_at: Date | null;
   updated_at: Date | null;
   treatment?: treatmentService.TreatmentRow | null;
@@ -46,6 +47,7 @@ function toRow(
     started_at: t.startedAt,
     last_appointment_id: t.lastAppointmentId,
     is_active: t.isActive,
+    completed_at: t.completedAt ?? null,
     created_at: t.createdAt,
     updated_at: t.updatedAt,
     treatment,
@@ -148,7 +150,7 @@ export async function updateProgress(
 export async function completeSession(
   tenantId: string,
   id: string,
-  appointmentId: string
+  appointmentId: string | null
 ): Promise<PatientTreatmentRow | null> {
   const [row] = await db
     .select()
@@ -178,12 +180,15 @@ export async function completeSession(
     isActive = treatment.maintenance_frequency_weeks === null;
   }
 
+  const completedAt = !isActive && row.isActive ? new Date() : undefined;
+
   const [updated] = await db
     .update(patientTreatments)
     .set({
       currentSession,
       lastAppointmentId: appointmentId,
       isActive,
+      ...(completedAt !== undefined ? { completedAt } : {}),
       updatedAt: new Date(),
     })
     .where(

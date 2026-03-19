@@ -202,18 +202,7 @@ export function PatientDetailPage() {
   };
 
   const handleCompleteSession = async (patientTreatmentId: string) => {
-    if (!id) return;
-    try {
-      await api.post(
-        `/patient-treatments/${patientTreatmentId}/complete-session`,
-        {
-          appointment_id: '',
-        }
-      );
-      toast.success('Sesión completada');
-    } catch {
-      toast.error('Error al completar sesión');
-    }
+    await completeSession(patientTreatmentId, null);
   };
 
   const handleRemovePatientTreatment = async (patientTreatmentId: string) => {

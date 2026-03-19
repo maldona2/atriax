@@ -20,7 +20,7 @@ const updatePatientTreatmentSchema = z.object({
 });
 
 const completeSessionSchema = z.object({
-  appointment_id: z.string().uuid(),
+  appointment_id: z.string().uuid().optional().nullable(),
 });
 
 function getTenantId(req: Request): string {
@@ -134,7 +134,7 @@ router.post(
       const patientTreatment = await patientTreatmentService.completeSession(
         tenantId,
         req.params.id,
-        parsed.data.appointment_id
+        parsed.data.appointment_id ?? null
       );
       if (!patientTreatment) {
         const err = new Error('Patient treatment not found');

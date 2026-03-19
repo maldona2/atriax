@@ -166,7 +166,7 @@ export function usePatientTreatments(patientId: string | null) {
   );
 
   const completeSession = useCallback(
-    async (id: string, appointmentId: string) => {
+    async (id: string, appointmentId: string | null) => {
       try {
         const { data } = await api.post<PatientTreatment>(
           `/patient-treatments/${id}/complete-session`,

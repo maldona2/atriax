@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Plus, Trash2 } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -71,8 +71,10 @@ export function PatientTreatmentsCard({
 }: PatientTreatmentsCardProps) {
   const [selectedTreatment, setSelectedTreatment] = useState<string>('');
   const [assigning, setAssigning] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const activeTreatments = patientTreatments.filter((pt) => pt.is_active);
+  const completedTreatments = patientTreatments.filter((pt) => !pt.is_active);
 
   const availableTreatments = treatments.filter(
     (t) =>
@@ -101,7 +103,8 @@ export function PatientTreatmentsCard({
         {loading ? (
           <p className="text-sm text-muted-foreground">Cargando...</p>
         ) : activeTreatments.length === 0 &&
-          availableTreatments.length === 0 ? (
+          availableTreatments.length === 0 &&
+          completedTreatments.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4">
             No hay tratamientos disponibles
           </p>
@@ -189,6 +192,60 @@ export function PatientTreatmentsCard({
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
+              </div>
+            )}
+
+            {completedTreatments.length > 0 && (
+              <div className="border-t pt-3">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between text-sm font-medium text-muted-foreground hover:text-foreground"
+                  onClick={() => setHistoryOpen((prev) => !prev)}
+                >
+                  <span>
+                    Historial de tratamientos ({completedTreatments.length})
+                  </span>
+                  {historyOpen ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </button>
+                {historyOpen && (
+                  <div className="mt-3 space-y-2">
+                    {completedTreatments.map((pt) => (
+                      <div
+                        key={pt.id}
+                        className="rounded-lg border bg-muted/30 p-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-sm">
+                            {pt.treatment?.name ?? 'Tratamiento'}
+                          </p>
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                            Completado
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {pt.current_session - 1} sesiones completadas
+                        </p>
+                        {pt.completed_at && (
+                          <p className="text-xs text-muted-foreground">
+                            Finalizado:{' '}
+                            {new Date(pt.completed_at).toLocaleDateString(
+                              'es-ES',
+                              {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              }
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -171,7 +171,9 @@ export function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [treatmentDialogOpen, setTreatmentDialogOpen] = useState(false);
-  const [editingTreatment, setEditingTreatment] = useState<Treatment | null>(null);
+  const [editingTreatment, setEditingTreatment] = useState<Treatment | null>(
+    null
+  );
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
