@@ -223,7 +223,7 @@ export function generateICS(options: ICSGeneratorOptions): string {
   // VCALENDAR wrapper
   lines.push('BEGIN:VCALENDAR');
   lines.push('VERSION:2.0');
-  lines.push('PRODID:-//AnamnesIA//Appointment Calendar//ES');
+  lines.push('PRODID:-//Atriax//Appointment Calendar//ES');
   lines.push(`METHOD:${method}`);
   lines.push('CALSCALE:GREGORIAN');
 

@@ -69,7 +69,7 @@ export class EventFormatter {
         timeZone: this.timezone,
       },
       source: {
-        title: 'AnamnesIA',
+        title: 'Atriax',
         url: appUrl,
       },
     };

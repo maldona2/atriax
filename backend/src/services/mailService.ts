@@ -12,8 +12,7 @@ import {
 import { generateICS, type ICSGeneratorOptions } from './icsGenerator.js';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? '';
-const RESEND_FROM =
-  process.env.RESEND_FROM ?? 'AnamnesIA <noreply@anamnesia.pro>';
+const RESEND_FROM = process.env.RESEND_FROM ?? 'Atriax <noreply@anamnesia.pro>';
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
