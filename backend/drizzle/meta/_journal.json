@@ -71,6 +71,20 @@
       "when": 1742256060000,
       "tag": "0009_patient_treatment_completed_at",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1774020000000,
+      "tag": "0010_forgot_password",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1774021000000,
+      "tag": "0011_session_photos",
+      "breakpoints": true
     }
   ]
 }

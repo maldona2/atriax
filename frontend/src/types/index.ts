@@ -86,6 +86,38 @@ export interface SessionPhoto {
   presigned_url: string;
 }
 
+// Appointment types
+export interface Appointment {
+  id: string;
+  tenant_id: string;
+  patient_id: string;
+  scheduled_at: string;
+  duration_minutes: number | null;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  payment_status: 'unpaid' | 'paid' | 'partial' | 'refunded';
+  total_amount_cents: number | null;
+  notes: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  patient_first_name?: string;
+  patient_last_name?: string;
+}
+
+export interface AppointmentTreatmentRow {
+  id: string;
+  treatment_id: string;
+  treatment_name: string;
+  quantity: number;
+  unit_price_cents: number;
+}
+
+export interface AppointmentDetail extends Appointment {
+  procedures_performed?: string | null;
+  recommendations?: string | null;
+  session_id?: string | null;
+  treatments?: AppointmentTreatmentRow[];
+}
+
 // Admin types
 export interface Tenant {
   id: string;

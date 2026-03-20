@@ -63,7 +63,7 @@ export function useAppointment(id: string | undefined) {
   const [detail, setDetail] = useState<AppointmentDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetch = useCallback(() => {
     if (!id) {
       setDetail(null);
       setLoading(false);
@@ -77,5 +77,9 @@ export function useAppointment(id: string | undefined) {
       .finally(() => setLoading(false));
   }, [id]);
 
-  return { detail, loading };
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { detail, loading, refetch: fetch };
 }
