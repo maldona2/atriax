@@ -7,6 +7,7 @@ import {
   reminderTemplate,
   verificationTemplate,
   welcomeTemplate,
+  passwordResetTemplate,
   type AppointmentEmailData,
 } from './emailTemplates.js';
 import { generateICS, type ICSGeneratorOptions } from './icsGenerator.js';
@@ -160,5 +161,13 @@ export async function sendWelcomeEmail(
   firstName: string
 ): Promise<void> {
   const tpl = welcomeTemplate(firstName);
+  await send(email, tpl.subject, tpl.html, tpl.text);
+}
+
+export async function sendPasswordResetEmail(
+  email: string,
+  resetUrl: string
+): Promise<void> {
+  const tpl = passwordResetTemplate(resetUrl);
   await send(email, tpl.subject, tpl.html, tpl.text);
 }

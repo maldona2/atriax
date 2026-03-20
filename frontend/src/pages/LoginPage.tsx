@@ -103,6 +103,14 @@ export function LoginPage() {
                   required
                   autoComplete="current-password"
                 />
+                <div className="text-right">
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs font-medium underline text-muted-foreground"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
               </Field>
 
               {error && <FieldError>{error}</FieldError>}

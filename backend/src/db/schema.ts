@@ -849,3 +849,39 @@ export const patientCountsRelations = relations(patientCounts, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// ─── password_reset_tokens ───────────────────────────────────────────────────
+
+export const passwordResetTokens = pgTable(
+  'password_reset_tokens',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    tokenHash: text('token_hash').unique().notNull(), // SHA-256 of raw token
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    used: boolean('used').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_prt_user_id').on(table.userId),
+    index('idx_prt_token_hash').on(table.tokenHash),
+    index('idx_prt_expires_at').on(table.expiresAt),
+  ]
+);
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type NewPasswordResetToken = typeof passwordResetTokens.$inferInsert;
+
+export const passwordResetTokensRelations = relations(
+  passwordResetTokens,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [passwordResetTokens.userId],
+      references: [users.id],
+    }),
+  })
+);

@@ -198,6 +198,40 @@ export function verificationTemplate(
   return { subject, html, text };
 }
 
+export function passwordResetTemplate(resetUrl: string): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = 'Recuperación de contraseña - Atriax';
+
+  const html = baseHtml(
+    subject,
+    `<div class="header"><h1>Recuperación de contraseña</h1></div>
+     <div class="body">
+       <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta.</p>
+       <p>Hacé clic en el botón para establecer una nueva contraseña:</p>
+       <p style="text-align:center;margin:28px 0">
+         <a href="${resetUrl}"
+            style="background:#1a1a2e;color:#fff;padding:12px 28px;border-radius:6px;
+                   text-decoration:none;font-weight:600;display:inline-block">
+           Restablecer contraseña
+         </a>
+       </p>
+       <p style="font-size:13px;color:#666">
+         O copiá este enlace en tu navegador:<br/>
+         <a href="${resetUrl}">${resetUrl}</a>
+       </p>
+       <p style="font-size:13px;color:#666">El enlace expira en 1 hora.</p>
+       <p style="font-size:13px;color:#666">Si no solicitaste este cambio, podés ignorar este email.</p>
+     </div>`
+  );
+
+  const text = `Recuperación de contraseña - Atriax\n\nRecibimos una solicitud para restablecer la contraseña de tu cuenta.\n\nRestablecer contraseña: ${resetUrl}\n\nEl enlace expira en 1 hora.\n\nSi no solicitaste este cambio, podés ignorar este email.`;
+
+  return { subject, html, text };
+}
+
 export function welcomeTemplate(firstName: string): {
   subject: string;
   html: string;

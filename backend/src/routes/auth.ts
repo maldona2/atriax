@@ -1,7 +1,13 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import * as authService from '../services/authService.js';
 import { authenticate } from '../middleware/auth.js';
+import {
+  requestPasswordReset,
+  validateResetToken,
+  resetPassword,
+} from '../services/passwordResetService.js';
 
 const router = Router();
 
@@ -117,6 +123,99 @@ router.post(
         parsed.data.newPassword
       );
       res.status(204).send();
+    } catch (e) {
+      next(e);
+    }
+  }
+);
+
+// ── Forgot / Reset password ──────────────────────────────────────────────────
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(8),
+});
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: {
+      message:
+        'Demasiadas solicitudes. Por favor, inténtalo de nuevo más tarde.',
+    },
+  },
+  statusCode: 429,
+});
+
+// 4.1 POST /api/auth/forgot-password
+router.post(
+  '/forgot-password',
+  forgotPasswordLimiter,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const parsed = forgotPasswordSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const err = new Error(
+          parsed.error.errors[0]?.message ?? 'Invalid request'
+        );
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        return next(err);
+      }
+      await requestPasswordReset(parsed.data.email);
+      res.status(200).json({
+        message: 'Si el email está registrado, recibirás un enlace en breve.',
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+);
+
+// 4.2 GET /api/auth/reset-password/validate?token=<string>
+router.get(
+  '/reset-password/validate',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const token = req.query.token;
+      if (typeof token !== 'string' || !token) {
+        const err = new Error(
+          'El enlace de recuperación no es válido o ha expirado.'
+        );
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        return next(err);
+      }
+      await validateResetToken(token);
+      res.status(200).json({ message: 'Token válido.' });
+    } catch (e) {
+      next(e);
+    }
+  }
+);
+
+// 4.3 POST /api/auth/reset-password
+router.post(
+  '/reset-password',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const parsed = resetPasswordSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const err = new Error(
+          parsed.error.errors[0]?.message ?? 'Invalid request'
+        );
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        return next(err);
+      }
+      await resetPassword(parsed.data.token, parsed.data.password);
+      res
+        .status(200)
+        .json({ message: 'Contraseña actualizada correctamente.' });
     } catch (e) {
       next(e);
     }

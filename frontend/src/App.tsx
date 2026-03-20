@@ -12,6 +12,8 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Toaster } from '@/components/ui/sonner';
 import { LoginPage } from '@/pages/LoginPage';
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import LandingPage from '@/pages/LandingPage';
 import { RegistrationPage } from '@/pages/RegistrationPage';
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage';
@@ -43,6 +45,22 @@ function App() {
               element={
                 <PublicRoute>
                   <RegistrationPage />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/forgot-password"
+              element={
+                <PublicRoute>
+                  <ForgotPasswordPage />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/reset-password"
+              element={
+                <PublicRoute>
+                  <ResetPasswordPage />
                 </PublicRoute>
               }
             />
