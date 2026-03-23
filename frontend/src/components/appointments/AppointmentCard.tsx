@@ -8,12 +8,14 @@ interface AppointmentCardProps {
   appointment: Appointment;
   isSelected: boolean;
   onClick: () => void;
+  isPast?: boolean;
 }
 
 export function AppointmentCard({
   appointment,
   isSelected,
   onClick,
+  isPast,
 }: AppointmentCardProps) {
   const config = statusConfig[appointment.status];
   const scheduledDate = parseISO(appointment.scheduled_at);
@@ -28,7 +30,8 @@ export function AppointmentCard({
     <button
       onClick={onClick}
       className={cn(
-        'w-full rounded-xl border bg-card p-4 text-left transition-all hover:bg-muted/50 hover:shadow-sm',
+        'w-full rounded-xl border bg-card p-4 text-left transition-all hover:bg-muted/50',
+        isPast && !isSelected && 'opacity-60',
         isSelected &&
           'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
       )}

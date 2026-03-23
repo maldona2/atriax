@@ -1,4 +1,4 @@
-import { useState, useMemo, type ReactNode } from 'react';
+import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CalendarIcon, Plus } from 'lucide-react';
@@ -65,6 +65,9 @@ export function AppointmentListView({
   const [fromOpen, setFromOpen] = useState(false);
   const [toOpen, setToOpen] = useState(false);
 
+  const todayAnchorRef = useRef<HTMLDivElement>(null);
+  const todayKey = format(new Date(), 'yyyy-MM-dd');
+
   const sorted = useMemo(() => {
     return [...appointments].sort((a, b) =>
       a.scheduled_at.localeCompare(b.scheduled_at)
@@ -72,6 +75,21 @@ export function AppointmentListView({
   }, [appointments]);
 
   const grouped = useMemo(() => groupByDate(sorted), [sorted]);
+
+  const pastGroups = useMemo(
+    () => grouped.filter(([key]) => key < todayKey),
+    [grouped, todayKey]
+  );
+  const upcomingGroups = useMemo(
+    () => grouped.filter(([key]) => key >= todayKey),
+    [grouped, todayKey]
+  );
+
+  useEffect(() => {
+    if (!loading && todayAnchorRef.current) {
+      todayAnchorRef.current.scrollIntoView({ block: 'start', behavior: 'instant' });
+    }
+  }, [loading]);
 
   return (
     <div className="flex h-full flex-col">
@@ -195,15 +213,16 @@ export function AppointmentListView({
             </div>
           ) : (
             <div className="space-y-4">
-              {grouped.map(([dateKey, apts]) => {
+              {/* Past groups — dimmed */}
+              {pastGroups.map(([dateKey, apts]) => {
                 const dateLabel = format(
                   parseISO(dateKey),
                   "EEEE d 'de' MMMM",
                   { locale: es }
                 );
                 return (
-                  <div key={dateKey}>
-                    <p className="mb-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground capitalize">
+                  <div key={dateKey} className="opacity-70">
+                    <p className="mb-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 capitalize">
                       {dateLabel}
                     </p>
                     <div className="space-y-1.5">
@@ -213,12 +232,53 @@ export function AppointmentListView({
                           appointment={apt}
                           isSelected={selectedId === apt.id}
                           onClick={() => onSelect(apt)}
+                          isPast={true}
                         />
                       ))}
                     </div>
                   </div>
                 );
               })}
+
+              {/* Invisible scroll anchor for today */}
+              <div ref={todayAnchorRef} />
+
+              {/* Today + future groups or empty state */}
+              {upcomingGroups.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+                  <CalendarIcon className="mb-3 h-10 w-10 opacity-30" />
+                  <p className="font-medium">Sin turnos próximos</p>
+                  <p className="mt-1 text-sm">
+                    No hay turnos agendados para hoy ni los próximos días.
+                  </p>
+                </div>
+              ) : (
+                upcomingGroups.map(([dateKey, apts]) => {
+                  const dateLabel = format(
+                    parseISO(dateKey),
+                    "EEEE d 'de' MMMM",
+                    { locale: es }
+                  );
+                  return (
+                    <div key={dateKey}>
+                      <p className="mb-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground capitalize">
+                        {dateLabel}
+                      </p>
+                      <div className="space-y-1.5">
+                        {apts.map((apt) => (
+                          <AppointmentCard
+                            key={apt.id}
+                            appointment={apt}
+                            isSelected={selectedId === apt.id}
+                            onClick={() => onSelect(apt)}
+                            isPast={false}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           )}
         </div>
