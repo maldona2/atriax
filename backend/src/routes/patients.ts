@@ -89,6 +89,28 @@ router.post(
 );
 
 router.get(
+  '/:id/sessions',
+  professionalOnly,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(req);
+      const excludeSessionId =
+        typeof req.query.exclude_session_id === 'string'
+          ? req.query.exclude_session_id
+          : undefined;
+      const sessionRows = await patientService.getPatientSessions(
+        tenantId,
+        req.params.id,
+        excludeSessionId
+      );
+      res.json(sessionRows);
+    } catch (e) {
+      next(e);
+    }
+  }
+);
+
+router.get(
   '/:id',
   professionalOnly,
   async (req: Request, res: Response, next: NextFunction) => {

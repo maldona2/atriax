@@ -118,6 +118,44 @@ export interface AppointmentDetail extends Appointment {
   treatments?: AppointmentTreatmentRow[];
 }
 
+export interface PreviousSession {
+  id: string;
+  appointment_id: string;
+  scheduled_at: string;
+  procedures_performed: string;
+  recommendations: string | null;
+  created_at: string | null;
+}
+
+export interface AppointmentDetailExtended extends AppointmentDetail {
+  patient_phone: string | null;
+  patient_email: string | null;
+  patient_date_of_birth: string | null;
+  patient_notes: string | null;
+  photos?: SessionPhoto[];
+  previous_sessions?: PreviousSession[];
+}
+
+// Patient types
+export interface Patient {
+  id: string;
+  tenant_id: string;
+  first_name: string;
+  last_name: string;
+  phone: string | null;
+  email: string | null;
+  date_of_birth: string | null;
+  notes: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface PatientDetail extends Patient {
+  appointment_count?: number;
+  unpaid_count?: number;
+  unpaid_total_cents?: number;
+}
+
 // Admin types
 export interface Tenant {
   id: string;

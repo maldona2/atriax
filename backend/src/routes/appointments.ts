@@ -57,10 +57,12 @@ router.get(
         return next(err);
       }
       const tenantId = getTenantId(req);
-      const { date, status, patientId } = req.query;
+      const { date, date_from, date_to, status, patientId } = req.query;
 
       const filters = {
         date: typeof date === 'string' ? date : undefined,
+        dateFrom: typeof date_from === 'string' ? date_from : undefined,
+        dateTo: typeof date_to === 'string' ? date_to : undefined,
         status:
           typeof status === 'string' && statusEnum.safeParse(status).success
             ? (status as any)
@@ -98,6 +100,28 @@ router.post(
       const tenantId = getTenantId(req);
       const appt = await appointmentService.create(tenantId, parsed.data);
       res.status(201).json(appt);
+    } catch (e) {
+      next(e);
+    }
+  }
+);
+
+router.get(
+  '/:id/detail',
+  professionalOnly,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(req);
+      const appt = await appointmentService.getDetailById(
+        tenantId,
+        req.params.id
+      );
+      if (!appt) {
+        const err = new Error('Appointment not found');
+        (err as Error & { statusCode?: number }).statusCode = 404;
+        return next(err);
+      }
+      res.json(appt);
     } catch (e) {
       next(e);
     }

@@ -3,6 +3,7 @@ import api from '@/lib/api';
 import type {
   Appointment,
   AppointmentDetail,
+  AppointmentDetailExtended,
   TreatmentLineItem,
 } from '@/types';
 
@@ -16,22 +17,37 @@ export interface AppointmentFormData {
   treatments?: TreatmentLineItem[];
 }
 
-export function useAppointments() {
+export interface AppointmentListFilters {
+  dateFrom?: Date | null;
+  dateTo?: Date | null;
+  status?: Appointment['status'] | 'all';
+}
+
+export function useAppointments(filters?: AppointmentListFilters) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState<Date | null>(null);
   const [status, setStatus] = useState<Appointment['status'] | 'all'>('all');
+
+  const dateFrom = filters?.dateFrom;
+  const dateTo = filters?.dateTo;
+  const filterStatus = filters?.status ?? status;
 
   const fetchAppointments = useCallback(
     async (options?: { silent?: boolean }) => {
       if (!options?.silent) setLoading(true);
       try {
         const params: Record<string, string> = {};
-        if (date) {
+        if (dateFrom) {
+          params.date_from = dateFrom.toISOString().slice(0, 10);
+        } else if (date) {
           params.date = date.toISOString().slice(0, 10);
         }
-        if (status !== 'all') {
-          params.status = status;
+        if (dateTo) {
+          params.date_to = dateTo.toISOString().slice(0, 10);
+        }
+        if (filterStatus !== 'all') {
+          params.status = filterStatus;
         }
         const { data } = await api.get<Appointment[]>('/appointments', {
           params,
@@ -41,7 +57,7 @@ export function useAppointments() {
         if (!options?.silent) setLoading(false);
       }
     },
-    [date, status]
+    [date, filterStatus, dateFrom, dateTo]
   );
 
   useEffect(() => {
@@ -82,4 +98,29 @@ export function useAppointment(id: string | undefined) {
   }, [fetch]);
 
   return { detail, loading, refetch: fetch };
+}
+
+export function useAppointmentDetail(id: string | undefined) {
+  const [detail, setDetail] = useState<AppointmentDetailExtended | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchDetail = useCallback(() => {
+    if (!id) {
+      setDetail(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    api
+      .get<AppointmentDetailExtended>(`/appointments/${id}/detail`)
+      .then(({ data }) => setDetail(data))
+      .catch(() => setDetail(null))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  useEffect(() => {
+    fetchDetail();
+  }, [fetchDetail]);
+
+  return { detail, loading, refetch: fetchDetail };
 }

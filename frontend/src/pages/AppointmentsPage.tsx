@@ -1,24 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
+  startOfMonth,
+  endOfMonth,
+  addMonths,
   addDays,
   addWeeks,
+  subWeeks,
+  startOfWeek,
   isSameWeek,
   parseISO,
-  startOfWeek,
-  subWeeks,
 } from 'date-fns';
-import { Plus } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { LayoutList, CalendarDays } from 'lucide-react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
 import { useAppointments } from '@/hooks/useAppointments';
 import { usePatients } from '@/hooks/usePatients';
 import { useTreatments } from '@/hooks/useTreatments';
@@ -28,53 +22,84 @@ import type { Appointment, Patient } from '@/types';
 import type { AppointmentFormData } from '@/hooks/useAppointments';
 import {
   emptyForm,
-  AppointmentDetailSheet,
   NewAppointmentSheet,
-  CalendarSkeleton,
+  AppointmentListView,
+  AppointmentDetailPanel,
+  AppointmentDetailSheet,
   AppointmentsSidebar,
   AppointmentsWeekGrid,
+  CalendarSkeleton,
 } from '@/components/appointments';
 
+type ViewMode = 'list' | 'calendar';
+
 export function AppointmentsPage() {
-  const {
-    appointments,
-    loading,
-    status,
-    setStatus: setStatusFilter,
-    refetch,
-  } = useAppointments();
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+
+  // ── List-view state ──────────────────────────────────────────────────────
+  const defaultDateFrom = startOfMonth(new Date());
+  const defaultDateTo = endOfMonth(addMonths(new Date(), 3));
+  const [dateFrom, setDateFrom] = useState<Date | null>(defaultDateFrom);
+  const [dateTo, setDateTo] = useState<Date | null>(defaultDateTo);
+  const [statusFilter, setStatusFilter] = useState<
+    Appointment['status'] | 'all'
+  >('all');
+
+  // ── Calendar-view state ──────────────────────────────────────────────────
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [calendarStatus, setCalendarStatus] = useState<
+    Appointment['status'] | 'all'
+  >('all');
+
+  // ── Shared state ─────────────────────────────────────────────────────────
+  const { appointments, loading, refetch } = useAppointments(
+    viewMode === 'list'
+      ? { dateFrom, dateTo, status: statusFilter }
+      : { status: calendarStatus }
+  );
   const { patients, refetch: refetchPatients } = usePatients();
   const { treatments } = useTreatments();
 
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
+    string | null
+  >(null);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
   const [form, setForm] = useState<AppointmentFormData>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
 
+  // ── Calendar-view filtered appointments ──────────────────────────────────
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  const filteredAppointments = useMemo(() => {
+  const calendarAppointments = useMemo(() => {
     return appointments.filter((apt) => {
-      if (status !== 'all' && apt.status !== status) return false;
+      if (calendarStatus !== 'all' && apt.status !== calendarStatus)
+        return false;
       const aptDate = parseISO(apt.scheduled_at);
       return isSameWeek(aptDate, currentDate, { weekStartsOn: 1 });
     });
-  }, [appointments, status, currentDate]);
+  }, [appointments, calendarStatus, currentDate]);
 
+  // ── Handlers ─────────────────────────────────────────────────────────────
   const openNewAppointment = (date?: Date) => {
     setSelectedAppointment(null);
-    setForm({
-      ...emptyForm,
-      date: date ?? new Date(),
-    });
+    setForm({ ...emptyForm, date: date ?? new Date() });
     setSheetOpen(true);
   };
 
-  const openAppointmentDetails = (apt: Appointment) => {
+  const handleSelectAppointment = (apt: Appointment) => {
+    setSelectedAppointmentId(apt.id);
+    // Only open the mobile sheet on small screens
+    if (window.innerWidth < 768) {
+      setMobileDetailOpen(true);
+    }
+  };
+
+  const handleCalendarAppointmentClick = (apt: Appointment) => {
     setSelectedAppointment(apt);
     setSheetOpen(true);
   };
@@ -106,13 +131,26 @@ export function AppointmentsPage() {
       if (selectedAppointment) {
         await api.put(`/appointments/${selectedAppointment.id}`, payload);
         toast.success('Turno actualizado');
+        setSheetOpen(false);
+        setForm(emptyForm);
+        refetch();
       } else {
-        await api.post('/appointments', payload);
+        const { data: newApt } = await api.post<Appointment>(
+          '/appointments',
+          payload
+        );
         toast.success('Turno creado');
+        setSheetOpen(false);
+        setForm(emptyForm);
+        refetch();
+        // Auto-select in list view
+        if (viewMode === 'list') {
+          setSelectedAppointmentId(newApt.id);
+          if (window.innerWidth < 768) {
+            setMobileDetailOpen(true);
+          }
+        }
       }
-      setSheetOpen(false);
-      setForm(emptyForm);
-      refetch();
     } catch {
       toast.error(
         selectedAppointment
@@ -125,92 +163,149 @@ export function AppointmentsPage() {
   };
 
   const handlePatientCreated = (patient: Patient) => {
-    // Refetch patients list to include the new patient
     refetchPatients();
-    // Automatically select the newly created patient
     setForm((f) => ({ ...f, patient_id: patient.id }));
     toast.success(`Paciente ${patient.first_name} ${patient.last_name} creado`);
   };
 
-  if (loading) {
-    return <CalendarSkeleton />;
+  // ── View toggle ───────────────────────────────────────────────────────────
+  const viewToggle = (
+    <div className="flex items-center rounded-md border bg-muted/40 p-0.5">
+      <Button
+        variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+        size="sm"
+        className="h-7 gap-1.5 px-2.5 text-xs"
+        onClick={() => setViewMode('list')}
+      >
+        <LayoutList className="h-3.5 w-3.5" />
+        Lista
+      </Button>
+      <Button
+        variant={viewMode === 'calendar' ? 'secondary' : 'ghost'}
+        size="sm"
+        className="h-7 gap-1.5 px-2.5 text-xs"
+        onClick={() => setViewMode('calendar')}
+      >
+        <CalendarDays className="h-3.5 w-3.5" />
+        Calendario
+      </Button>
+    </div>
+  );
+
+  // ── Calendar view ─────────────────────────────────────────────────────────
+  if (viewMode === 'calendar') {
+    if (loading) return <CalendarSkeleton />;
+    return (
+      <div className="-m-4 flex h-[calc(100vh-4rem)] min-h-0 flex-col overflow-hidden bg-background md:-m-6">
+        <header className="flex shrink-0 flex-col gap-4 border-b px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight">Turnos</h1>
+            {viewToggle}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={() => openNewAppointment()}>Nuevo turno</Button>
+          </div>
+        </header>
+
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <AppointmentsSidebar
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+            onDateChange={setCurrentDate}
+          />
+          <AppointmentsWeekGrid
+            currentDate={currentDate}
+            weekDays={weekDays}
+            filteredAppointments={calendarAppointments}
+            onPreviousWeek={() => setCurrentDate(subWeeks(currentDate, 1))}
+            onNextWeek={() => setCurrentDate(addWeeks(currentDate, 1))}
+            onToday={() => setCurrentDate(new Date())}
+            onNewAppointment={openNewAppointment}
+            onAppointmentClick={handleCalendarAppointmentClick}
+          />
+        </div>
+
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetContent className="flex w-full flex-col overflow-hidden p-0 sm:max-w-md">
+            {selectedAppointment ? (
+              <AppointmentDetailSheet
+                appointment={selectedAppointment}
+                onClose={() => setSheetOpen(false)}
+                onStatusChange={(updated) => {
+                  setSelectedAppointment(updated);
+                  refetch({ silent: true });
+                }}
+              />
+            ) : (
+              <NewAppointmentSheet
+                form={form}
+                setForm={setForm}
+                patients={patients}
+                treatments={treatments}
+                submitting={submitting}
+                onSubmit={handleSubmit}
+                onPatientCreated={handlePatientCreated}
+              />
+            )}
+          </SheetContent>
+        </Sheet>
+      </div>
+    );
   }
 
+  // ── List view ─────────────────────────────────────────────────────────────
   return (
-    <div className="-m-4 flex h-[calc(100vh-4rem)] min-h-0 flex-col overflow-hidden bg-background md:-m-6">
-      <header className="flex shrink-0 flex-col gap-4 border-b px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-semibold tracking-tight">Turnos</h1>
-          <Badge variant="secondary" className="hidden sm:inline-flex">
-            {filteredAppointments.length} esta semana
-          </Badge>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={status}
-            onValueChange={(v) => setStatusFilter(v as typeof status)}
-          >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="pending">Pendientes</SelectItem>
-              <SelectItem value="confirmed">Confirmados</SelectItem>
-              <SelectItem value="completed">Completados</SelectItem>
-              <SelectItem value="cancelled">Cancelados</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button onClick={() => openNewAppointment()}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo turno
-          </Button>
-        </div>
-      </header>
-
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <AppointmentsSidebar
-          selectedDate={selectedDate}
-          onDateSelect={setSelectedDate}
-          onDateChange={setCurrentDate}
-        />
-
-        <AppointmentsWeekGrid
-          currentDate={currentDate}
-          weekDays={weekDays}
-          filteredAppointments={filteredAppointments}
-          onPreviousWeek={() => setCurrentDate(subWeeks(currentDate, 1))}
-          onNextWeek={() => setCurrentDate(addWeeks(currentDate, 1))}
-          onToday={() => setCurrentDate(new Date())}
-          onNewAppointment={openNewAppointment}
-          onAppointmentClick={openAppointmentDetails}
+    <div className="-m-4 flex h-[calc(100vh-4rem)] min-h-0 overflow-hidden bg-background md:-m-6">
+      {/* Left panel */}
+      <div
+        className={`flex h-full flex-col ${mobileDetailOpen ? 'hidden md:flex' : 'flex'} w-full border-r md:w-[40%] min-w-0`}
+      >
+        <AppointmentListView
+          appointments={appointments}
+          loading={loading}
+          selectedId={selectedAppointmentId}
+          onSelect={handleSelectAppointment}
+          onNew={() => openNewAppointment()}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onDateFromChange={setDateFrom}
+          onDateToChange={setDateTo}
+          status={statusFilter}
+          onStatusChange={setStatusFilter}
+          viewToggle={viewToggle}
         />
       </div>
 
+      {/* Right panel: desktop */}
+      <div className="hidden h-full flex-1 overflow-hidden md:flex md:flex-col">
+        <AppointmentDetailPanel appointmentId={selectedAppointmentId} />
+      </div>
+
+      {/* Right panel: mobile Sheet */}
+      <Sheet open={mobileDetailOpen} onOpenChange={setMobileDetailOpen}>
+        <SheetContent
+          side="right"
+          className="flex w-full flex-col overflow-hidden p-0 sm:max-w-md"
+        >
+          <AppointmentDetailPanel
+            appointmentId={selectedAppointmentId}
+            onClose={() => setMobileDetailOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
+
+      {/* New appointment sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="flex w-full flex-col overflow-hidden p-0 sm:max-w-md">
-          {selectedAppointment ? (
-            <AppointmentDetailSheet
-              appointment={selectedAppointment}
-              onClose={() => setSheetOpen(false)}
-              onStatusChange={(updated) => {
-                setSelectedAppointment(updated);
-                refetch({ silent: true });
-              }}
-            />
-          ) : (
-            <NewAppointmentSheet
-              form={form}
-              setForm={setForm}
-              patients={patients}
-              treatments={treatments}
-              submitting={submitting}
-              onSubmit={handleSubmit}
-              onPatientCreated={handlePatientCreated}
-            />
-          )}
+          <NewAppointmentSheet
+            form={form}
+            setForm={setForm}
+            patients={patients}
+            treatments={treatments}
+            submitting={submitting}
+            onSubmit={handleSubmit}
+            onPatientCreated={handlePatientCreated}
+          />
         </SheetContent>
       </Sheet>
     </div>

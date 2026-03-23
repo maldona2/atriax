@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, ne, or, sql } from 'drizzle-orm';
 import { db, patients, appointments, sessions } from '../db/client.js';
 import * as medicalHistoryService from './medicalHistoryService.js';
 
@@ -217,6 +217,61 @@ export async function update(
     .returning();
 
   return row ? toRow(row) : null;
+}
+
+export interface PatientSessionRow {
+  id: string;
+  appointment_id: string;
+  scheduled_at: Date | null;
+  procedures_performed: string;
+  recommendations: string | null;
+  created_at: Date | null;
+}
+
+export async function getPatientSessions(
+  tenantId: string,
+  patientId: string,
+  excludeSessionId?: string
+): Promise<PatientSessionRow[]> {
+  // Validate patient belongs to tenant
+  const [patient] = await db
+    .select({ id: patients.id })
+    .from(patients)
+    .where(and(eq(patients.id, patientId), eq(patients.tenantId, tenantId)))
+    .limit(1);
+
+  if (!patient) return [];
+
+  const conditions = [
+    eq(sessions.patientId, patientId),
+    eq(sessions.tenantId, tenantId),
+  ];
+  if (excludeSessionId) {
+    conditions.push(ne(sessions.id, excludeSessionId));
+  }
+
+  const rows = await db
+    .select({
+      id: sessions.id,
+      appointmentId: sessions.appointmentId,
+      scheduledAt: appointments.scheduledAt,
+      proceduresPerformed: sessions.proceduresPerformed,
+      recommendations: sessions.recommendations,
+      createdAt: sessions.createdAt,
+    })
+    .from(sessions)
+    .innerJoin(appointments, eq(appointments.id, sessions.appointmentId))
+    .where(and(...conditions))
+    .orderBy(desc(sessions.createdAt));
+
+  return rows.map((r) => ({
+    id: r.id,
+    appointment_id: r.appointmentId,
+    scheduled_at: r.scheduledAt,
+    procedures_performed: r.proceduresPerformed,
+    recommendations: r.recommendations ?? null,
+    created_at: r.createdAt ?? null,
+  }));
 }
 
 export async function remove(tenantId: string, id: string): Promise<boolean> {

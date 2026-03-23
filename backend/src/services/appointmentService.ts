@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ne, sql } from 'drizzle-orm';
 import {
   db,
   appointments,
@@ -112,6 +112,8 @@ export interface CreateAppointmentInput {
 
 export interface ListFilters {
   date?: string;
+  dateFrom?: string;
+  dateTo?: string;
   status?: AppointmentStatus;
   patientId?: string;
 }
@@ -151,6 +153,16 @@ export async function list(
   if (filters.date) {
     conditions.push(
       sql`${appointments.scheduledAt}::date = ${filters.date}::date`
+    );
+  }
+  if (filters.dateFrom) {
+    conditions.push(
+      sql`${appointments.scheduledAt}::date >= ${filters.dateFrom}::date`
+    );
+  }
+  if (filters.dateTo) {
+    conditions.push(
+      sql`${appointments.scheduledAt}::date <= ${filters.dateTo}::date`
     );
   }
   if (filters.status) {
@@ -273,6 +285,140 @@ export async function getById(
     recommendations: row.recommendations ?? null,
     session_id: row.sessionId ?? null,
     treatments: treatmentItems,
+  };
+}
+
+export interface PreviousSession {
+  id: string;
+  appointment_id: string;
+  scheduled_at: Date | null;
+  procedures_performed: string;
+  recommendations: string | null;
+  created_at: Date | null;
+}
+
+export interface AppointmentDetailExtended extends AppointmentDetail {
+  patient_phone: string | null;
+  patient_email: string | null;
+  patient_date_of_birth: string | null;
+  patient_notes: string | null;
+  previous_sessions?: PreviousSession[];
+}
+
+export async function getDetailById(
+  tenantId: string,
+  id: string
+): Promise<AppointmentDetailExtended | null> {
+  const [row] = await db
+    .select({
+      id: appointments.id,
+      tenantId: appointments.tenantId,
+      patientId: appointments.patientId,
+      scheduledAt: appointments.scheduledAt,
+      durationMinutes: appointments.durationMinutes,
+      status: appointments.status,
+      paymentStatus: appointments.paymentStatus,
+      totalAmountCents: appointments.totalAmountCents,
+      notes: appointments.notes,
+      createdAt: appointments.createdAt,
+      updatedAt: appointments.updatedAt,
+      firstName: patients.firstName,
+      lastName: patients.lastName,
+      patientPhone: patients.phone,
+      patientEmail: patients.email,
+      patientDateOfBirth: patients.dateOfBirth,
+      patientNotes: patients.notes,
+      proceduresPerformed: sessions.proceduresPerformed,
+      recommendations: sessions.recommendations,
+      sessionId: sessions.id,
+    })
+    .from(appointments)
+    .innerJoin(patients, eq(patients.id, appointments.patientId))
+    .leftJoin(sessions, eq(sessions.appointmentId, appointments.id))
+    .where(and(eq(appointments.id, id), eq(appointments.tenantId, tenantId)))
+    .limit(1);
+
+  if (!row) return null;
+
+  const treatmentRows = await db
+    .select({
+      id: appointmentTreatments.id,
+      treatmentId: appointmentTreatments.treatmentId,
+      treatmentName: treatments.name,
+      quantity: appointmentTreatments.quantity,
+      unitPriceCents: appointmentTreatments.unitPriceCents,
+    })
+    .from(appointmentTreatments)
+    .innerJoin(treatments, eq(treatments.id, appointmentTreatments.treatmentId))
+    .where(eq(appointmentTreatments.appointmentId, id));
+
+  const treatmentItems: AppointmentTreatmentRow[] = treatmentRows.map((t) => ({
+    id: t.id,
+    treatment_id: t.treatmentId,
+    treatment_name: t.treatmentName,
+    quantity: t.quantity,
+    unit_price_cents: t.unitPriceCents,
+  }));
+
+  // Fetch previous sessions for this patient (last 5, excluding current appointment's session)
+  const prevSessionConditions = [
+    eq(sessions.patientId, row.patientId),
+    eq(sessions.tenantId, tenantId),
+  ];
+  if (row.sessionId) {
+    prevSessionConditions.push(ne(sessions.id, row.sessionId));
+  }
+
+  const prevSessionRows = await db
+    .select({
+      id: sessions.id,
+      appointmentId: sessions.appointmentId,
+      scheduledAt: appointments.scheduledAt,
+      proceduresPerformed: sessions.proceduresPerformed,
+      recommendations: sessions.recommendations,
+      createdAt: sessions.createdAt,
+    })
+    .from(sessions)
+    .innerJoin(appointments, eq(appointments.id, sessions.appointmentId))
+    .where(and(...prevSessionConditions))
+    .orderBy(desc(sessions.createdAt))
+    .limit(5);
+
+  const previousSessions: PreviousSession[] = prevSessionRows.map((s) => ({
+    id: s.id,
+    appointment_id: s.appointmentId,
+    scheduled_at: s.scheduledAt,
+    procedures_performed: s.proceduresPerformed,
+    recommendations: s.recommendations ?? null,
+    created_at: s.createdAt ?? null,
+  }));
+
+  return {
+    ...toRow(
+      {
+        id: row.id,
+        tenantId: row.tenantId,
+        patientId: row.patientId,
+        scheduledAt: row.scheduledAt,
+        durationMinutes: row.durationMinutes,
+        status: row.status,
+        paymentStatus: row.paymentStatus,
+        totalAmountCents: row.totalAmountCents,
+        notes: row.notes,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      },
+      { firstName: row.firstName, lastName: row.lastName }
+    ),
+    procedures_performed: row.proceduresPerformed ?? null,
+    recommendations: row.recommendations ?? null,
+    session_id: row.sessionId ?? null,
+    treatments: treatmentItems,
+    patient_phone: row.patientPhone ?? null,
+    patient_email: row.patientEmail ?? null,
+    patient_date_of_birth: row.patientDateOfBirth ?? null,
+    patient_notes: row.patientNotes ?? null,
+    previous_sessions: previousSessions,
   };
 }
 
