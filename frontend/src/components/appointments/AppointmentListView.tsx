@@ -87,7 +87,10 @@ export function AppointmentListView({
 
   useEffect(() => {
     if (!loading && todayAnchorRef.current) {
-      todayAnchorRef.current.scrollIntoView({ block: 'start', behavior: 'instant' });
+      todayAnchorRef.current.scrollIntoView({
+        block: 'start',
+        behavior: 'instant',
+      });
     }
   }, [loading]);
 

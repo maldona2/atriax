@@ -9,8 +9,8 @@ export type PlanName = 'pro' | 'gold';
 export interface SubscriptionPlan {
   name: PlanName;
   priceARS: number;
+  dailyAppointmentLimit: number; // -1 for unlimited
   features: {
-    appointments: boolean;
     calendarSync: boolean;
     patientDatabase: boolean;
     aiFeatures: boolean;
@@ -104,10 +104,11 @@ export interface CreateSubscriptionRequest {
 
 export interface SubscriptionStatusResponse {
   userId: string;
-  plan: PlanName;
+  plan: PlanName | 'free';
   status: 'active' | 'paused' | 'cancelled';
+  dailyAppointmentLimit: number; // -1 for unlimited
   features: {
-    appointments: boolean;
+    appointments: boolean; // derived: dailyAppointmentLimit > 0 || dailyAppointmentLimit === -1
     calendarSync: boolean;
     patientDatabase: boolean;
     aiFeatures: boolean;
@@ -117,6 +118,17 @@ export interface SubscriptionStatusResponse {
     start: string;
     end: string;
   };
+}
+
+// ─── Limit Check ─────────────────────────────────────────────────────────────
+
+export interface LimitCheckResult {
+  allowed: boolean;
+  limit: number; // -1 for unlimited
+  currentUsage: number;
+  remaining: number; // -1 for unlimited
+  resetTime: Date; // Next midnight UTC
+  reason?: string; // Present when allowed = false
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────

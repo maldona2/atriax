@@ -21,6 +21,8 @@ import {
 import { PlanManager } from '../services/PlanManager.js';
 import { PaymentGatewayClient } from '../services/PaymentGatewayClient.js';
 import { WebhookHandler } from '../services/WebhookHandler.js';
+import { LimitEnforcer } from '../services/LimitEnforcer.js';
+import { UsageTracker } from '../services/UsageTracker.js';
 import { loadSubscriptionConfig } from '../config/env.js';
 import { db, users, subscriptions } from '../../db/client.js';
 import logger from '../../utils/logger.js';
@@ -34,6 +36,7 @@ export class SubscriptionAPI {
   private planManager: PlanManager;
   private paymentGateway: PaymentGatewayClient;
   private webhookHandler: WebhookHandler;
+  private limitEnforcer: LimitEnforcer;
   private config: ReturnType<typeof loadSubscriptionConfig>;
 
   constructor() {
@@ -47,6 +50,10 @@ export class SubscriptionAPI {
     this.webhookHandler = new WebhookHandler(
       this.config.MERCADO_PAGO_WEBHOOK_SECRET,
       this.config.MERCADO_PAGO_ACCESS_TOKEN
+    );
+    this.limitEnforcer = new LimitEnforcer(
+      this.planManager,
+      new UsageTracker()
     );
     this.setupRoutes();
   }
@@ -75,6 +82,7 @@ export class SubscriptionAPI {
     this.router.delete('/:userId', this.cancelSubscription.bind(this));
     this.router.post('/:userId/pause', this.pauseSubscription.bind(this));
     this.router.post('/:userId/resume', this.resumeSubscription.bind(this));
+    this.router.get('/:userId/limits', this.getDailyLimitStatus.bind(this)); // Must be before /:userId
     this.router.get('/:userId', this.getSubscriptionStatus.bind(this));
 
     // Webhook endpoints (no JWT authentication, use signature validation)
@@ -84,6 +92,43 @@ export class SubscriptionAPI {
       '/webhooks/preapproval',
       this.handlePreApprovalWebhook.bind(this)
     );
+  }
+
+  /**
+   * GET /subscriptions/:userId/limits
+   * Get daily appointment limit status for a user
+   * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5
+   */
+  private async getDailyLimitStatus(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      const { userId } = req.params;
+      const authenticatedUser = req.user as AuthUser;
+
+      if (authenticatedUser.id !== userId) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+
+      const status = await this.limitEnforcer.getDailyAppointmentStatus(userId);
+
+      res.json({
+        limit: status.limit,
+        used: status.currentUsage,
+        remaining: status.remaining,
+        resetTime: status.resetTime.toISOString(),
+      });
+    } catch (error) {
+      logger.error(
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+        'Error getting daily limit status'
+      );
+      res.status(500).json({ error: 'Failed to get limit status' });
+    }
   }
 
   /**
@@ -704,7 +749,9 @@ export class SubscriptionAPI {
         .limit(1);
 
       if (subscriptionRows.length === 0 || user.subscriptionPlan === 'free') {
-        // Free tier: derive features from implicit free plan
+        // Free tier
+        const freeDailyLimit =
+          this.planManager.getDailyAppointmentLimit('free');
         logger.info(
           { userId },
           'Free tier subscription status retrieved successfully'
@@ -716,8 +763,9 @@ export class SubscriptionAPI {
           status: user.subscriptionStatus,
           preApprovalId: null,
           billingPeriodStart: null,
+          dailyAppointmentLimit: freeDailyLimit,
           features: {
-            appointments: false,
+            appointments: freeDailyLimit > 0 || freeDailyLimit === -1,
             calendarSync: false,
             patientDatabase: true,
             aiFeatures: false,
@@ -753,7 +801,13 @@ export class SubscriptionAPI {
         billingPeriodStart: sub.billingPeriodStart
           ? sub.billingPeriodStart.toISOString()
           : null,
-        features: planDetails.features,
+        dailyAppointmentLimit: planDetails.dailyAppointmentLimit,
+        features: {
+          ...planDetails.features,
+          appointments:
+            planDetails.dailyAppointmentLimit > 0 ||
+            planDetails.dailyAppointmentLimit === -1,
+        },
       });
     } catch (error) {
       logger.error(
@@ -781,7 +835,12 @@ export class SubscriptionAPI {
         name: plan.name,
         displayName: plan.name === 'pro' ? 'Profesional' : 'Gold',
         priceARS: plan.priceARS,
-        features: plan.features,
+        dailyAppointmentLimit: plan.dailyAppointmentLimit,
+        features: {
+          ...plan.features,
+          appointments:
+            plan.dailyAppointmentLimit > 0 || plan.dailyAppointmentLimit === -1,
+        },
         disabled: plan.disabled || false,
       }));
 

@@ -1,9 +1,11 @@
 import {
   boolean,
+  date,
   index,
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uuid,
@@ -943,3 +945,35 @@ export const sessionPhotosRelations = relations(sessionPhotos, ({ one }) => ({
     references: [patients.id],
   }),
 }));
+
+// ─── daily_appointment_usage ──────────────────────────────────────────────────
+
+export const dailyAppointmentUsage = pgTable(
+  'daily_appointment_usage',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    usageDate: date('usage_date').notNull(),
+    count: integer('count').notNull().default(0),
+    lastUpdated: timestamp('last_updated', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.usageDate] }),
+    index('idx_daily_appointment_usage_date').on(table.usageDate),
+  ]
+);
+
+export type DailyAppointmentUsage = typeof dailyAppointmentUsage.$inferSelect;
+export type NewDailyAppointmentUsage =
+  typeof dailyAppointmentUsage.$inferInsert;
+
+export const dailyAppointmentUsageRelations = relations(
+  dailyAppointmentUsage,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [dailyAppointmentUsage.userId],
+      references: [users.id],
+    }),
+  })
+);
