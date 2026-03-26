@@ -17,8 +17,6 @@ import {
   Palette,
   Syringe,
   Plus,
-  Pencil,
-  Trash2,
   CreditCard,
   Check,
   Sparkles,
@@ -66,6 +64,7 @@ import { usePatients } from '@/hooks/usePatients';
 import { useTreatments } from '@/hooks/useTreatments';
 import { useSubscription } from '@/hooks/useSubscription';
 import { TreatmentFormDialog } from '@/components/treatments';
+import { TreatmentCard } from '@/components/treatments/TreatmentCard';
 import type { Treatment } from '@/types';
 import { SubscriptionCard } from '@/components/subscriptions/SubscriptionCard';
 import { FeatureStatus } from '@/components/subscriptions/FeatureStatus';
@@ -311,7 +310,7 @@ export function ProfilePage() {
           defaultValue={searchParams.get('tab') ?? 'profile'}
           className="space-y-8 flex flex-col"
         >
-          <TabsList className="grid h-auto w-full max-w-2xl grid-cols-3 gap-1 rounded-xl bg-muted/50 p-1 sm:grid-cols-5">
+          <TabsList className="grid h-auto w-full max-w-2xl grid-cols-5 gap-1 rounded-xl bg-muted/50 p-1">
             <TabsTrigger
               value="profile"
               className="gap-2 rounded-lg px-3 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
@@ -784,7 +783,7 @@ export function ProfilePage() {
           <TabsContent value="treatments" className="space-y-6">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Syringe className="h-5 w-5 text-muted-foreground" />
@@ -796,13 +795,14 @@ export function ProfilePage() {
                   </div>
                   <Button
                     size="sm"
+                    className="w-full sm:w-auto"
                     onClick={() => {
                       setEditingTreatment(null);
                       setTreatmentDialogOpen(true);
                     }}
                   >
                     <Plus className="mr-2 h-4 w-4" />
-                    Nuevo
+                    Nuevo tratamiento
                   </Button>
                 </div>
               </CardHeader>
@@ -818,39 +818,15 @@ export function ProfilePage() {
                 ) : (
                   <div className="space-y-2">
                     {treatments.map((t) => (
-                      <div
+                      <TreatmentCard
                         key={t.id}
-                        className="flex items-center justify-between rounded-lg border px-4 py-3"
-                      >
-                        <div>
-                          <p className="font-medium">{t.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {(t.price_cents / 100).toFixed(2)} por sesión
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => {
-                              setEditingTreatment(t);
-                              setTreatmentDialogOpen(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                            <span className="sr-only">Editar</span>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => removeTreatment(t.id)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Eliminar</span>
-                          </Button>
-                        </div>
-                      </div>
+                        treatment={t}
+                        onEdit={(treatment) => {
+                          setEditingTreatment(treatment);
+                          setTreatmentDialogOpen(true);
+                        }}
+                        onDelete={(id) => removeTreatment(id)}
+                      />
                     ))}
                   </div>
                 )}

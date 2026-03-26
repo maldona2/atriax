@@ -11,13 +11,14 @@ import {
 import { usePatients } from '@/hooks/usePatients';
 import { PatientFormDialog } from '@/components/patients/PatientFormDialog';
 import { PatientActionsMenu } from '@/components/patients/PatientActionsMenu';
+import { PatientCard } from '@/components/patients/PatientCard';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/data-table/data-table';
 import { DataTableSkeleton } from '@/components/data-table/data-table-skeleton';
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar';
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header';
 import api from '@/lib/api';
-import type { Patient } from '@/types';
+import type { Patient, PatientDetail } from '@/types';
 import type { PatientFormData } from '@/hooks/usePatients';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
@@ -202,16 +203,32 @@ export function PatientsPage() {
         </Button>
       </div>
 
-      <DataTable table={table}>
-        <DataTableToolbar table={table} filterFields={filterFields}>
-          {patients.length > 0 && (
-            <span className="text-sm text-muted-foreground">
-              {patients.length}{' '}
-              {patients.length === 1 ? 'paciente' : 'pacientes'}
-            </span>
-          )}
-        </DataTableToolbar>
-      </DataTable>
+      {/* Mobile card list — visible below md breakpoint */}
+      <div className="flex flex-col gap-2 md:hidden">
+        {patients.length === 0 ? (
+          <p className="py-4 text-center text-sm text-muted-foreground">
+            No hay pacientes registrados.
+          </p>
+        ) : (
+          patients.map((p) => (
+            <PatientCard key={p.id} patient={p as PatientDetail} />
+          ))
+        )}
+      </div>
+
+      {/* Desktop table — hidden below md breakpoint */}
+      <div className="hidden md:block">
+        <DataTable table={table}>
+          <DataTableToolbar table={table} filterFields={filterFields}>
+            {patients.length > 0 && (
+              <span className="text-sm text-muted-foreground">
+                {patients.length}{' '}
+                {patients.length === 1 ? 'paciente' : 'pacientes'}
+              </span>
+            )}
+          </DataTableToolbar>
+        </DataTable>
+      </div>
 
       <PatientFormDialog
         open={dialogOpen}

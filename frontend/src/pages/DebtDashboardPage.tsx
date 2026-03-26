@@ -69,6 +69,7 @@ import { usePaymentHistory } from '@/hooks/usePaymentHistory';
 import { usePaymentMethodAnalytics } from '@/hooks/usePaymentMethodAnalytics';
 import { usePatientAppointments } from '@/hooks/usePatientAppointments';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import type {
   PaymentHistoryFilters,
   PatientPaymentRecord,
@@ -170,7 +171,7 @@ function OverviewTab() {
       {/* Trends chart */}
       <Card className="lg:col-span-2">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="text-lg font-semibold">
                 Resumen Financiero
@@ -179,11 +180,11 @@ function OverviewTab() {
             </div>
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-primary" />
+                <div className="h-3 w-3 shrink-0 rounded-full bg-primary" />
                 <span className="text-muted-foreground">Cobrado</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-amber-500" />
+                <div className="h-3 w-3 shrink-0 rounded-full bg-amber-500" />
                 <span className="text-muted-foreground">Pendiente</span>
               </div>
             </div>
@@ -191,7 +192,7 @@ function OverviewTab() {
         </CardHeader>
         <CardContent>
           {statistics.loading ? (
-            <Skeleton className="h-[300px] w-full" />
+            <Skeleton className="h-[200px] w-full sm:h-[300px]" />
           ) : (
             <ChartContainer
               config={{
@@ -204,7 +205,7 @@ function OverviewTab() {
                   color: 'hsl(var(--chart-3))',
                 },
               }}
-              className="h-[300px]"
+              className="h-[200px] sm:h-[300px]"
             >
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
@@ -294,16 +295,16 @@ function OverviewTab() {
         </CardHeader>
         <CardContent>
           {paymentMethods.loading ? (
-            <Skeleton className="h-[300px] w-full" />
+            <Skeleton className="h-[200px] w-full sm:h-[300px]" />
           ) : methodsData.length === 0 ? (
-            <div className="flex h-[300px] items-center justify-center">
+            <div className="flex h-[200px] items-center justify-center sm:h-[300px]">
               <p className="text-sm text-muted-foreground">Sin datos aún</p>
             </div>
           ) : (
             <>
               <ChartContainer
                 config={{ value: { label: 'Porcentaje' } }}
-                className="h-[250px]"
+                className="h-[180px] sm:h-[250px]"
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -311,8 +312,8 @@ function OverviewTab() {
                       data={methodsData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
+                      innerRadius="40%"
+                      outerRadius="70%"
                       paddingAngle={4}
                       dataKey="value"
                       nameKey="name"
@@ -341,17 +342,17 @@ function OverviewTab() {
                   </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-4 grid grid-cols-1 gap-2 xs:grid-cols-2">
                 {methodsData.map((item, i) => (
-                  <div key={i} className="flex items-center gap-2">
+                  <div key={i} className="flex items-center gap-2 min-w-0">
                     <div
-                      className="h-3 w-3 rounded-full"
+                      className="h-3 w-3 shrink-0 rounded-full"
                       style={{ backgroundColor: item.color }}
                     />
-                    <span className="text-sm text-muted-foreground">
+                    <span className="truncate text-sm text-muted-foreground">
                       {item.name}
                     </span>
-                    <span className="ml-auto text-sm font-medium">
+                    <span className="ml-auto shrink-0 text-sm font-medium">
                       {item.value}%
                     </span>
                   </div>
@@ -398,7 +399,7 @@ function AgingTab() {
               config={{
                 amount: { label: 'Monto', color: 'hsl(var(--chart-1))' },
               }}
-              className="h-[250px]"
+              className="h-[180px] sm:h-[250px]"
             >
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -468,14 +469,14 @@ function AgingTab() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="overflow-x-auto">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
             Detalle por Antigüedad
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          <Table className="min-w-[400px]">
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead className="text-muted-foreground">Rango</TableHead>
@@ -491,9 +492,13 @@ function AgingTab() {
             <TableBody>
               {buckets.map((item, i) => (
                 <TableRow key={i} className="border-border">
-                  <TableCell className="font-medium">{item.range}</TableCell>
+                  <TableCell className="font-medium whitespace-nowrap">
+                    {item.range}
+                  </TableCell>
                   <TableCell>{item.patientCount}</TableCell>
-                  <TableCell>{formatCurrency(item.totalAmountCents)}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {formatCurrency(item.totalAmountCents)}
+                  </TableCell>
                   <TableCell>
                     <Badge variant="secondary">{item.percentage}%</Badge>
                   </TableCell>
@@ -661,7 +666,7 @@ function PatientAppointmentsSheet({
 
   return (
     <Sheet open={patient !== null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+      <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
         <SheetHeader className="mb-6">
           <SheetTitle>{patient?.patientName}</SheetTitle>
           <SheetDescription asChild>
@@ -783,7 +788,8 @@ function HistoryTab() {
   return (
     <>
       <div className="space-y-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center">
+        {/* Desktop filters */}
+        <div className="hidden flex-col gap-4 md:flex md:flex-row md:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -818,13 +824,112 @@ function HistoryTab() {
               <SelectItem value="partially_paid">Parcial</SelectItem>
             </SelectContent>
           </Select>
-          <span className="text-sm text-muted-foreground whitespace-nowrap">
+          <span className="whitespace-nowrap text-sm text-muted-foreground">
             {totalCount} registros
           </span>
         </div>
 
-        <Card>
-          <CardContent className="p-0">
+        {/* Mobile search + filter panel */}
+        <div className="flex flex-col gap-3 md:hidden">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar paciente..."
+              value={filters.search ?? ''}
+              onChange={(e) =>
+                setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))
+              }
+              className="pl-9"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Select
+              value={filters.paymentStatus ?? 'all'}
+              onValueChange={(v) =>
+                setFilters((f) => ({
+                  ...f,
+                  paymentStatus:
+                    v === 'all'
+                      ? undefined
+                      : (v as PaymentHistoryFilters['paymentStatus']),
+                  page: 1,
+                }))
+              }
+            >
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Estado de pago" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="paid">Pagado</SelectItem>
+                <SelectItem value="unpaid">Pendiente</SelectItem>
+                <SelectItem value="partially_paid">Parcial</SelectItem>
+              </SelectContent>
+            </Select>
+            {filters.paymentStatus && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setFilters((f) => ({
+                    ...f,
+                    paymentStatus: undefined,
+                    page: 1,
+                  }))
+                }
+              >
+                Limpiar
+              </Button>
+            )}
+          </div>
+          <span className="text-sm text-muted-foreground">
+            {totalCount} registros
+          </span>
+        </div>
+
+        {/* Mobile card list */}
+        <div className="flex flex-col gap-2 md:hidden">
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-[68px] w-full rounded-lg" />
+            ))
+          ) : records.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              No hay registros.
+            </p>
+          ) : (
+            records.map((r) => (
+              <Card
+                key={r.patientId}
+                className="cursor-pointer transition-colors hover:bg-accent/50"
+                onClick={() => setSelectedPatient(r)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{r.patientName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Pendiente:{' '}
+                        <span
+                          className={
+                            r.unpaidCents > 0 ? 'text-destructive' : ''
+                          }
+                        >
+                          {formatCurrency(r.unpaidCents)}
+                        </span>
+                      </p>
+                    </div>
+                    {getStatusBadge(r.paymentStatus)}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <Card className="hidden md:block">
+          <CardContent className="overflow-x-auto p-0">
             {loading ? (
               <div className="space-y-2 p-4">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -832,13 +937,13 @@ function HistoryTab() {
                 ))}
               </div>
             ) : (
-              <Table>
+              <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="text-muted-foreground">
                       Paciente
                     </TableHead>
-                    <TableHead className="text-muted-foreground">
+                    <TableHead className="text-muted-foreground whitespace-nowrap">
                       Deuda total
                     </TableHead>
                     <TableHead className="text-muted-foreground">
@@ -850,7 +955,7 @@ function HistoryTab() {
                     <TableHead className="text-muted-foreground">
                       Estado
                     </TableHead>
-                    <TableHead className="text-muted-foreground">
+                    <TableHead className="text-muted-foreground whitespace-nowrap">
                       Último pago
                     </TableHead>
                   </TableRow>
@@ -872,20 +977,22 @@ function HistoryTab() {
                       className="cursor-pointer border-border hover:bg-accent/50"
                       onClick={() => setSelectedPatient(r)}
                     >
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium whitespace-nowrap">
                         {r.patientName}
                       </TableCell>
-                      <TableCell>{formatCurrency(r.totalDebtCents)}</TableCell>
-                      <TableCell className="text-primary">
+                      <TableCell className="whitespace-nowrap">
+                        {formatCurrency(r.totalDebtCents)}
+                      </TableCell>
+                      <TableCell className="text-primary whitespace-nowrap">
                         {formatCurrency(r.paidCents)}
                       </TableCell>
                       <TableCell
-                        className={r.unpaidCents > 0 ? 'text-destructive' : ''}
+                        className={`whitespace-nowrap ${r.unpaidCents > 0 ? 'text-destructive' : ''}`}
                       >
                         {formatCurrency(r.unpaidCents)}
                       </TableCell>
                       <TableCell>{getStatusBadge(r.paymentStatus)}</TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="text-muted-foreground whitespace-nowrap">
                         {r.lastPaymentDate
                           ? new Date(r.lastPaymentDate).toLocaleDateString(
                               'es-AR'
@@ -983,26 +1090,37 @@ export function DebtDashboardPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-secondary">
-          <TabsTrigger value="overview">Vista General</TabsTrigger>
-          <TabsTrigger value="aging">Antigüedad</TabsTrigger>
-          <TabsTrigger value="plans">Planes de Pago</TabsTrigger>
-          <TabsTrigger value="history">Historial</TabsTrigger>
-        </TabsList>
+        <ScrollArea className="w-full">
+          <TabsList className="inline-flex w-max min-w-full justify-start bg-secondary p-1">
+            <TabsTrigger value="overview" className="whitespace-nowrap">
+              Vista General
+            </TabsTrigger>
+            <TabsTrigger value="aging" className="whitespace-nowrap">
+              Antigüedad
+            </TabsTrigger>
+            <TabsTrigger value="plans" className="whitespace-nowrap">
+              Planes de Pago
+            </TabsTrigger>
+            <TabsTrigger value="history" className="whitespace-nowrap">
+              Historial
+            </TabsTrigger>
+          </TabsList>
+          <ScrollBar orientation="horizontal" className="invisible" />
+        </ScrollArea>
 
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="min-w-0 space-y-6">
           <OverviewTab />
         </TabsContent>
 
-        <TabsContent value="aging">
+        <TabsContent value="aging" className="min-w-0">
           <AgingTab />
         </TabsContent>
 
-        <TabsContent value="plans">
+        <TabsContent value="plans" className="min-w-0">
           <PlansTab />
         </TabsContent>
 
-        <TabsContent value="history">
+        <TabsContent value="history" className="min-w-0">
           <HistoryTab />
         </TabsContent>
       </Tabs>
