@@ -98,7 +98,7 @@ export function AppointmentListView({
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="shrink-0 border-b px-4 py-4">
-        <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="mb-3 flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold tracking-tight">Turnos</h2>
             <Badge variant="secondary" className="tabular-nums">

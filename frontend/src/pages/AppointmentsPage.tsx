@@ -174,20 +174,20 @@ export function AppointmentsPage() {
       <Button
         variant={viewMode === 'list' ? 'secondary' : 'ghost'}
         size="sm"
-        className="h-7 gap-1.5 px-2.5 text-xs"
+        className="h-7 gap-1.5 px-1.5 text-xs sm:px-2.5"
         onClick={() => setViewMode('list')}
       >
-        <LayoutList className="h-3.5 w-3.5" />
-        Lista
+        <LayoutList className="h-3.5 w-3.5 shrink-0" />
+        <span className="hidden xs:inline sm:inline">Lista</span>
       </Button>
       <Button
         variant={viewMode === 'calendar' ? 'secondary' : 'ghost'}
         size="sm"
-        className="h-7 gap-1.5 px-2.5 text-xs"
+        className="h-7 gap-1.5 px-1.5 text-xs sm:px-2.5"
         onClick={() => setViewMode('calendar')}
       >
-        <CalendarDays className="h-3.5 w-3.5" />
-        Calendario
+        <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+        <span className="hidden xs:inline sm:inline">Calendario</span>
       </Button>
     </div>
   );
@@ -196,14 +196,21 @@ export function AppointmentsPage() {
   if (viewMode === 'calendar') {
     if (loading) return <CalendarSkeleton />;
     return (
-      <div className="-m-4 flex h-[calc(100vh-4rem)] min-h-0 flex-col overflow-hidden bg-background md:-m-6">
-        <header className="flex shrink-0 flex-col gap-4 border-b px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">Turnos</h1>
+      <div className="-m-4 flex h-[calc(100vh-4rem)] min-h-0 flex-col overflow-hidden bg-background sm:-m-5 md:-m-6">
+        <header className="flex shrink-0 flex-col gap-2 border-b px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4 md:px-6 md:py-4">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+            Turnos
+          </h1>
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {viewToggle}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={() => openNewAppointment()}>Nuevo turno</Button>
+            <Button
+              size="sm"
+              className="h-8 px-2.5 text-xs sm:h-9 sm:px-3 sm:text-sm"
+              onClick={() => openNewAppointment()}
+            >
+              <span className="hidden sm:inline">Nuevo turno</span>
+              <span className="sm:hidden">Nuevo</span>
+            </Button>
           </div>
         </header>
 
@@ -226,7 +233,7 @@ export function AppointmentsPage() {
         </div>
 
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-          <SheetContent className="flex w-full flex-col overflow-hidden p-0 sm:max-w-md">
+          <SheetContent className="flex w-full flex-col overflow-hidden p-0 sm:max-w-md md:max-w-lg">
             {selectedAppointment ? (
               <AppointmentDetailSheet
                 appointment={selectedAppointment}
@@ -255,10 +262,10 @@ export function AppointmentsPage() {
 
   // ── List view ─────────────────────────────────────────────────────────────
   return (
-    <div className="-m-4 flex h-[calc(100vh-4rem)] min-h-0 overflow-hidden bg-background md:-m-6">
+    <div className="-m-4 flex h-[calc(100vh-4rem)] min-h-0 overflow-hidden bg-background sm:-m-5 md:-m-6">
       {/* Left panel */}
       <div
-        className={`flex h-full flex-col ${mobileDetailOpen ? 'hidden md:flex' : 'flex'} w-full border-r md:w-[40%] min-w-0`}
+        className={`flex h-full flex-col ${mobileDetailOpen ? 'hidden md:flex' : 'flex'} w-full min-w-0 border-r md:w-[45%] lg:w-[40%] xl:w-[35%] md:min-w-[320px] lg:min-w-[360px] xl:min-w-[400px] md:max-w-[500px] lg:max-w-[520px] xl:max-w-[560px]`}
       >
         <AppointmentListView
           appointments={appointments}
@@ -277,7 +284,7 @@ export function AppointmentsPage() {
       </div>
 
       {/* Right panel: desktop */}
-      <div className="hidden h-full flex-1 overflow-hidden md:flex md:flex-col">
+      <div className="hidden h-full min-w-0 flex-1 overflow-hidden md:flex md:flex-col">
         <AppointmentDetailPanel appointmentId={selectedAppointmentId} />
       </div>
 
@@ -285,7 +292,7 @@ export function AppointmentsPage() {
       <Sheet open={mobileDetailOpen} onOpenChange={setMobileDetailOpen}>
         <SheetContent
           side="right"
-          className="flex w-full flex-col overflow-hidden p-0 sm:max-w-md"
+          className="flex w-full flex-col overflow-hidden p-0 sm:max-w-md md:max-w-lg"
         >
           <AppointmentDetailPanel
             appointmentId={selectedAppointmentId}
@@ -296,7 +303,7 @@ export function AppointmentsPage() {
 
       {/* New appointment sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="flex w-full flex-col overflow-hidden p-0 sm:max-w-md">
+        <SheetContent className="flex w-full flex-col overflow-hidden p-0 sm:max-w-md md:max-w-lg">
           <NewAppointmentSheet
             form={form}
             setForm={setForm}
