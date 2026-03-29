@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function CalendarSkeleton() {
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-dvh flex-col">
       <header className="flex items-center justify-between border-b px-6 py-4">
         <Skeleton className="h-8 w-32" />
         <Skeleton className="h-10 w-36" />

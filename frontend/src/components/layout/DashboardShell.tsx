@@ -212,7 +212,7 @@ export function DashboardShell({
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-dvh bg-background">
       {/* Desktop Sidebar */}
       <aside
         className={cn(

@@ -87,7 +87,7 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 px-4 py-12">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-muted/40 px-4 py-12">
       <div className="mb-8 flex flex-col items-center gap-2">
         <AtriaxLogo />
         <span className="text-lg font-semibold tracking-tight text-foreground">

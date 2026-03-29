@@ -99,26 +99,33 @@ export function NewAppointmentSheet({
       ),
     }));
   };
+
   return (
-    <div className="flex h-full flex-col">
-      <SheetHeader className="border-b bg-primary/5 px-6 py-6">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 ring-4 ring-primary/5">
-            <Plus className="h-6 w-6 text-primary" />
+    <div className="flex h-full max-h-[100dvh] flex-col overflow-hidden">
+      {/* Header - compact on small screens */}
+      <SheetHeader className="shrink-0 border-b bg-primary/5 px-4 py-3 sm:px-6 sm:py-6">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-2 ring-primary/5 sm:h-12 sm:w-12 sm:ring-4">
+            <Plus className="h-5 w-5 text-primary sm:h-6 sm:w-6" />
           </div>
-          <div>
-            <SheetTitle className="text-xl">Nuevo turno</SheetTitle>
-            <p className="text-sm text-muted-foreground">
+          <div className="min-w-0">
+            <SheetTitle className="text-lg sm:text-xl">Nuevo turno</SheetTitle>
+            <p className="truncate text-xs text-muted-foreground sm:text-sm">
               Completa los datos para agendar
             </p>
           </div>
         </div>
       </SheetHeader>
 
-      <form onSubmit={onSubmit} className="flex flex-1 flex-col">
-        <ScrollArea className="flex-1">
-          <div className="space-y-6 p-6">
-            <div className="space-y-2.5">
+      <form
+        onSubmit={onSubmit}
+        className="flex min-h-0 flex-1 flex-col overflow-hidden"
+      >
+        {/* Scrollable content area */}
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="space-y-4 p-4 sm:space-y-6 sm:p-6">
+            {/* Patient select */}
+            <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium">
                 <User className="h-4 w-4 text-primary" />
                 Paciente
@@ -129,7 +136,7 @@ export function NewAppointmentSheet({
                   setForm((f) => ({ ...f, patient_id: value }))
                 }
               >
-                <SelectTrigger className="h-12 w-full rounded-lg bg-background">
+                <SelectTrigger className="h-10 w-full rounded-lg bg-background sm:h-12">
                   <SelectValue placeholder="Selecciona un paciente" />
                 </SelectTrigger>
                 <SelectContent>
@@ -144,7 +151,8 @@ export function NewAppointmentSheet({
               <QuickAddPatientDialog onPatientCreated={onPatientCreated} />
             </div>
 
-            <div className="space-y-2.5">
+            {/* Date picker */}
+            <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium">
                 <CalendarIcon className="h-4 w-4 text-primary" />
                 Fecha
@@ -154,7 +162,7 @@ export function NewAppointmentSheet({
                   <Button
                     variant="outline"
                     className={cn(
-                      'h-12 w-full justify-start rounded-lg text-left font-normal',
+                      'h-10 w-full justify-start rounded-lg text-left font-normal sm:h-12',
                       !form.date && 'text-muted-foreground'
                     )}
                     type="button"
@@ -178,22 +186,23 @@ export function NewAppointmentSheet({
               </Popover>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2.5">
+            {/* Time and Duration */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium">
                   <Clock className="h-4 w-4 text-primary" />
                   Hora
                 </label>
                 <Input
                   type="time"
-                  className="h-12 rounded-lg bg-background"
+                  className="h-10 rounded-lg bg-background sm:h-12"
                   value={form.time}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, time: e.target.value }))
                   }
                 />
               </div>
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium">
                   <Clock className="h-4 w-4 text-primary" />
                   Duración
@@ -204,7 +213,7 @@ export function NewAppointmentSheet({
                     setForm((f) => ({ ...f, duration_minutes: Number(value) }))
                   }
                 >
-                  <SelectTrigger className="h-12 w-full rounded-lg bg-background">
+                  <SelectTrigger className="h-10 w-full rounded-lg bg-background sm:h-12">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -219,7 +228,8 @@ export function NewAppointmentSheet({
               </div>
             </div>
 
-            <div className="space-y-2.5">
+            {/* Treatments */}
+            <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium">
                 <Syringe className="h-4 w-4 text-primary" />
                 Tratamientos{' '}
@@ -228,7 +238,7 @@ export function NewAppointmentSheet({
                 </span>
               </label>
               {treatments.length === 0 ? (
-                <p className="rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground">
+                <p className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground sm:px-4 sm:py-3">
                   Crea tratamientos en tu perfil para agregarlos aquí.
                 </p>
               ) : (
@@ -240,7 +250,7 @@ export function NewAppointmentSheet({
                     }}
                     value=""
                   >
-                    <SelectTrigger className="h-12 w-full rounded-lg bg-background">
+                    <SelectTrigger className="h-10 w-full rounded-lg bg-background sm:h-12">
                       <SelectValue placeholder="Agregar tratamiento" />
                     </SelectTrigger>
                     <SelectContent>
@@ -252,7 +262,7 @@ export function NewAppointmentSheet({
                     </SelectContent>
                   </Select>
                   {lineItems.length > 0 && (
-                    <div className="space-y-2 rounded-lg border p-3">
+                    <div className="space-y-2 rounded-lg border p-2 sm:p-3">
                       {lineItems.map((item) => {
                         const t = treatments.find(
                           (x) => x.id === item.treatment_id
@@ -262,14 +272,14 @@ export function NewAppointmentSheet({
                             key={item.treatment_id}
                             className="flex items-center justify-between gap-2"
                           >
-                            <span className="text-sm font-medium truncate">
+                            <span className="truncate text-sm font-medium">
                               {t?.name ?? '—'}
                             </span>
-                            <div className="flex items-center gap-2">
+                            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
                               <Input
                                 type="number"
                                 min={1}
-                                className="h-8 w-16"
+                                className="h-7 w-12 sm:h-8 sm:w-16"
                                 value={item.quantity}
                                 onChange={(e) =>
                                   updateQuantity(
@@ -278,7 +288,7 @@ export function NewAppointmentSheet({
                                   )
                                 }
                               />
-                              <span className="w-16 text-right text-sm tabular-nums">
+                              <span className="w-14 text-right text-sm tabular-nums sm:w-16">
                                 {(
                                   (item.quantity * item.unit_price_cents) /
                                   100
@@ -287,7 +297,8 @@ export function NewAppointmentSheet({
                               <Button
                                 type="button"
                                 variant="ghost"
-                                size="icon-sm"
+                                size="icon"
+                                className="h-7 w-7 sm:h-8 sm:w-8"
                                 onClick={() =>
                                   removeLineItem(item.treatment_id)
                                 }
@@ -310,7 +321,8 @@ export function NewAppointmentSheet({
               )}
             </div>
 
-            <div className="space-y-2.5">
+            {/* Notes */}
+            <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium">
                 <FileText className="h-4 w-4 text-primary" />
                 Notas{' '}
@@ -319,7 +331,7 @@ export function NewAppointmentSheet({
                 </span>
               </label>
               <Input
-                className="h-12 rounded-lg bg-background"
+                className="h-10 rounded-lg bg-background sm:h-12"
                 value={form.notes}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, notes: e.target.value }))
@@ -330,10 +342,11 @@ export function NewAppointmentSheet({
           </div>
         </ScrollArea>
 
-        <div className="border-t bg-muted/30 p-4">
+        {/* Footer - always visible */}
+        <div className="shrink-0 border-t bg-muted/30 p-3 sm:p-4">
           <Button
             type="submit"
-            className="h-12 w-full rounded-lg text-base font-medium"
+            className="h-10 w-full rounded-lg text-sm font-medium sm:h-12 sm:text-base"
             disabled={submitting || !form.patient_id || !form.date}
           >
             {submitting ? 'Creando...' : 'Crear turno'}

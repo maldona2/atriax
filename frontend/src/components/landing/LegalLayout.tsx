@@ -17,7 +17,7 @@ export function LegalLayout({
   children,
 }: LegalLayoutProps) {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-dvh bg-background flex flex-col">
       {/* Minimal header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">

@@ -196,7 +196,7 @@ export function AppointmentsPage() {
   if (viewMode === 'calendar') {
     if (loading) return <CalendarSkeleton />;
     return (
-      <div className="-m-4 flex h-[calc(100vh-4rem)] min-h-0 flex-col overflow-hidden bg-background sm:-m-5 md:-m-6">
+      <div className="-m-4 flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden bg-background sm:-m-5 md:-m-6">
         <header className="flex shrink-0 flex-col gap-2 border-b px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4 md:px-6 md:py-4">
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
             Turnos
@@ -262,7 +262,7 @@ export function AppointmentsPage() {
 
   // ── List view ─────────────────────────────────────────────────────────────
   return (
-    <div className="-m-4 flex h-[calc(100vh-4rem)] min-h-0 overflow-hidden bg-background sm:-m-5 md:-m-6">
+    <div className="-m-4 flex h-[calc(100dvh-4rem)] min-h-0 overflow-hidden bg-background sm:-m-5 md:-m-6">
       {/* Left panel */}
       <div
         className={`flex h-full flex-col ${mobileDetailOpen ? 'hidden md:flex' : 'flex'} w-full min-w-0 border-r md:w-[45%] lg:w-[40%] xl:w-[35%] md:min-w-[320px] lg:min-w-[360px] xl:min-w-[400px] md:max-w-[500px] lg:max-w-[520px] xl:max-w-[560px]`}
