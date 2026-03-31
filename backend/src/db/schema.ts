@@ -266,7 +266,7 @@ export const sessions = pgTable(
       .references(() => appointments.id, { onDelete: 'cascade' }),
     patientId: uuid('patient_id')
       .notNull()
-      .references(() => patients.id),
+      .references(() => patients.id, { onDelete: 'cascade' }),
     proceduresPerformed: text('procedures_performed').notNull(),
     recommendations: text('recommendations'),
     nextVisitNotes: text('next_visit_notes'),

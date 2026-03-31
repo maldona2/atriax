@@ -196,6 +196,31 @@ export function usePatientTreatments(patientId: string | null) {
     []
   );
 
+  const reactivatePatientTreatment = useCallback(async (id: string) => {
+    try {
+      const { data } = await api.put<PatientTreatment>(
+        `/patient-treatments/${id}`,
+        { is_active: true }
+      );
+      setPatientTreatments((prev) =>
+        prev.map((pt) => (pt.id === id ? data : pt))
+      );
+      toast.success('Tratamiento reactivado');
+    } catch (err: unknown) {
+      const res =
+        err &&
+        typeof err === 'object' &&
+        'response' in err &&
+        (err as { response?: { data?: unknown } }).response?.data;
+      const msg =
+        res && typeof res === 'object' && res !== null && 'error' in res
+          ? (res as { error?: { message?: string } }).error?.message
+          : 'Error al reactivar tratamiento';
+      toast.error(msg);
+      throw err;
+    }
+  }, []);
+
   const removePatientTreatment = useCallback(async (id: string) => {
     try {
       await api.delete(`/patient-treatments/${id}`);
@@ -264,6 +289,7 @@ export function usePatientTreatments(patientId: string | null) {
     refetch: fetchPatientTreatments,
     assignTreatment,
     completeSession,
+    reactivatePatientTreatment,
     removePatientTreatment,
     calculateNextAppointment,
   };

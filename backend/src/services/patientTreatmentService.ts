@@ -177,7 +177,7 @@ export async function completeSession(
     treatment.initial_sessions_count > 0 &&
     nextSession > treatment.initial_sessions_count
   ) {
-    isActive = treatment.maintenance_frequency_weeks === null;
+    isActive = treatment.maintenance_frequency_weeks !== null;
   }
 
   const completedAt = !isActive && row.isActive ? new Date() : undefined;

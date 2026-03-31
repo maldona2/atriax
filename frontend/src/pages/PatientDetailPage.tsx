@@ -81,6 +81,7 @@ export function PatientDetailPage() {
     loading: patientTreatmentsLoading,
     assignTreatment,
     completeSession,
+    reactivatePatientTreatment,
     removePatientTreatment,
     calculateNextAppointment,
   } = usePatientTreatments(id ?? null);
@@ -221,6 +222,12 @@ export function PatientDetailPage() {
 
   const handleCompleteSession = async (patientTreatmentId: string) => {
     await completeSession(patientTreatmentId, null);
+  };
+
+  const handleReactivatePatientTreatment = async (
+    patientTreatmentId: string
+  ) => {
+    await reactivatePatientTreatment(patientTreatmentId);
   };
 
   const handleRemovePatientTreatment = async (patientTreatmentId: string) => {
@@ -405,6 +412,7 @@ export function PatientDetailPage() {
             loading={patientTreatmentsLoading}
             onAssignTreatment={handleAssignTreatment}
             onCompleteSession={handleCompleteSession}
+            onReactivateTreatment={handleReactivatePatientTreatment}
             onRemoveTreatment={handleRemovePatientTreatment}
             calculateNextAppointment={calculateNextAppointment}
           />

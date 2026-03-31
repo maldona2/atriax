@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -37,6 +37,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { QuickAddPatientDialog } from './QuickAddPatientDialog';
 import { MedicalHistorySection } from './MedicalHistorySection';
+import { SuggestedDateIndicator } from './SuggestedDateIndicator';
+import { useSuggestedAppointmentDate } from '@/hooks/useSuggestedAppointmentDate';
 import type { AppointmentFormData } from '@/hooks/useAppointments';
 import type { Patient, Treatment } from '@/types';
 
@@ -61,6 +63,27 @@ export function NewAppointmentSheet({
 }: NewAppointmentSheetProps) {
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [sessionNotesExpanded, setSessionNotesExpanded] = useState(false);
+  const [isDateModified, setIsDateModified] = useState(false);
+  const prevPatientId = useRef<string>('');
+
+  const { suggestedDate, calculationDetails } = useSuggestedAppointmentDate(
+    form.patient_id || null
+  );
+
+  // Reset modification flag when patient changes
+  useEffect(() => {
+    if (form.patient_id !== prevPatientId.current) {
+      prevPatientId.current = form.patient_id;
+      setIsDateModified(false);
+    }
+  }, [form.patient_id]);
+
+  // Auto-populate date when suggestion is calculated and user hasn't modified it
+  useEffect(() => {
+    if (suggestedDate && !isDateModified) {
+      setForm((f) => ({ ...f, date: suggestedDate }));
+    }
+  }, [suggestedDate, isDateModified, setForm]);
 
   const lineItems = form.treatments ?? [];
   const totalCents = lineItems.reduce(
@@ -189,12 +212,19 @@ export function NewAppointmentSheet({
                   <Calendar
                     mode="single"
                     selected={form.date ?? undefined}
-                    onSelect={(d) =>
-                      setForm((f) => ({ ...f, date: d ?? null }))
-                    }
+                    onSelect={(d) => {
+                      setIsDateModified(true);
+                      setForm((f) => ({ ...f, date: d ?? null }));
+                    }}
                   />
                 </PopoverContent>
               </Popover>
+              {calculationDetails && (
+                <SuggestedDateIndicator
+                  calculationDetails={calculationDetails}
+                  isModified={isDateModified}
+                />
+              )}
             </div>
 
             {/* Time and Duration */}

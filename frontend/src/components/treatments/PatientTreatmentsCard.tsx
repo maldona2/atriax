@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { Calendar, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
+import {
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  RotateCcw,
+  Trash2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -17,6 +24,7 @@ interface PatientTreatmentsCardProps {
   loading: boolean;
   onAssignTreatment: (treatmentId: string) => Promise<void>;
   onCompleteSession: (id: string) => Promise<void>;
+  onReactivateTreatment: (id: string) => Promise<void>;
   onRemoveTreatment: (id: string) => Promise<void>;
   calculateNextAppointment: (patientTreatment: PatientTreatment) => Date | null;
 }
@@ -66,6 +74,7 @@ export function PatientTreatmentsCard({
   loading,
   onAssignTreatment,
   onCompleteSession,
+  onReactivateTreatment,
   onRemoveTreatment,
   calculateNextAppointment,
 }: PatientTreatmentsCardProps) {
@@ -222,9 +231,19 @@ export function PatientTreatmentsCard({
                           <p className="font-medium text-sm">
                             {pt.treatment?.name ?? 'Tratamiento'}
                           </p>
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                            Completado
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                              Completado
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => onReactivateTreatment(pt.id)}
+                              title="Reactivar tratamiento"
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           {pt.current_session - 1} sesiones completadas
