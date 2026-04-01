@@ -9,6 +9,10 @@
 - ES5 trailing commas.
 - Run Prettier before committing code.
 
+## Language
+
+- Write all code (identifiers, comments, commit messages) in **English**. See `45-language.md` for the UI-Spanish rule.
+
 ## Naming Conventions
 
 - Use camelCase for variables and functions.
