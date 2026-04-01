@@ -194,6 +194,39 @@ router.delete(
 // ─── Sync Routes ──────────────────────────────────────────────────────────────
 
 /**
+ * POST /api/calendar/sync/all
+ * Trigger initial/full sync for the authenticated doctor
+ */
+router.post(
+  '/calendar/sync/all',
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.id;
+      const tenantId = req.user!.tenantId;
+
+      if (!tenantId) {
+        return res.status(400).json({ error: 'User has no tenant' });
+      }
+
+      await syncQueue.enqueue({
+        tenantId,
+        userId,
+        operation: 'batch_sync',
+        priority: 10,
+      });
+
+      res.json({
+        success: true,
+        message: 'Batch sync job enqueued',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
  * POST /api/calendar/sync/:appointmentId
  * Manually sync a single appointment
  */
@@ -223,39 +256,6 @@ router.post(
         calendarSyncMonitor.recordFailure(result.error ?? 'Unknown error');
         res.status(422).json({ success: false, error: result.error });
       }
-    } catch (err) {
-      next(err);
-    }
-  }
-);
-
-/**
- * POST /api/calendar/sync/all
- * Trigger initial/full sync for the authenticated doctor
- */
-router.post(
-  '/calendar/sync/all',
-  authenticate,
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = req.user!.id;
-      const tenantId = req.user!.tenantId;
-
-      if (!tenantId) {
-        return res.status(400).json({ error: 'User has no tenant' });
-      }
-
-      await syncQueue.enqueue({
-        tenantId,
-        userId,
-        operation: 'batch_sync',
-        priority: 10,
-      });
-
-      res.json({
-        success: true,
-        message: 'Batch sync job enqueued',
-      });
     } catch (err) {
       next(err);
     }
