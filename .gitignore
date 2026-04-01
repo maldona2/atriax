@@ -3,6 +3,10 @@
 .env.local
 .env.*.local
 
+#Kiro
+*.kiro
+.kiro/
+
 # Dependencies
 node_modules/
 
