@@ -142,9 +142,7 @@ export const appointments = pgTable(
       .default('pending'),
     paymentStatus: text('payment_status', {
       enum: ['unpaid', 'paid', 'partial', 'refunded'],
-    })
-      .notNull()
-      .default('unpaid'),
+    }).default('unpaid'),
     totalAmountCents: integer('total_amount_cents'),
     notes: text('notes'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),

@@ -42,7 +42,9 @@ export function AppointmentDetailPanel({
   const [activeStatus, setActiveStatus] = useState<
     Appointment['status'] | null
   >(null);
-  const [activePayment, setActivePayment] = useState<PaymentStatus>('unpaid');
+  const [activePayment, setActivePayment] = useState<PaymentStatus | null>(
+    null
+  );
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export function AppointmentDetailPanel({
 
   useEffect(() => {
     if (detail) {
-      setActivePayment((detail.payment_status as PaymentStatus) ?? 'unpaid');
+      setActivePayment(detail.payment_status ?? null);
       setActiveStatus(detail.status);
     }
   }, [detail]);
@@ -67,7 +69,7 @@ export function AppointmentDetailPanel({
       await api.put(`/appointments/${detail.id}`, {
         payment_status: newStatus,
       });
-      setActivePayment(newStatus);
+      setActivePayment(newStatus ?? null);
       refetch();
       toast.success('Estado de pago actualizado');
     } catch {
@@ -184,18 +186,20 @@ export function AppointmentDetailPanel({
           />
 
           {/* Treatments */}
-          {detail.treatments && detail.treatments.length > 0 && (
-            <>
-              <Separator />
-              <TreatmentInfoSection
-                treatments={detail.treatments}
-                totalAmountCents={detail.total_amount_cents}
-                paymentStatus={activePayment}
-                onPaymentChange={handlePaymentChange}
-                isUpdating={isUpdating}
-              />
-            </>
-          )}
+          {detail.treatments &&
+            detail.treatments.length > 0 &&
+            activePayment !== null && (
+              <>
+                <Separator />
+                <TreatmentInfoSection
+                  treatments={detail.treatments}
+                  totalAmountCents={detail.total_amount_cents}
+                  paymentStatus={activePayment}
+                  onPaymentChange={handlePaymentChange}
+                  isUpdating={isUpdating}
+                />
+              </>
+            )}
 
           <Separator />
 

@@ -87,7 +87,7 @@ export interface AppointmentRow {
   scheduled_at: Date | null;
   duration_minutes: number | null;
   status: AppointmentStatus;
-  payment_status: PaymentStatus;
+  payment_status: PaymentStatus | null;
   total_amount_cents: number | null;
   notes: string | null;
   created_at: Date | null;
@@ -137,7 +137,7 @@ function toRow(
     scheduled_at: a.scheduledAt,
     duration_minutes: a.durationMinutes ?? null,
     status: a.status as AppointmentStatus,
-    payment_status: (a.paymentStatus as PaymentStatus) ?? 'unpaid',
+    payment_status: (a.paymentStatus as PaymentStatus | null) ?? null,
     total_amount_cents: a.totalAmountCents ?? null,
     notes: a.notes ?? null,
     created_at: a.createdAt ?? null,
@@ -606,8 +606,12 @@ export async function update(
   if (data.duration_minutes !== undefined)
     setValue.durationMinutes = data.duration_minutes ?? 60;
   if (data.status !== undefined) setValue.status = data.status;
-  if (data.payment_status !== undefined)
+  if (data.status === 'cancelled') {
+    setValue.paymentStatus = null;
+    setValue.totalAmountCents = null;
+  } else if (data.payment_status !== undefined) {
     setValue.paymentStatus = data.payment_status;
+  }
   if (data.notes !== undefined) setValue.notes = data.notes ?? null;
 
   if (data.treatments !== undefined) {
@@ -681,7 +685,12 @@ export async function cancel(
 ): Promise<AppointmentRow | null> {
   const [row] = await db
     .update(appointments)
-    .set({ status: 'cancelled', updatedAt: new Date() })
+    .set({
+      status: 'cancelled',
+      paymentStatus: null,
+      totalAmountCents: null,
+      updatedAt: new Date(),
+    })
     .where(and(eq(appointments.id, id), eq(appointments.tenantId, tenantId)))
     .returning();
 

@@ -13,7 +13,11 @@ import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { PatientFormDialog } from './PatientFormDialog';
 import { MedicalHistoryDialog } from './MedicalHistoryDialog';
-import { emptyForm, NewAppointmentSheet } from '@/components/appointments';
+import {
+  emptyForm,
+  NewAppointmentSheet,
+  TreatmentInfoSection,
+} from '@/components/appointments';
 import { paymentConfig } from '@/components/appointments/constants';
 import type { PatientFormData } from '@/hooks/usePatients';
 import type { AppointmentFormData } from '@/hooks/useAppointments';
@@ -87,6 +91,28 @@ export function PatientDetailPanel({
   const [appointmentSheetOpen, setAppointmentSheetOpen] = useState(false);
   const [form, setForm] = useState<AppointmentFormData>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+
+  const [updatingPaymentId, setUpdatingPaymentId] = useState<string | null>(
+    null
+  );
+
+  const handlePaymentChange = async (
+    appointmentId: string,
+    newStatus: PaymentStatus
+  ) => {
+    setUpdatingPaymentId(appointmentId);
+    try {
+      await api.put(`/appointments/${appointmentId}`, {
+        payment_status: newStatus,
+      });
+      toast.success('Estado de pago actualizado');
+      refetch();
+    } catch {
+      toast.error('Error al actualizar el estado de pago');
+    } finally {
+      setUpdatingPaymentId(null);
+    }
+  };
 
   const [medicalDialogOpen, setMedicalDialogOpen] = useState(false);
   const [medicalDialogType, setMedicalDialogType] = useState<
@@ -430,48 +456,84 @@ export function PatientDetailPanel({
                     label: a.status,
                     variant: 'secondary' as const,
                   };
-                  const pmtCfg =
-                    paymentConfig[a.payment_status as PaymentStatus] ??
-                    paymentConfig.unpaid;
+                  const pmtCfg = a.payment_status
+                    ? (paymentConfig[a.payment_status as PaymentStatus] ??
+                      paymentConfig.unpaid)
+                    : null;
                   return (
                     <Link
                       key={a.id}
                       to={`/app/appointments/${a.id}`}
-                      className="group flex items-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50"
+                      className="group flex flex-col gap-2 rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50"
                     >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <Clock className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <p className="text-sm font-medium text-foreground">
-                            {formatDate(a.scheduled_at)}
-                          </p>
-                          <Badge
-                            variant={config.variant}
-                            className="shrink-0 text-xs"
-                          >
-                            {config.label}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className={cn('shrink-0 text-xs', pmtCfg.className)}
-                          >
-                            {pmtCfg.label}
-                          </Badge>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <Clock className="h-4 w-4" />
                         </div>
-                        <div className="mt-0.5 flex items-center justify-between">
-                          {a.procedures_performed && (
-                            <p className="line-clamp-1 text-xs text-muted-foreground">
-                              {a.procedures_performed}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <p className="text-sm font-medium text-foreground">
+                              {formatDate(a.scheduled_at)}
                             </p>
-                          )}
-                          <span className="ml-auto text-xs font-medium tabular-nums text-muted-foreground">
-                            ${((a.total_amount_cents ?? 0) / 100).toFixed(2)}
-                          </span>
+                            <Badge
+                              variant={config.variant}
+                              className="shrink-0 text-xs"
+                            >
+                              {config.label}
+                            </Badge>
+                            {pmtCfg &&
+                              !(
+                                a.treatments?.length > 0 &&
+                                a.total_amount_cents > 0
+                              ) && (
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    'shrink-0 text-xs',
+                                    pmtCfg.className
+                                  )}
+                                >
+                                  {pmtCfg.label}
+                                </Badge>
+                              )}
+                          </div>
+                          <div className="mt-0.5 flex items-center justify-between">
+                            {a.procedures_performed && (
+                              <p className="line-clamp-1 text-xs text-muted-foreground">
+                                {a.procedures_performed}
+                              </p>
+                            )}
+                            {pmtCfg &&
+                              !(
+                                a.treatments?.length > 0 &&
+                                a.total_amount_cents > 0
+                              ) && (
+                                <span className="ml-auto text-xs font-medium tabular-nums text-muted-foreground">
+                                  $
+                                  {((a.total_amount_cents ?? 0) / 100).toFixed(
+                                    2
+                                  )}
+                                </span>
+                              )}
+                          </div>
                         </div>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                       </div>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                      {a.treatments?.length > 0 &&
+                        a.total_amount_cents > 0 &&
+                        a.payment_status && (
+                          <div onClick={(e) => e.preventDefault()}>
+                            <TreatmentInfoSection
+                              treatments={a.treatments}
+                              totalAmountCents={a.total_amount_cents}
+                              paymentStatus={a.payment_status}
+                              onPaymentChange={(newStatus) =>
+                                handlePaymentChange(a.id, newStatus)
+                              }
+                              isUpdating={updatingPaymentId === a.id}
+                            />
+                          </div>
+                        )}
                     </Link>
                   );
                 })}

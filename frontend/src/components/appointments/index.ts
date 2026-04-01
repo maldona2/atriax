@@ -7,3 +7,4 @@ export { AppointmentsWeekGrid } from './AppointmentsWeekGrid';
 export { AppointmentListView } from './AppointmentListView';
 export { AppointmentCard } from './AppointmentCard';
 export { AppointmentDetailPanel } from './AppointmentDetailPanel';
+export { TreatmentInfoSection } from './TreatmentInfoSection';

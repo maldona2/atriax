@@ -284,7 +284,7 @@ export async function getPatientSessions(
 export interface PatientPaymentHistoryEntry {
   appointment_id: string;
   scheduled_at: string;
-  payment_status: string;
+  payment_status: string | null;
   total_amount_cents: number | null;
   treatments: Array<{
     name: string;
