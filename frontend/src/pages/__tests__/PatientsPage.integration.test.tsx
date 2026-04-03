@@ -60,6 +60,11 @@ describe('PatientsPage Integration - Task 7', () => {
       loading: false,
       refetch: mockRefetch,
     });
+    vi.mocked(usePatients.usePatient).mockReturnValue({
+      detail: null,
+      loading: false,
+      refetch: vi.fn(),
+    } as any);
   });
 
   it('should render PatientActionsMenu for each patient row', async () => {
@@ -116,12 +121,12 @@ describe('PatientsPage Integration - Task 7', () => {
       expect(screen.getByText('Pérez, Juan')).toBeInTheDocument();
     });
 
-    // Check that patient name links still exist
-    const juanLink = screen.getByRole('link', { name: 'Pérez, Juan' });
-    expect(juanLink).toHaveAttribute('href', '/app/patients/1');
+    // Check that patient name cards still exist (rendered as buttons in card layout)
+    const juanCard = screen.getByRole('button', { name: /Pérez, Juan/ });
+    expect(juanCard).toBeInTheDocument();
 
-    const mariaLink = screen.getByRole('link', { name: 'García, María' });
-    expect(mariaLink).toHaveAttribute('href', '/app/patients/2');
+    const mariaCard = screen.getByRole('button', { name: /García, María/ });
+    expect(mariaCard).toBeInTheDocument();
   });
 
   it('should maintain existing "Nuevo paciente" button functionality', async () => {
@@ -135,9 +140,9 @@ describe('PatientsPage Integration - Task 7', () => {
       expect(screen.getByText('Pérez, Juan')).toBeInTheDocument();
     });
 
-    // Check that the "Nuevo paciente" button exists
+    // Check that the "Nuevo" button exists (to create a new patient)
     const newPatientButton = screen.getByRole('button', {
-      name: /Nuevo paciente/i,
+      name: /Nuevo/i,
     });
     expect(newPatientButton).toBeInTheDocument();
     expect(newPatientButton).not.toBeDisabled();

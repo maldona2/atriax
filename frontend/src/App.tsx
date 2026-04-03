@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom';
 import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ChatbotProvider } from '@/contexts/ChatbotContext';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { PublicRoute } from '@/components/layout/PublicRoute';
 import { AdminLayout } from '@/components/layout/AdminLayout';
@@ -32,90 +33,95 @@ function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <AuthProvider>
-        <Router>
-          <Routes>
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <LoginPage />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <PublicRoute>
-                  <RegistrationPage />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/forgot-password"
-              element={
-                <PublicRoute>
-                  <ForgotPasswordPage />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/reset-password"
-              element={
-                <PublicRoute>
-                  <ResetPasswordPage />
-                </PublicRoute>
-              }
-            />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute allowedRoles={['super_admin']}>
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="tenants" element={<TenantsPage />} />
-              <Route index element={<Navigate to="/admin/tenants" replace />} />
-            </Route>
-            <Route
-              path="/app"
-              element={
-                <ProtectedRoute allowedRoles={['professional']}>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="appointments" element={<AppointmentsPage />} />
+        <ChatbotProvider>
+          <Router>
+            <Routes>
               <Route
-                path="appointments/:id"
-                element={<AppointmentDetailPage />}
+                path="/login"
+                element={
+                  <PublicRoute>
+                    <LoginPage />
+                  </PublicRoute>
+                }
               />
-              <Route path="patients" element={<PatientsPage />} />
-              <Route path="patients/:id" element={<PatientDetailPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="debt-dashboard" element={<DebtDashboardPage />} />
-              <Route path="help" element={<HelpPage />} />
-              <Route path="help/:section" element={<HelpPage />} />
               <Route
-                index
-                element={<Navigate to="/app/appointments" replace />}
+                path="/register"
+                element={
+                  <PublicRoute>
+                    <RegistrationPage />
+                  </PublicRoute>
+                }
               />
-            </Route>
-            <Route
-              path="/"
-              element={
-                <PublicRoute>
-                  <LandingPage />
-                </PublicRoute>
-              }
-            />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
-        <Toaster />
+              <Route
+                path="/forgot-password"
+                element={
+                  <PublicRoute>
+                    <ForgotPasswordPage />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/reset-password"
+                element={
+                  <PublicRoute>
+                    <ResetPasswordPage />
+                  </PublicRoute>
+                }
+              />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="tenants" element={<TenantsPage />} />
+                <Route
+                  index
+                  element={<Navigate to="/admin/tenants" replace />}
+                />
+              </Route>
+              <Route
+                path="/app"
+                element={
+                  <ProtectedRoute allowedRoles={['professional']}>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="appointments" element={<AppointmentsPage />} />
+                <Route
+                  path="appointments/:id"
+                  element={<AppointmentDetailPage />}
+                />
+                <Route path="patients" element={<PatientsPage />} />
+                <Route path="patients/:id" element={<PatientDetailPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="debt-dashboard" element={<DebtDashboardPage />} />
+                <Route path="help" element={<HelpPage />} />
+                <Route path="help/:section" element={<HelpPage />} />
+                <Route
+                  index
+                  element={<Navigate to="/app/appointments" replace />}
+                />
+              </Route>
+              <Route
+                path="/"
+                element={
+                  <PublicRoute>
+                    <LandingPage />
+                  </PublicRoute>
+                }
+              />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Router>
+          <Toaster />
+        </ChatbotProvider>
       </AuthProvider>
     </ThemeProvider>
   );

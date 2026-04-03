@@ -60,7 +60,9 @@ export function useAppointmentNotifications(): void {
       // Requirements: 1.1, 4.1, 4.2, 6.2
       const relevantAppointments = appointments.filter(
         (appointment) =>
-          appointment.status === 'pending' || appointment.status === 'confirmed'
+          appointment.status === 'pending' ||
+          appointment.status === 'confirmed' ||
+          appointment.status === 'scheduled'
       );
 
       // Loop through relevant appointments and check for time matches
@@ -128,6 +130,10 @@ export function useAppointmentNotifications(): void {
                 onClick: () =>
                   navigate(`/app/patients/${appointment.patient_id}`),
               };
+            } else {
+              console.warn(
+                `Missing patient_id for appointment ${appointment.id}`
+              );
             }
 
             // Trigger toast notification

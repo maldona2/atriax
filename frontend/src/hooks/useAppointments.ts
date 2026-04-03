@@ -66,6 +66,14 @@ export function useAppointments(filters?: AppointmentListFilters) {
     fetchAppointments();
   }, [fetchAppointments]);
 
+  // Refresh silently when the chatbot creates or modifies an appointment
+  useEffect(() => {
+    const handler = () => fetchAppointments({ silent: true });
+    window.addEventListener('chatbot:appointment-changed', handler);
+    return () =>
+      window.removeEventListener('chatbot:appointment-changed', handler);
+  }, [fetchAppointments]);
+
   return {
     appointments,
     loading,

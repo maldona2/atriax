@@ -338,7 +338,11 @@ export class ContentValidator {
    */
   private convertAjvErrors(ajvErrors: ErrorObject[]): ContentError[] {
     return ajvErrors.map((error) => ({
-      field: error.instancePath || error.schemaPath,
+      field:
+        error.keyword === 'required'
+          ? ((error.params as { missingProperty?: string }).missingProperty ??
+            error.schemaPath)
+          : (error.instancePath || error.schemaPath).replace(/^\//, ''),
       message: this.formatAjvErrorMessage(error),
       code: this.mapAjvErrorToCode(error.keyword),
       severity: 'error' as const,
@@ -422,19 +426,19 @@ export class ContentValidator {
     const icons: string[] = [];
 
     // Hero trust indicators
-    content.hero.trustIndicators.forEach((ti) => icons.push(ti.icon));
+    content.hero?.trustIndicators?.forEach((ti) => icons.push(ti.icon));
 
     // Problems
-    content.problems.items.forEach((p) => icons.push(p.icon));
+    content.problems?.items?.forEach((p) => icons.push(p.icon));
 
     // Benefits
-    content.benefits.items.forEach((b) => icons.push(b.icon));
+    content.benefits?.items?.forEach((b) => icons.push(b.icon));
 
     // Features
-    content.features.items.forEach((f) => icons.push(f.icon));
+    content.features?.items?.forEach((f) => icons.push(f.icon));
 
     // How it works
-    content.howItWorks.steps.forEach((s) => icons.push(s.icon));
+    content.howItWorks?.steps?.forEach((s) => icons.push(s.icon));
 
     return icons;
   }

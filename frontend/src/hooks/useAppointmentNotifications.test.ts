@@ -32,6 +32,7 @@ describe('useAppointmentNotifications - Task 3.2: Time Matching', () => {
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
   });
 
@@ -61,6 +62,7 @@ describe('useAppointmentNotifications - Task 3.2: Time Matching', () => {
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     renderHook(() => useAppointmentNotifications());
@@ -93,6 +95,7 @@ describe('useAppointmentNotifications - Task 3.2: Time Matching', () => {
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     renderHook(() => useAppointmentNotifications());
@@ -123,6 +126,7 @@ describe('useAppointmentNotifications - Task 3.2: Time Matching', () => {
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     renderHook(() => useAppointmentNotifications());
@@ -160,6 +164,7 @@ describe('useAppointmentNotifications - Task 3.2: Time Matching', () => {
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     renderHook(() => useAppointmentNotifications());
@@ -200,6 +205,7 @@ describe('useAppointmentNotifications - Task 3.2: Time Matching', () => {
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     renderHook(() => useAppointmentNotifications());
@@ -234,6 +240,7 @@ describe('useAppointmentNotifications - Task 3.2: Time Matching', () => {
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     renderHook(() => useAppointmentNotifications());
@@ -277,6 +284,7 @@ describe('useAppointmentNotifications - Task 3.2: Time Matching', () => {
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     renderHook(() => useAppointmentNotifications());
@@ -305,6 +313,7 @@ describe('useAppointmentNotifications - Task 4.1: Toast Notification Content', (
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
   });
 
@@ -331,6 +340,7 @@ describe('useAppointmentNotifications - Task 4.1: Toast Notification Content', (
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     // Set time to 1 minute before appointment
@@ -368,6 +378,7 @@ describe('useAppointmentNotifications - Task 4.1: Toast Notification Content', (
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -401,6 +412,7 @@ describe('useAppointmentNotifications - Task 4.1: Toast Notification Content', (
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -434,6 +446,7 @@ describe('useAppointmentNotifications - Task 4.1: Toast Notification Content', (
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -467,6 +480,7 @@ describe('useAppointmentNotifications - Task 4.1: Toast Notification Content', (
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -500,6 +514,7 @@ describe('useAppointmentNotifications - Task 4.1: Toast Notification Content', (
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T09:14:00'));
@@ -533,6 +548,7 @@ describe('useAppointmentNotifications - Task 4.1: Toast Notification Content', (
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T17:44:00'));
@@ -566,6 +582,7 @@ describe('useAppointmentNotifications - Task 4.2: Action Button with Navigation'
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
   });
 
@@ -592,6 +609,7 @@ describe('useAppointmentNotifications - Task 4.2: Action Button with Navigation'
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -627,6 +645,7 @@ describe('useAppointmentNotifications - Task 4.2: Action Button with Navigation'
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -667,6 +686,7 @@ describe('useAppointmentNotifications - Task 4.2: Action Button with Navigation'
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -716,6 +736,7 @@ describe('useAppointmentNotifications - Task 4.2: Action Button with Navigation'
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -757,6 +778,7 @@ describe('useAppointmentNotifications - Task 4.2: Action Button with Navigation'
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -807,6 +829,7 @@ describe('useAppointmentNotifications - Task 4.2: Action Button with Navigation'
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -850,6 +873,7 @@ describe('useAppointmentNotifications - Task 5.1: Date Change Detection', () => 
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
   });
 
@@ -879,6 +903,7 @@ describe('useAppointmentNotifications - Task 5.1: Date Change Detection', () => 
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     renderHook(() => useAppointmentNotifications());
@@ -907,6 +932,7 @@ describe('useAppointmentNotifications - Task 5.1: Date Change Detection', () => 
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     // Advance timer on new day - should trigger notification again (Set was cleared)
@@ -923,6 +949,7 @@ describe('useAppointmentNotifications - Task 5.1: Date Change Detection', () => 
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     renderHook(() => useAppointmentNotifications());
@@ -961,6 +988,7 @@ describe('useAppointmentNotifications - Task 5.1: Date Change Detection', () => 
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     renderHook(() => useAppointmentNotifications());
@@ -985,6 +1013,7 @@ describe('useAppointmentNotifications - Task 5.1: Date Change Detection', () => 
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     // Advance timer on new day - should trigger notification (Set was cleared)
@@ -1013,6 +1042,7 @@ describe('useAppointmentNotifications - Task 5.1: Date Change Detection', () => 
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     renderHook(() => useAppointmentNotifications());
@@ -1029,6 +1059,7 @@ describe('useAppointmentNotifications - Task 5.1: Date Change Detection', () => 
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.advanceTimersByTime(60000);
@@ -1042,6 +1073,7 @@ describe('useAppointmentNotifications - Task 5.1: Date Change Detection', () => 
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.advanceTimersByTime(60000);
@@ -1069,6 +1101,7 @@ describe('useAppointmentNotifications - Task 5.1: Date Change Detection', () => 
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     renderHook(() => useAppointmentNotifications());
@@ -1105,6 +1138,7 @@ describe('useAppointmentNotifications - Task 6.1: Multiple Simultaneous Appointm
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
   });
 
@@ -1155,6 +1189,7 @@ describe('useAppointmentNotifications - Task 6.1: Multiple Simultaneous Appointm
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -1196,6 +1231,7 @@ describe('useAppointmentNotifications - Task 6.1: Multiple Simultaneous Appointm
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -1252,6 +1288,7 @@ describe('useAppointmentNotifications - Task 6.1: Multiple Simultaneous Appointm
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -1322,6 +1359,7 @@ describe('useAppointmentNotifications - Task 6.1: Multiple Simultaneous Appointm
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -1378,6 +1416,7 @@ describe('useAppointmentNotifications - Task 6.1: Multiple Simultaneous Appointm
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));
@@ -1413,6 +1452,7 @@ describe('useAppointmentNotifications - Task 6.1: Multiple Simultaneous Appointm
       setDate: vi.fn(),
       isLoading: false,
       error: null,
+      refetch: vi.fn(),
     } as any);
 
     vi.setSystemTime(new Date('2024-01-15T14:29:00'));

@@ -51,7 +51,7 @@ describe('ContentValidator', () => {
         'Construido específicamente para las necesidades de medicina estética.',
       items: [
         {
-          icon: 'calendar',
+          icon: 'bar-chart',
           title: 'Un calendario para toda la clínica',
           description:
             'Visualiza la disponibilidad de todos tus proveedores y salas en tiempo real.',
@@ -62,7 +62,7 @@ describe('ContentValidator', () => {
           ],
         },
         {
-          icon: 'users',
+          icon: 'heart',
           title: 'Cada detalle del paciente en un lugar',
           description:
             'Perfiles completos con historial, fotos antes/después, consentimientos.',
@@ -78,7 +78,7 @@ describe('ContentValidator', () => {
       description: 'Todo lo que necesitas para gestionar tu clínica',
       items: [
         {
-          icon: 'calendar',
+          icon: 'zap',
           title: 'Gestión de citas',
           description: 'Sistema completo de reservas y calendario',
         },
@@ -98,7 +98,7 @@ describe('ContentValidator', () => {
           step: 2,
           title: 'Invita a tu equipo',
           description: 'Colabora con todo tu personal',
-          icon: 'users',
+          icon: 'people',
         },
       ],
     },
@@ -120,9 +120,9 @@ describe('ContentValidator', () => {
       description: 'Profesionales que confían en nosotros',
       items: [
         {
-          name: 'Clínica Premium',
+          name: 'Centro Premium',
           specialty: 'Medicina Estética',
-          description: 'Clínica líder en tratamientos estéticos',
+          description: 'Referente en tratamientos estéticos',
         },
       ],
     },
@@ -147,7 +147,7 @@ describe('ContentValidator', () => {
         {
           question: '¿Es seguro almacenar datos médicos?',
           answer:
-            'Sí, cumplimos con todas las normativas de protección de datos.',
+            'Sí, cumplimos con todas las normativas de protección de datos de salud.',
           category: 'seguridad',
         },
       ],
