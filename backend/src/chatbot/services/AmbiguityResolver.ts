@@ -110,7 +110,12 @@ export function findMissingParam(
         intent.params.appointment_id !== '__CONTEXT__';
       const hasDate = !!intent.params.date;
       const hasContextId = !!context.lastAppointmentId;
-      if (!hasId && !hasDate && !hasContextId) return spec;
+      const hasPatientRef =
+        !!intent.params.patient_name ||
+        !!intent.params.full_name ||
+        (!!intent.params.patient_id &&
+          intent.params.patient_id !== '__CONTEXT__');
+      if (!hasId && !hasDate && !hasContextId && !hasPatientRef) return spec;
     } else if (field === 'date') {
       if (!intent.params.date) return spec;
     } else if (field === 'time') {

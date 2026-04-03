@@ -475,12 +475,93 @@ export class CommandExecutor {
     context: ConversationContext,
     tenantId: string
   ): Promise<ExecutionResult> {
-    // Cancellation is an update with status='cancelled'
-    return this.updateAppointment(
-      { ...intent, params: { ...intent.params, status: 'cancelled' } },
-      context,
-      tenantId
-    );
+    const params = intent.params;
+    const appointmentId =
+      (params.appointment_id as string | undefined) ??
+      context.lastAppointmentId;
+
+    // Single specific appointment — delegate to updateAppointment as before
+    if (appointmentId) {
+      return this.updateAppointment(
+        { ...intent, params: { ...params, status: 'cancelled' } },
+        context,
+        tenantId
+      );
+    }
+
+    // No specific appointment — search and bulk cancel all matching
+    const filters: appointmentService.ListFilters = {};
+    if (params.date) filters.date = normalizeDate(params.date as string);
+    if (params.date_from)
+      filters.dateFrom = normalizeDate(params.date_from as string);
+    if (params.date_to)
+      filters.dateTo = normalizeDate(params.date_to as string);
+
+    if (params.patient_id && params.patient_id !== '__CONTEXT__') {
+      filters.patientId = params.patient_id as string;
+    } else if (params.patient_name) {
+      const resolved = await resolvePatientName(
+        tenantId,
+        params.patient_name as string
+      );
+      if (!resolved) {
+        return { success: false, error: 'PATIENT_NOT_FOUND', statusCode: 404 };
+      }
+      if (resolved === 'ambiguous') {
+        return { success: false, error: 'AMBIGUOUS_PATIENT', statusCode: 300 };
+      }
+      filters.patientId = resolved.id;
+    }
+
+    // Require at least one filter to avoid wiping everything
+    if (
+      !filters.date &&
+      !filters.dateFrom &&
+      !filters.dateTo &&
+      !filters.patientId
+    ) {
+      return {
+        success: false,
+        error: 'MISSING_APPOINTMENT_REF',
+        statusCode: 400,
+      };
+    }
+
+    const results = await appointmentService.list(tenantId, filters);
+    if (results.length === 0) {
+      return { success: false, error: 'NOT_FOUND', statusCode: 404 };
+    }
+
+    // Single result — normal path with full detail fetch
+    if (results.length === 1) {
+      const updated = await appointmentService.update(tenantId, results[0].id, {
+        status: 'cancelled',
+      });
+      if (!updated)
+        return { success: false, error: 'NOT_FOUND', statusCode: 404 };
+      const detail = await appointmentService.getById(tenantId, updated.id);
+      return {
+        success: true,
+        data: detail ?? updated,
+        appointmentId: updated.id,
+        patientId: updated.patient_id,
+      };
+    }
+
+    // Multiple results — bulk cancel
+    const cancelled: appointmentService.AppointmentRow[] = [];
+    for (const appt of results) {
+      try {
+        const updated = await appointmentService.update(tenantId, appt.id, {
+          status: 'cancelled',
+        });
+        if (updated) cancelled.push(updated);
+      } catch {
+        // Skip appointments that can't transition (e.g. already cancelled)
+      }
+    }
+
+    return { success: true, data: cancelled };
   }
 
   // ─── Patient operations ─────────────────────────────────────────────────────

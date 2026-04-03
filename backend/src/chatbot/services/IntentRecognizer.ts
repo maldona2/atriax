@@ -55,6 +55,16 @@ Reglas de extracción:
 - Estado de citas: "confirmar"→"confirmed", "completar"→"completed", "cancelar"→"cancelled", "no vino"→"no-show"
 - Estado de pago: "pagado"→"paid", "sin pagar"→"unpaid", "parcial"→"partial", "reembolso"→"refunded"
 - Para búsquedas sin ID específico, buscar por nombre
+- Nombres de pacientes: extraer siempre como patient_name, incluso en formato "Apellido, Nombre"
+
+Mapeo OBLIGATORIO de operaciones:
+- "cancelar/anular turno/cita" → operation:"update" + entity:"appointment" + params:{status:"cancelled", patient_name:"..."} — NUNCA usar operation:"delete" para cancelaciones
+- "eliminar/borrar turno/cita" → operation:"delete" + entity:"appointment"
+- "eliminar/borrar paciente" → operation:"delete" + entity:"patient"
+- "confirmar turno" → operation:"update" + entity:"appointment" + params:{status:"confirmed"}
+- "reprogramar/mover turno" → operation:"update" + entity:"appointment"
+- "cancelar turno de [Apellido, Nombre]" → operation:"update", entity:"appointment", params:{status:"cancelled", patient_name:"Apellido, Nombre"}
+- "elimina todos los turnos de [fecha]" → operation:"delete", entity:"appointment", params:{date:"YYYY-MM-DD"}
 
 Solo devuelve el JSON, sin texto adicional.`;
 }

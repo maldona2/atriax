@@ -63,10 +63,19 @@ export function createConfirmation(
     const dateTime = entityDetails.dateTime ?? 'esta fecha';
     prompt = formatter.confirmationCancellationRequest(name, dateTime);
   } else if (intent.operation === 'delete' && intent.entity === 'appointment') {
-    const name = entityDetails.patientName ?? 'el turno';
-    const dateTime = entityDetails.dateTime ?? '';
+    const name = entityDetails.patientName;
+    const dateTime =
+      entityDetails.dateTime ?? (intent.params.date as string | undefined);
+    let message: string;
+    if (name) {
+      message = `Estás por eliminar el turno de **${name}**${dateTime ? ` del **${dateTime}**` : ''}.`;
+    } else if (dateTime) {
+      message = `Estás por cancelar **todos los turnos** del **${dateTime}**.`;
+    } else {
+      message = 'Estás por eliminar un turno.';
+    }
     prompt = formatter.confirmationRequest(
-      `Estás por eliminar el turno de **${name}**${dateTime ? ` del **${dateTime}**` : ''}.`,
+      message,
       'Esta acción es irreversible.'
     );
   } else {

@@ -104,13 +104,14 @@ export class ChatbotService {
       }
 
       if (isAffirmativeResponse(message)) {
-        // Execute the confirmed intent
+        // Execute the confirmed intent — skip re-confirmation
         updatedContext = clearPendingConfirmation(updatedContext);
         return this.executeIntent(
           pendingConfirmation.intent,
           updatedContext,
           tenantId,
-          userId
+          userId,
+          true
         );
       }
 
@@ -238,7 +239,8 @@ export class ChatbotService {
     intent: Intent,
     context: ConversationContext,
     tenantId: string,
-    userId: string
+    userId: string,
+    alreadyConfirmed = false
   ): Promise<ChatbotResponse> {
     let updatedContext = { ...context };
 
@@ -255,7 +257,7 @@ export class ChatbotService {
     }
 
     // ── Check if destructive operation needs confirmation ─────────────────────
-    if (requiresConfirmation(intent)) {
+    if (!alreadyConfirmed && requiresConfirmation(intent)) {
       const entityDetails = await this.fetchEntityDetails(
         intent,
         updatedContext,
@@ -310,7 +312,7 @@ export class ChatbotService {
     context: ConversationContext
   ): ChatbotResponse {
     // Handle disambiguation cases
-    if (error === 'AMBIGUOUS_PATIENT' || result.statusCode === 300) {
+    if (error === 'AMBIGUOUS_PATIENT') {
       const patients = Array.isArray(result.data) ? result.data : [];
       if (patients.length > 0) {
         const disambiguation = createPatientDisambiguation(
@@ -433,7 +435,13 @@ export class ChatbotService {
           }
           return formatter.appointmentUpdated(apt);
         }
-        if (operation === 'delete') return formatter.appointmentCancelled(apt);
+        if (operation === 'delete') {
+          if (Array.isArray(data)) {
+            const count = data.length;
+            return `✅ Se cancelaron ${count} turno${count !== 1 ? 's' : ''} correctamente.`;
+          }
+          return formatter.appointmentCancelled(apt);
+        }
         break;
       }
       case 'patient': {
