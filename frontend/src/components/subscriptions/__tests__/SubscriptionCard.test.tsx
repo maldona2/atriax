@@ -8,11 +8,12 @@ describe('SubscriptionCard', () => {
     name: 'pro',
     displayName: 'Pro',
     priceARS: 30000,
-    limits: {
-      clinicalNotesMonthly: 100,
-      recordingMinutesDaily: 120,
-      tokensMonthly: 1000000,
-      costMonthlyUSD: 10,
+    features: {
+      appointments: true,
+      calendarSync: true,
+      patientDatabase: true,
+      aiFeatures: false,
+      whatsappIntegration: false,
     },
   };
 
@@ -21,7 +22,7 @@ describe('SubscriptionCard', () => {
     render(<SubscriptionCard plan={mockPlan} onSubscribe={onSubscribe} />);
 
     expect(screen.getByText('Pro')).toBeInTheDocument();
-    expect(screen.getByText(/15\.000/)).toBeInTheDocument();
+    expect(screen.getByText(/30\.000/)).toBeInTheDocument();
   });
 
   it('should show current plan badge when active', () => {
@@ -38,23 +39,24 @@ describe('SubscriptionCard', () => {
     expect(screen.getByText('Plan actual')).toBeInTheDocument();
   });
 
-  it('should format unlimited limits correctly', () => {
-    const unlimitedPlan: SubscriptionPlan = {
-      name: 'enterprise',
-      displayName: 'Enterprise',
+  it('should render gold plan features', () => {
+    const goldPlan: SubscriptionPlan = {
+      name: 'gold',
+      displayName: 'Gold',
       priceARS: 50000,
-      limits: {
-        clinicalNotesMonthly: -1,
-        recordingMinutesDaily: -1,
-        tokensMonthly: -1,
-        costMonthlyUSD: -1,
+      features: {
+        appointments: true,
+        calendarSync: true,
+        patientDatabase: true,
+        aiFeatures: true,
+        whatsappIntegration: true,
       },
     };
 
     const onSubscribe = vi.fn();
-    render(<SubscriptionCard plan={unlimitedPlan} onSubscribe={onSubscribe} />);
+    render(<SubscriptionCard plan={goldPlan} onSubscribe={onSubscribe} />);
 
-    const unlimitedTexts = screen.getAllByText(/Ilimitado/);
-    expect(unlimitedTexts.length).toBeGreaterThan(0);
+    expect(screen.getByText('Funciones de IA')).toBeInTheDocument();
+    expect(screen.getByText('Integración con WhatsApp')).toBeInTheDocument();
   });
 });

@@ -1063,15 +1063,15 @@ export function ProfilePage() {
                   </Button>
                 </div>
 
-                {/* Enterprise Plan */}
+                {/* Gold Plan */}
                 <div className="relative flex flex-col rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md sm:rounded-2xl sm:p-6">
                   <div className="mb-6">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
                       <Building2 className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <h3 className="mt-4 text-xl font-bold">Enterprise</h3>
+                    <h3 className="mt-4 text-xl font-bold">Gold</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Para clínicas y equipos
+                      Para profesionales que quieren potenciar su práctica
                     </p>
                   </div>
                   <div className="mb-6">
@@ -1083,11 +1083,10 @@ export function ProfilePage() {
                   <ul className="mb-8 flex-1 space-y-3">
                     {[
                       'Todo en Pro',
-                      'Múltiples profesionales',
-                      'API personalizada',
-                      'Integraciones avanzadas',
-                      'Soporte dedicado 24/7',
-                      'Facturación personalizada',
+                      'Asistente de IA integrado',
+                      'Conexión WhatsApp Bot',
+                      'Turnos ilimitados',
+                      'Soporte prioritario',
                     ].map((feature) => (
                       <li key={feature} className="flex items-start gap-3">
                         <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
@@ -1101,19 +1100,18 @@ export function ProfilePage() {
                     variant="outline"
                     className="w-full"
                     disabled={
-                      subscriptionStatus?.plan === 'enterprise' ||
-                      subscriptionLoading
+                      subscriptionStatus?.plan === 'gold' || subscriptionLoading
                     }
-                    onClick={() => createSubscription('enterprise')}
+                    onClick={() => createSubscription('gold')}
                   >
-                    {subscriptionStatus?.plan === 'enterprise'
+                    {subscriptionStatus?.plan === 'gold'
                       ? 'Plan actual'
                       : 'Contactar ventas'}
                   </Button>
                 </div>
               </div>
 
-              {/* Enterprise CTA */}
+              {/* Gold CTA */}
               <div className="rounded-xl bg-primary p-4 text-primary-foreground sm:rounded-2xl sm:p-6 md:p-8">
                 <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:gap-4 sm:text-left">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/10 sm:h-14 sm:w-14 sm:rounded-2xl">
@@ -1121,11 +1119,11 @@ export function ProfilePage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-base font-semibold sm:text-lg">
-                      ¿Necesitas una solución personalizada?
+                      ¿Querés llevar tu práctica al siguiente nivel?
                     </h3>
                     <p className="mt-1 text-xs text-primary-foreground/80 sm:text-sm">
-                      Contacta con nuestro equipo para obtener un plan adaptado
-                      a las necesidades de tu clínica.
+                      Contactá con nuestro equipo para activar el plan Gold y
+                      acceder al asistente de IA y WhatsApp Bot.
                     </p>
                   </div>
                   <Button
