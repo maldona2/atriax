@@ -64,6 +64,7 @@ import sessionPhotosRoutes from './routes/sessionPhotos.js';
 import debtDashboardRoutes from './routes/debtDashboard.js';
 import remindersRoutes from './routes/reminders.js';
 import chatbotRoutes from './chatbot/routes.js';
+import whatsappRoutes from './whatsapp/routes.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -82,6 +83,7 @@ app.use('/api/registration', registrationRoutes);
 app.use('/api/debt-dashboard', debtDashboardRoutes);
 app.use('/api/reminders', remindersRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);

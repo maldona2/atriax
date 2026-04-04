@@ -571,6 +571,104 @@ export const paymentPlans = pgTable(
 export type PaymentPlan = typeof paymentPlans.$inferSelect;
 export type NewPaymentPlan = typeof paymentPlans.$inferInsert;
 
+// ─── whatsapp_sessions ────────────────────────────────────────────────────────
+
+export const whatsappSessions = pgTable(
+  'whatsapp_sessions',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    /** The patient's phone number in E.164 format (e.g. +5491112345678) */
+    phoneNumber: text('phone_number').notNull(),
+    /** Serialized ConversationContext JSON */
+    context: jsonb('context')
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    lastMessageAt: timestamp('last_message_at', {
+      withTimezone: true,
+    }).defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_whatsapp_sessions_tenant').on(table.tenantId),
+    index('idx_whatsapp_sessions_phone').on(table.phoneNumber),
+    index('idx_whatsapp_sessions_expires').on(table.expiresAt),
+  ]
+);
+
+export type WhatsappSession = typeof whatsappSessions.$inferSelect;
+export type NewWhatsappSession = typeof whatsappSessions.$inferInsert;
+
+// ─── whatsapp_verifications ───────────────────────────────────────────────────
+
+export const whatsappVerifications = pgTable(
+  'whatsapp_verifications',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** The doctor's WhatsApp Business phone in E.164 format */
+    phoneNumber: text('phone_number').notNull(),
+    /** bcrypt hash of the 6-digit OTP */
+    otpHash: text('otp_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    attempts: integer('attempts').notNull().default(0),
+    isVerified: boolean('is_verified').notNull().default(false),
+    verifiedAt: timestamp('verified_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_whatsapp_verifications_user').on(table.userId),
+    index('idx_whatsapp_verifications_tenant').on(table.tenantId),
+    index('idx_whatsapp_verifications_expires').on(table.expiresAt),
+  ]
+);
+
+export type WhatsappVerification = typeof whatsappVerifications.$inferSelect;
+export type NewWhatsappVerification = typeof whatsappVerifications.$inferInsert;
+
+// ─── whatsapp_messages ────────────────────────────────────────────────────────
+
+export const whatsappMessages = pgTable(
+  'whatsapp_messages',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    /** Patient phone number in E.164 format */
+    phoneNumber: text('phone_number').notNull(),
+    direction: text('direction', { enum: ['inbound', 'outbound'] }).notNull(),
+    role: text('role', { enum: ['user', 'assistant'] }).notNull(),
+    content: text('content').notNull(),
+    /** Meta's message ID for deduplication */
+    metaMessageId: text('meta_message_id'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_whatsapp_messages_tenant').on(table.tenantId),
+    index('idx_whatsapp_messages_phone').on(table.phoneNumber),
+    index('idx_whatsapp_messages_meta_id').on(table.metaMessageId),
+  ]
+);
+
+export type WhatsappMessage = typeof whatsappMessages.$inferSelect;
+export type NewWhatsappMessage = typeof whatsappMessages.$inferInsert;
+
 // ─── relations ───────────────────────────────────────────────────────────────
 
 export const tenantsRelations = relations(tenants, ({ many }) => ({
@@ -588,7 +686,44 @@ export const tenantsRelations = relations(tenants, ({ many }) => ({
   sessionPhotos: many(sessionPhotos),
   paymentRecords: many(paymentRecords),
   paymentPlans: many(paymentPlans),
+  whatsappSessions: many(whatsappSessions),
+  whatsappVerifications: many(whatsappVerifications),
+  whatsappMessages: many(whatsappMessages),
 }));
+
+export const whatsappSessionsRelations = relations(
+  whatsappSessions,
+  ({ one }) => ({
+    tenant: one(tenants, {
+      fields: [whatsappSessions.tenantId],
+      references: [tenants.id],
+    }),
+  })
+);
+
+export const whatsappVerificationsRelations = relations(
+  whatsappVerifications,
+  ({ one }) => ({
+    tenant: one(tenants, {
+      fields: [whatsappVerifications.tenantId],
+      references: [tenants.id],
+    }),
+    user: one(users, {
+      fields: [whatsappVerifications.userId],
+      references: [users.id],
+    }),
+  })
+);
+
+export const whatsappMessagesRelations = relations(
+  whatsappMessages,
+  ({ one }) => ({
+    tenant: one(tenants, {
+      fields: [whatsappMessages.tenantId],
+      references: [tenants.id],
+    }),
+  })
+);
 
 export const usersRelations = relations(users, ({ one }) => ({
   tenant: one(tenants, {

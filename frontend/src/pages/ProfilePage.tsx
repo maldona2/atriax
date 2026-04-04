@@ -68,6 +68,7 @@ import { TreatmentFormDialog } from '@/components/treatments';
 import { TreatmentCard } from '@/components/treatments/TreatmentCard';
 import type { Treatment } from '@/types';
 import { FeatureStatus } from '@/components/subscriptions/FeatureStatus';
+import { WhatsAppSettings } from '@/components/settings/WhatsAppSettings';
 
 interface ProfileDoctor {
   firstName: string;
@@ -1139,6 +1140,13 @@ export function ProfilePage() {
 
           <TabsContent value="settings" className="space-y-4 sm:space-y-6">
             <GoogleCalendarSettings />
+
+            <WhatsAppSettings
+              isGoldPlan={
+                subscriptionStatus?.plan === 'gold' &&
+                subscriptionStatus?.status === 'active'
+              }
+            />
 
             <Card>
               <CardHeader>
