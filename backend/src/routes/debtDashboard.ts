@@ -6,6 +6,25 @@ import { requireRole } from '../middleware/requireRole.js';
 import { debtDashboardService } from '../services/debtDashboardService.js';
 import { db, appointments } from '../db/client.js';
 
+const createPaymentPlanSchema = z.object({
+  patientId: z.string().uuid(),
+  totalAmountCents: z.number().int().positive(),
+  installmentAmountCents: z.number().int().positive(),
+  frequency: z.enum(['weekly', 'biweekly', 'monthly']),
+  startDate: z.string().datetime({ offset: true }),
+});
+
+const updatePaymentPlanSchema = z.object({
+  installmentAmountCents: z.number().int().positive().optional(),
+  frequency: z.enum(['weekly', 'biweekly', 'monthly']).optional(),
+  nextPaymentDate: z.string().datetime({ offset: true }).nullable().optional(),
+});
+
+const recordPaymentSchema = z.object({
+  paymentDate: z.string().datetime({ offset: true }),
+  paymentStatus: z.enum(['on_time', 'late']),
+});
+
 const router = Router();
 const professionalOnly = [authenticate, requireRole('professional')];
 
@@ -185,6 +204,130 @@ router.get(
         )
         .orderBy(desc(appointments.scheduledAt));
       res.json({ appointments: rows });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// POST /api/debt-dashboard/payment-plans
+router.post(
+  '/payment-plans',
+  professionalOnly,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(req);
+      const parsed = createPaymentPlanSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const err = new Error('Invalid request body');
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        return next(err);
+      }
+      const plan = await debtDashboardService.createPaymentPlan(
+        tenantId,
+        parsed.data
+      );
+      res.status(201).json(plan);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// PATCH /api/debt-dashboard/payment-plans/:id
+router.patch(
+  '/payment-plans/:id',
+  professionalOnly,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(req);
+      const { id } = req.params;
+      const parsed = updatePaymentPlanSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const err = new Error('Invalid request body');
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        return next(err);
+      }
+      const plan = await debtDashboardService.updatePaymentPlan(
+        tenantId,
+        id,
+        parsed.data
+      );
+      res.json(plan);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// DELETE /api/debt-dashboard/payment-plans/:id
+router.delete(
+  '/payment-plans/:id',
+  professionalOnly,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(req);
+      const { id } = req.params;
+      await debtDashboardService.cancelPaymentPlan(tenantId, id);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// POST /api/debt-dashboard/payment-plans/:id/payments
+router.post(
+  '/payment-plans/:id/payments',
+  professionalOnly,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(req);
+      const { id } = req.params;
+      const parsed = recordPaymentSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const err = new Error('Invalid request body');
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        return next(err);
+      }
+      const plan = await debtDashboardService.recordPayment(
+        tenantId,
+        id,
+        parsed.data
+      );
+      res.json(plan);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// POST /api/debt-dashboard/payment-plans/:id/mark-delinquent
+router.post(
+  '/payment-plans/:id/mark-delinquent',
+  professionalOnly,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(req);
+      const { id } = req.params;
+      const plan = await debtDashboardService.markPlanDelinquent(tenantId, id);
+      res.json(plan);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// POST /api/debt-dashboard/payment-plans/:id/reactivate
+router.post(
+  '/payment-plans/:id/reactivate',
+  professionalOnly,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(req);
+      const { id } = req.params;
+      const plan = await debtDashboardService.reactivatePlan(tenantId, id);
+      res.json(plan);
     } catch (err) {
       next(err);
     }

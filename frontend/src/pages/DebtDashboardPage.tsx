@@ -35,6 +35,12 @@ import {
   CreditCard,
   Search,
   ArrowUpRight,
+  Plus,
+  Pencil,
+  X,
+  CheckCircle,
+  AlertTriangle,
+  RotateCcw,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -70,9 +76,19 @@ import { usePaymentMethodAnalytics } from '@/hooks/usePaymentMethodAnalytics';
 import { usePatientAppointments } from '@/hooks/usePatientAppointments';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { CreatePlanDialog } from '@/components/debt-dashboard/CreatePlanDialog';
+import { EditPlanDialog } from '@/components/debt-dashboard/EditPlanDialog';
+import { RecordPaymentDialog } from '@/components/debt-dashboard/RecordPaymentDialog';
+import { ConfirmDialog } from '@/components/debt-dashboard/ConfirmDialog';
+import {
+  cancelPaymentPlan,
+  markPlanDelinquent,
+  reactivatePlan,
+} from '@/lib/debtDashboardApi';
 import type {
   PaymentHistoryFilters,
   PatientPaymentRecord,
+  PaymentPlan,
 } from '@/types/debtDashboard';
 
 const PIE_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899'];
@@ -513,7 +529,18 @@ function AgingTab() {
 }
 
 function PlansTab() {
-  const { data: plans, loading } = usePaymentPlans();
+  const { data: plans, loading, refetch } = usePaymentPlans();
+
+  const [showCreate, setShowCreate] = useState(false);
+  const [editPlan, setEditPlan] = useState<PaymentPlan | null>(null);
+  const [recordPlan, setRecordPlan] = useState<PaymentPlan | null>(null);
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    description: string;
+    confirmLabel: string;
+    variant?: 'default' | 'destructive';
+    action: () => Promise<void>;
+  } | null>(null);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -542,6 +569,44 @@ function PlansTab() {
     }
   };
 
+  const openCancel = (plan: PaymentPlan) =>
+    setConfirmState({
+      title: 'Cancelar plan',
+      description: `¿Cancelar el plan de pago de ${plan.patientName}? Esta acción no se puede deshacer.`,
+      confirmLabel: 'Cancelar plan',
+      variant: 'destructive',
+      action: async () => {
+        await cancelPaymentPlan(plan.id);
+        setConfirmState(null);
+        refetch();
+      },
+    });
+
+  const openMarkDelinquent = (plan: PaymentPlan) =>
+    setConfirmState({
+      title: 'Marcar como moroso',
+      description: `¿Marcar el plan de ${plan.patientName} como moroso?`,
+      confirmLabel: 'Marcar moroso',
+      variant: 'destructive',
+      action: async () => {
+        await markPlanDelinquent(plan.id);
+        setConfirmState(null);
+        refetch();
+      },
+    });
+
+  const openReactivate = (plan: PaymentPlan) =>
+    setConfirmState({
+      title: 'Reactivar plan',
+      description: `¿Reactivar el plan de pago de ${plan.patientName}?`,
+      confirmLabel: 'Reactivar',
+      action: async () => {
+        await reactivatePlan(plan.id);
+        setConfirmState(null);
+        refetch();
+      },
+    });
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -552,63 +617,179 @@ function PlansTab() {
     );
   }
 
-  if (plans.length === 0) {
-    return (
-      <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-        No hay planes de pago registrados.
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      {plans.map((plan) => (
-        <Card key={plan.id}>
-          <CardContent className="p-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <h3 className="font-semibold">{plan.patientName}</h3>
-                  {getStatusBadge(plan.status)}
-                </div>
-                {plan.nextPaymentDate && (
-                  <p className="text-sm text-muted-foreground">
-                    Próximo pago:{' '}
-                    {new Date(plan.nextPaymentDate).toLocaleDateString('es-AR')}
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-col gap-2 md:items-end">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold">
-                    {formatCurrency(
-                      plan.installmentAmountCents *
-                        (plan.onTimePayments + plan.latePayments)
-                    )}
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    / {formatCurrency(plan.totalAmountCents)}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {plan.onTimePayments + plan.latePayments > 0 &&
-                    `${plan.latePayments} cuotas tardías`}
-                </p>
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Progreso</span>
-                <span className="font-medium">
-                  {plan.completionPercentage}%
-                </span>
-              </div>
-              <Progress value={plan.completionPercentage} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <>
+      <div className="space-y-4">
+        <div className="flex justify-end">
+          <Button onClick={() => setShowCreate(true)} size="sm">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo plan
+          </Button>
+        </div>
+
+        {plans.length === 0 ? (
+          <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+            No hay planes de pago registrados.
+          </div>
+        ) : (
+          plans.map((plan) => {
+            const totalPayments = plan.onTimePayments + plan.latePayments;
+            const remaining = Math.max(
+              0,
+              plan.totalAmountCents -
+                plan.installmentAmountCents * totalPayments
+            );
+            return (
+              <Card key={plan.id}>
+                <CardContent className="p-6">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-semibold">{plan.patientName}</h3>
+                        {getStatusBadge(plan.status)}
+                      </div>
+                      {plan.nextPaymentDate && (
+                        <p className="text-sm text-muted-foreground">
+                          Próximo pago:{' '}
+                          {new Date(plan.nextPaymentDate).toLocaleDateString(
+                            'es-AR'
+                          )}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2 md:items-end">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-bold">
+                          {formatCurrency(
+                            plan.installmentAmountCents * totalPayments
+                          )}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          / {formatCurrency(plan.totalAmountCents)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Restante: {formatCurrency(remaining)}
+                        {totalPayments > 0 && plan.latePayments > 0 && (
+                          <span className="ml-2 text-destructive">
+                            · {plan.latePayments} tardía
+                            {plan.latePayments !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Progreso</span>
+                      <span className="font-medium">
+                        {plan.completionPercentage}%
+                      </span>
+                    </div>
+                    <Progress
+                      value={plan.completionPercentage}
+                      className="h-2"
+                    />
+                  </div>
+
+                  {(plan.status === 'active' ||
+                    plan.status === 'delinquent') && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditPlan(plan)}
+                      >
+                        <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                        Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setRecordPlan(plan)}
+                      >
+                        <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                        Registrar pago
+                      </Button>
+                      {plan.status === 'active' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => openMarkDelinquent(plan)}
+                        >
+                          <AlertTriangle className="mr-1.5 h-3.5 w-3.5" />
+                          Marcar moroso
+                        </Button>
+                      )}
+                      {plan.status === 'delinquent' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openReactivate(plan)}
+                        >
+                          <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                          Reactivar
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => openCancel(plan)}
+                      >
+                        <X className="mr-1.5 h-3.5 w-3.5" />
+                        Cancelar
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
+      </div>
+
+      <CreatePlanDialog
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onSuccess={() => {
+          setShowCreate(false);
+          refetch();
+        }}
+      />
+
+      <EditPlanDialog
+        plan={editPlan}
+        onClose={() => setEditPlan(null)}
+        onSuccess={() => {
+          setEditPlan(null);
+          refetch();
+        }}
+      />
+
+      <RecordPaymentDialog
+        plan={recordPlan}
+        onClose={() => setRecordPlan(null)}
+        onSuccess={() => {
+          setRecordPlan(null);
+          refetch();
+        }}
+      />
+
+      {confirmState && (
+        <ConfirmDialog
+          open
+          title={confirmState.title}
+          description={confirmState.description}
+          confirmLabel={confirmState.confirmLabel}
+          variant={confirmState.variant}
+          onConfirm={confirmState.action}
+          onCancel={() => setConfirmState(null)}
+        />
+      )}
+    </>
   );
 }
 

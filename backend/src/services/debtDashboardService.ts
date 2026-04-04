@@ -7,6 +7,25 @@ import {
   paymentPlans,
 } from '../db/client.js';
 
+export interface CreatePaymentPlanInput {
+  patientId: string;
+  totalAmountCents: number;
+  installmentAmountCents: number;
+  frequency: 'weekly' | 'biweekly' | 'monthly';
+  startDate: string;
+}
+
+export interface UpdatePaymentPlanInput {
+  installmentAmountCents?: number;
+  frequency?: 'weekly' | 'biweekly' | 'monthly';
+  nextPaymentDate?: string | null;
+}
+
+export interface RecordPaymentInput {
+  paymentDate: string;
+  paymentStatus: 'on_time' | 'late';
+}
+
 export interface PaymentStatistics {
   totalPaidCents: number;
   totalUnpaidCents: number;
@@ -447,6 +466,327 @@ export class DebtDashboardService {
     const paginated = records.slice(offset, offset + pageSize);
 
     return { records: paginated, totalCount };
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  calculateNextPaymentDate(
+    from: Date,
+    frequency: 'weekly' | 'biweekly' | 'monthly'
+  ): Date {
+    const next = new Date(from);
+    if (frequency === 'weekly') {
+      next.setDate(next.getDate() + 7);
+    } else if (frequency === 'biweekly') {
+      next.setDate(next.getDate() + 14);
+    } else {
+      next.setMonth(next.getMonth() + 1);
+    }
+    return next;
+  }
+
+  calculateRemainingBalance(
+    totalAmountCents: number,
+    installmentAmountCents: number,
+    totalPayments: number
+  ): number {
+    return Math.max(
+      0,
+      totalAmountCents - installmentAmountCents * totalPayments
+    );
+  }
+
+  shouldMarkCompleted(
+    totalAmountCents: number,
+    installmentAmountCents: number,
+    totalPayments: number
+  ): boolean {
+    const paidAmount = installmentAmountCents * totalPayments;
+    return paidAmount >= totalAmountCents;
+  }
+
+  private throwNotFound(message = 'Not found'): never {
+    const err = new Error(message);
+    (err as Error & { statusCode?: number }).statusCode = 404;
+    throw err;
+  }
+
+  private throwConflict(message: string): never {
+    const err = new Error(message);
+    (err as Error & { statusCode?: number }).statusCode = 409;
+    throw err;
+  }
+
+  private throwBadRequest(message: string): never {
+    const err = new Error(message);
+    (err as Error & { statusCode?: number }).statusCode = 400;
+    throw err;
+  }
+
+  private async getPlanForTenant(id: string, tenantId: string) {
+    const [plan] = await db
+      .select()
+      .from(paymentPlans)
+      .where(and(eq(paymentPlans.id, id), eq(paymentPlans.tenantId, tenantId)));
+    if (!plan) this.throwNotFound('Payment plan not found');
+    return plan;
+  }
+
+  private async buildPlanWithPatient(plan: {
+    id: string;
+    patientId: string;
+    totalAmountCents: number;
+    installmentAmountCents: number;
+    frequency: string;
+    startDate: Date;
+    nextPaymentDate: Date | null;
+    status: string;
+    onTimePayments: number;
+    latePayments: number;
+  }): Promise<PaymentPlanWithPatient> {
+    const [patient] = await db
+      .select({ firstName: patients.firstName, lastName: patients.lastName })
+      .from(patients)
+      .where(eq(patients.id, plan.patientId));
+
+    const totalPayments = plan.onTimePayments + plan.latePayments;
+    const expectedInstallments =
+      plan.installmentAmountCents > 0
+        ? Math.ceil(plan.totalAmountCents / plan.installmentAmountCents)
+        : 1;
+    const completionPercentage =
+      plan.status === 'completed'
+        ? 100
+        : Math.min(
+            100,
+            Math.round((totalPayments / expectedInstallments) * 100)
+          );
+
+    return {
+      id: plan.id,
+      patientId: plan.patientId,
+      patientName: patient
+        ? `${patient.firstName} ${patient.lastName}`
+        : 'Desconocido',
+      totalAmountCents: plan.totalAmountCents,
+      installmentAmountCents: plan.installmentAmountCents,
+      frequency: plan.frequency,
+      startDate: plan.startDate.toISOString(),
+      nextPaymentDate: plan.nextPaymentDate?.toISOString() ?? null,
+      status: plan.status,
+      onTimePayments: plan.onTimePayments,
+      latePayments: plan.latePayments,
+      completionPercentage,
+    };
+  }
+
+  // ── Mutations ───────────────────────────────────────────────────────────────
+
+  async createPaymentPlan(
+    tenantId: string,
+    input: CreatePaymentPlanInput
+  ): Promise<PaymentPlanWithPatient> {
+    const {
+      patientId,
+      totalAmountCents,
+      installmentAmountCents,
+      frequency,
+      startDate,
+    } = input;
+
+    if (totalAmountCents <= 0) {
+      this.throwBadRequest('Total amount must be greater than 0');
+    }
+    if (installmentAmountCents <= 0) {
+      this.throwBadRequest('Installment amount must be greater than 0');
+    }
+    if (installmentAmountCents > totalAmountCents) {
+      this.throwBadRequest('Installment amount cannot exceed total amount');
+    }
+
+    const [patient] = await db
+      .select({ id: patients.id })
+      .from(patients)
+      .where(and(eq(patients.id, patientId), eq(patients.tenantId, tenantId)));
+    if (!patient) this.throwNotFound('Patient not found');
+
+    const start = new Date(startDate);
+    const nextPaymentDate = this.calculateNextPaymentDate(start, frequency);
+
+    const [created] = await db
+      .insert(paymentPlans)
+      .values({
+        tenantId,
+        patientId,
+        totalAmountCents,
+        installmentAmountCents,
+        frequency,
+        startDate: start,
+        nextPaymentDate,
+        status: 'active',
+        onTimePayments: 0,
+        latePayments: 0,
+      })
+      .returning();
+
+    return this.buildPlanWithPatient(created);
+  }
+
+  async updatePaymentPlan(
+    tenantId: string,
+    id: string,
+    input: UpdatePaymentPlanInput
+  ): Promise<PaymentPlanWithPatient> {
+    const plan = await this.getPlanForTenant(id, tenantId);
+
+    if (plan.status !== 'active' && plan.status !== 'delinquent') {
+      this.throwConflict('Only active or delinquent plans can be updated');
+    }
+
+    if (input.installmentAmountCents !== undefined) {
+      if (input.installmentAmountCents <= 0) {
+        this.throwBadRequest('Installment amount must be greater than 0');
+      }
+      const totalPayments = plan.onTimePayments + plan.latePayments;
+      const remaining = this.calculateRemainingBalance(
+        plan.totalAmountCents,
+        plan.installmentAmountCents,
+        totalPayments
+      );
+      if (input.installmentAmountCents > remaining) {
+        this.throwBadRequest(
+          'Installment amount cannot exceed remaining balance'
+        );
+      }
+    }
+
+    const updates: Partial<typeof paymentPlans.$inferInsert> = {
+      updatedAt: new Date(),
+    };
+    if (input.installmentAmountCents !== undefined) {
+      updates.installmentAmountCents = input.installmentAmountCents;
+    }
+    if (input.frequency !== undefined) {
+      updates.frequency = input.frequency;
+    }
+    if (input.nextPaymentDate !== undefined) {
+      updates.nextPaymentDate = input.nextPaymentDate
+        ? new Date(input.nextPaymentDate)
+        : null;
+    }
+
+    const [updated] = await db
+      .update(paymentPlans)
+      .set(updates)
+      .where(and(eq(paymentPlans.id, id), eq(paymentPlans.tenantId, tenantId)))
+      .returning();
+
+    return this.buildPlanWithPatient(updated);
+  }
+
+  async cancelPaymentPlan(tenantId: string, id: string): Promise<void> {
+    const plan = await this.getPlanForTenant(id, tenantId);
+
+    if (plan.status === 'completed') {
+      this.throwConflict('Completed plans cannot be cancelled');
+    }
+    if (plan.status === 'cancelled') {
+      this.throwConflict('Plan is already cancelled');
+    }
+
+    await db
+      .update(paymentPlans)
+      .set({
+        status: 'cancelled',
+        nextPaymentDate: null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(paymentPlans.id, id), eq(paymentPlans.tenantId, tenantId)));
+  }
+
+  async recordPayment(
+    tenantId: string,
+    id: string,
+    input: RecordPaymentInput
+  ): Promise<PaymentPlanWithPatient> {
+    const plan = await this.getPlanForTenant(id, tenantId);
+
+    if (plan.status !== 'active' && plan.status !== 'delinquent') {
+      this.throwConflict(
+        'Payments can only be recorded for active or delinquent plans'
+      );
+    }
+
+    const newOnTime =
+      plan.onTimePayments + (input.paymentStatus === 'on_time' ? 1 : 0);
+    const newLate =
+      plan.latePayments + (input.paymentStatus === 'late' ? 1 : 0);
+    const totalPayments = newOnTime + newLate;
+
+    const isCompleted = this.shouldMarkCompleted(
+      plan.totalAmountCents,
+      plan.installmentAmountCents,
+      totalPayments
+    );
+
+    const nextPaymentDate = isCompleted
+      ? null
+      : this.calculateNextPaymentDate(
+          new Date(input.paymentDate),
+          plan.frequency as 'weekly' | 'biweekly' | 'monthly'
+        );
+
+    const [updated] = await db
+      .update(paymentPlans)
+      .set({
+        onTimePayments: newOnTime,
+        latePayments: newLate,
+        nextPaymentDate,
+        status: isCompleted ? 'completed' : plan.status,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(paymentPlans.id, id), eq(paymentPlans.tenantId, tenantId)))
+      .returning();
+
+    return this.buildPlanWithPatient(updated);
+  }
+
+  async markPlanDelinquent(
+    tenantId: string,
+    id: string
+  ): Promise<PaymentPlanWithPatient> {
+    const plan = await this.getPlanForTenant(id, tenantId);
+
+    if (plan.status !== 'active') {
+      this.throwConflict('Only active plans can be marked as delinquent');
+    }
+
+    const [updated] = await db
+      .update(paymentPlans)
+      .set({ status: 'delinquent', updatedAt: new Date() })
+      .where(and(eq(paymentPlans.id, id), eq(paymentPlans.tenantId, tenantId)))
+      .returning();
+
+    return this.buildPlanWithPatient(updated);
+  }
+
+  async reactivatePlan(
+    tenantId: string,
+    id: string
+  ): Promise<PaymentPlanWithPatient> {
+    const plan = await this.getPlanForTenant(id, tenantId);
+
+    if (plan.status !== 'delinquent') {
+      this.throwConflict('Only delinquent plans can be reactivated');
+    }
+
+    const [updated] = await db
+      .update(paymentPlans)
+      .set({ status: 'active', updatedAt: new Date() })
+      .where(and(eq(paymentPlans.id, id), eq(paymentPlans.tenantId, tenantId)))
+      .returning();
+
+    return this.buildPlanWithPatient(updated);
   }
 
   async getPaymentMethodAnalytics(

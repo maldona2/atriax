@@ -178,8 +178,7 @@ export function findMissingParam(
       const hasContextId = !!context.lastTreatmentId;
       if (!hasId && !hasName && !hasContextId) return spec;
     } else if (field === 'price_cents') {
-      const hasPrice =
-        !!intent.params.price_cents || !!intent.params.price;
+      const hasPrice = !!intent.params.price_cents || !!intent.params.price;
       if (!hasPrice) return spec;
     } else if (
       field === 'phone' ||

@@ -74,3 +74,22 @@ export interface PaymentHistoryFilters {
   page?: number;
   pageSize?: number;
 }
+
+export interface CreatePaymentPlanInput {
+  patientId: string;
+  totalAmountCents: number;
+  installmentAmountCents: number;
+  frequency: 'weekly' | 'biweekly' | 'monthly';
+  startDate: string;
+}
+
+export interface UpdatePaymentPlanInput {
+  installmentAmountCents?: number;
+  frequency?: 'weekly' | 'biweekly' | 'monthly';
+  nextPaymentDate?: string | null;
+}
+
+export interface RecordPaymentInput {
+  paymentDate: string;
+  paymentStatus: 'on_time' | 'late';
+}

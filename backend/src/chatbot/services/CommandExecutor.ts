@@ -878,15 +878,11 @@ export class CommandExecutor {
   ): Promise<treatmentService.TreatmentRow | null | 'ambiguous'> {
     const all = await treatmentService.list(tenantId);
     const lower = name.toLowerCase().trim();
-    const matches = all.filter((t) =>
-      t.name.toLowerCase().includes(lower)
-    );
+    const matches = all.filter((t) => t.name.toLowerCase().includes(lower));
     if (matches.length === 0) return null;
     if (matches.length === 1) return matches[0];
     // Prefer exact match
-    const exact = matches.find(
-      (t) => t.name.toLowerCase() === lower
-    );
+    const exact = matches.find((t) => t.name.toLowerCase() === lower);
     if (exact) return exact;
     return 'ambiguous';
   }

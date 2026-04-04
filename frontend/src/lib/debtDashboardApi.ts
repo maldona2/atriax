@@ -7,6 +7,9 @@ import type {
   PatientPaymentRecord,
   PaymentMethodAnalytics,
   PaymentHistoryFilters,
+  CreatePaymentPlanInput,
+  UpdatePaymentPlanInput,
+  RecordPaymentInput,
 } from '../types/debtDashboard';
 
 export async function fetchStatistics(
@@ -65,4 +68,51 @@ export async function fetchPatientAppointments(
     params: { patientId },
   });
   return data.appointments;
+}
+
+export async function createPaymentPlan(
+  input: CreatePaymentPlanInput
+): Promise<PaymentPlan> {
+  const { data } = await api.post('/debt-dashboard/payment-plans', input);
+  return data;
+}
+
+export async function updatePaymentPlan(
+  id: string,
+  input: UpdatePaymentPlanInput
+): Promise<PaymentPlan> {
+  const { data } = await api.patch(
+    `/debt-dashboard/payment-plans/${id}`,
+    input
+  );
+  return data;
+}
+
+export async function cancelPaymentPlan(id: string): Promise<void> {
+  await api.delete(`/debt-dashboard/payment-plans/${id}`);
+}
+
+export async function recordPayment(
+  id: string,
+  input: RecordPaymentInput
+): Promise<PaymentPlan> {
+  const { data } = await api.post(
+    `/debt-dashboard/payment-plans/${id}/payments`,
+    input
+  );
+  return data;
+}
+
+export async function markPlanDelinquent(id: string): Promise<PaymentPlan> {
+  const { data } = await api.post(
+    `/debt-dashboard/payment-plans/${id}/mark-delinquent`
+  );
+  return data;
+}
+
+export async function reactivatePlan(id: string): Promise<PaymentPlan> {
+  const { data } = await api.post(
+    `/debt-dashboard/payment-plans/${id}/reactivate`
+  );
+  return data;
 }
