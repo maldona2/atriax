@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import {
@@ -68,6 +68,14 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { useDebtStatistics } from '@/hooks/useDebtStatistics';
 import { useAgingReport } from '@/hooks/useAgingReport';
 import { usePaymentPlans } from '@/hooks/usePaymentPlans';
@@ -84,11 +92,14 @@ import {
   cancelPaymentPlan,
   markPlanDelinquent,
   reactivatePlan,
+  updateAppointmentPayment,
 } from '@/lib/debtDashboardApi';
 import type {
   PaymentHistoryFilters,
   PatientPaymentRecord,
+  PatientAppointmentDetail,
   PaymentPlan,
+  UpdateAppointmentPaymentInput,
 } from '@/types/debtDashboard';
 
 const PIE_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899'];
@@ -800,13 +811,6 @@ const apptStatusLabels: Record<string, string> = {
   cancelled: 'Cancelado',
 };
 
-const apptPaymentLabels: Record<string, string> = {
-  unpaid: 'Sin pagar',
-  paid: 'Pagado',
-  partial: 'Parcial',
-  refunded: 'Reembolsado',
-};
-
 function getPaymentBadge(status: string) {
   switch (status) {
     case 'paid':
@@ -834,6 +838,192 @@ function getPaymentBadge(status: string) {
   }
 }
 
+const PAYMENT_METHOD_LABELS: Record<
+  UpdateAppointmentPaymentInput['paymentMethod'],
+  string
+> = {
+  cash: 'Efectivo',
+  card: 'Tarjeta',
+  transfer: 'Transferencia',
+  insurance: 'Obra social',
+  other: 'Otro',
+};
+
+const PAYMENT_STATUS_OPTIONS: {
+  value: UpdateAppointmentPaymentInput['paymentStatus'];
+  label: string;
+}[] = [
+  { value: 'paid', label: 'Pagado' },
+  { value: 'partial', label: 'Parcial' },
+  { value: 'unpaid', label: 'Sin pagar' },
+  { value: 'refunded', label: 'Reembolsado' },
+];
+
+function AppointmentPaymentDialog({
+  appt,
+  onClose,
+  onSaved,
+}: {
+  appt: PatientAppointmentDetail | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [amountPesos, setAmountPesos] = useState('');
+  const [paymentDate, setPaymentDate] = useState(today);
+  const [paymentMethod, setPaymentMethod] =
+    useState<UpdateAppointmentPaymentInput['paymentMethod']>('cash');
+  const [paymentStatus, setPaymentStatus] =
+    useState<UpdateAppointmentPaymentInput['paymentStatus']>('paid');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (appt) {
+      setAmountPesos(
+        appt.totalAmountCents != null
+          ? String(Math.round(appt.totalAmountCents / 100))
+          : ''
+      );
+      setPaymentDate(today);
+      setPaymentMethod('cash');
+      setPaymentStatus(
+        (appt.paymentStatus as UpdateAppointmentPaymentInput['paymentStatus']) ??
+          'paid'
+      );
+      setError(null);
+    }
+  }, [appt]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!appt) return;
+    const amountCents = Math.round(parseFloat(amountPesos) * 100);
+    if (isNaN(amountCents) || amountCents < 0) {
+      setError('Ingresá un monto válido.');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await updateAppointmentPayment(appt.id, {
+        amountCents,
+        paymentDate: new Date(paymentDate).toISOString(),
+        paymentMethod,
+        paymentStatus,
+      });
+      onSaved();
+      onClose();
+    } catch {
+      setError('No se pudo guardar el pago. Intentá de nuevo.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={appt !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Registrar pago</DialogTitle>
+          {appt && (
+            <p className="text-sm text-muted-foreground">
+              {new Date(appt.scheduledAt).toLocaleDateString('es-AR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              })}
+            </p>
+          )}
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="appt-amount">Monto ($)</Label>
+            <Input
+              id="appt-amount"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="0"
+              value={amountPesos}
+              onChange={(e) => setAmountPesos(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="appt-date">Fecha de pago</Label>
+            <Input
+              id="appt-date"
+              type="date"
+              value={paymentDate}
+              onChange={(e) => setPaymentDate(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Método</Label>
+            <Select
+              value={paymentMethod}
+              onValueChange={(v) =>
+                setPaymentMethod(
+                  v as UpdateAppointmentPaymentInput['paymentMethod']
+                )
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(PAYMENT_METHOD_LABELS).map(([v, label]) => (
+                  <SelectItem key={v} value={v}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Estado de pago</Label>
+            <Select
+              value={paymentStatus}
+              onValueChange={(v) =>
+                setPaymentStatus(
+                  v as UpdateAppointmentPaymentInput['paymentStatus']
+                )
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAYMENT_STATUS_OPTIONS.map(({ value, label }) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={saving}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Guardando…' : 'Guardar'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function PatientAppointmentsSheet({
   patient,
   onClose,
@@ -841,93 +1031,127 @@ function PatientAppointmentsSheet({
   patient: PatientPaymentRecord | null;
   onClose: () => void;
 }) {
-  const { data: appts, loading } = usePatientAppointments(
+  const { data: appts, loading, refetch } = usePatientAppointments(
     patient?.patientId ?? null
   );
+  const [editingAppt, setEditingAppt] =
+    useState<PatientAppointmentDetail | null>(null);
 
   return (
-    <Sheet open={patient !== null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
-        <SheetHeader className="mb-6">
-          <SheetTitle>{patient?.patientName}</SheetTitle>
-          <SheetDescription asChild>
-            <div className="flex flex-wrap gap-3 pt-1">
-              <div className="text-sm">
-                <span className="text-muted-foreground">Cobrado: </span>
-                <span className="font-medium text-primary">
-                  {patient ? formatCurrency(patient.paidCents) : '—'}
-                </span>
+    <>
+      <Sheet open={patient !== null} onOpenChange={(open) => !open && onClose()}>
+        <SheetContent className="flex w-full flex-col overflow-hidden sm:max-w-xl">
+          <SheetHeader className="border-b pb-4">
+            <SheetTitle className="text-lg">{patient?.patientName}</SheetTitle>
+            <SheetDescription asChild>
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                <div className="rounded-lg bg-primary/10 px-3 py-2 text-center">
+                  <p className="text-xs text-muted-foreground">Cobrado</p>
+                  <p className="font-semibold text-primary">
+                    {patient ? formatCurrency(patient.paidCents) : '—'}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-destructive/10 px-3 py-2 text-center">
+                  <p className="text-xs text-muted-foreground">Pendiente</p>
+                  <p
+                    className={`font-semibold ${patient && patient.unpaidCents > 0 ? 'text-destructive' : ''}`}
+                  >
+                    {patient ? formatCurrency(patient.unpaidCents) : '—'}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-secondary px-3 py-2 text-center">
+                  <p className="text-xs text-muted-foreground">Total</p>
+                  <p className="font-semibold">
+                    {patient ? formatCurrency(patient.totalDebtCents) : '—'}
+                  </p>
+                </div>
               </div>
-              <div className="text-sm">
-                <span className="text-muted-foreground">Pendiente: </span>
-                <span
-                  className={`font-medium ${patient && patient.unpaidCents > 0 ? 'text-destructive' : ''}`}
-                >
-                  {patient ? formatCurrency(patient.unpaidCents) : '—'}
-                </span>
-              </div>
-              <div className="text-sm">
-                <span className="text-muted-foreground">Total: </span>
-                <span className="font-medium">
-                  {patient ? formatCurrency(patient.totalDebtCents) : '—'}
-                </span>
-              </div>
-            </div>
-          </SheetDescription>
-        </SheetHeader>
+            </SheetDescription>
+          </SheetHeader>
 
-        {loading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full" />
-            ))}
+          <div className="flex-1 overflow-y-auto pt-4">
+            {loading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-14 w-full" />
+                ))}
+              </div>
+            ) : appts.length === 0 ? (
+              <p className="py-12 text-center text-sm text-muted-foreground">
+                No hay turnos registrados.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">
+                      Fecha
+                    </TableHead>
+                    <TableHead className="text-muted-foreground">
+                      Turno
+                    </TableHead>
+                    <TableHead className="text-muted-foreground">
+                      Estado pago
+                    </TableHead>
+                    <TableHead className="text-right text-muted-foreground">
+                      Monto
+                    </TableHead>
+                    <TableHead />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {appts.map((appt) => (
+                    <TableRow
+                      key={appt.id}
+                      className={`border-border ${
+                        appt.paymentStatus === 'unpaid' ||
+                        appt.paymentStatus === 'partial'
+                          ? 'bg-destructive/5'
+                          : ''
+                      }`}
+                    >
+                      <TableCell className="text-sm">
+                        {new Date(appt.scheduledAt).toLocaleDateString(
+                          'es-AR'
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {apptStatusLabels[appt.status] ?? appt.status}
+                      </TableCell>
+                      <TableCell>
+                        {getPaymentBadge(appt.paymentStatus)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {appt.totalAmountCents != null
+                          ? formatCurrency(appt.totalAmountCents)
+                          : '—'}
+                      </TableCell>
+                      <TableCell className="w-8 pl-0">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => setEditingAppt(appt)}
+                          title="Registrar pago"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
-        ) : appts.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            No hay turnos registrados.
-          </p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground">Fecha</TableHead>
-                <TableHead className="text-muted-foreground">Turno</TableHead>
-                <TableHead className="text-muted-foreground">Pago</TableHead>
-                <TableHead className="text-right text-muted-foreground">
-                  Monto
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {appts.map((appt) => (
-                <TableRow
-                  key={appt.id}
-                  className={`border-border ${
-                    appt.paymentStatus === 'unpaid' ||
-                    appt.paymentStatus === 'partial'
-                      ? 'bg-destructive/5'
-                      : ''
-                  }`}
-                >
-                  <TableCell className="text-sm">
-                    {new Date(appt.scheduledAt).toLocaleDateString('es-AR')}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {apptStatusLabels[appt.status] ?? appt.status}
-                  </TableCell>
-                  <TableCell>{getPaymentBadge(appt.paymentStatus)}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    {appt.totalAmountCents != null
-                      ? formatCurrency(appt.totalAmountCents)
-                      : '—'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </SheetContent>
-    </Sheet>
+        </SheetContent>
+      </Sheet>
+
+      <AppointmentPaymentDialog
+        appt={editingAppt}
+        onClose={() => setEditingAppt(null)}
+        onSaved={refetch}
+      />
+    </>
   );
 }
 

@@ -93,3 +93,10 @@ export interface RecordPaymentInput {
   paymentDate: string;
   paymentStatus: 'on_time' | 'late';
 }
+
+export interface UpdateAppointmentPaymentInput {
+  amountCents: number;
+  paymentDate: string;
+  paymentMethod: 'cash' | 'card' | 'transfer' | 'insurance' | 'other';
+  paymentStatus: 'unpaid' | 'paid' | 'partial' | 'refunded';
+}

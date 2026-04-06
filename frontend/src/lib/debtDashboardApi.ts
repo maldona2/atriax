@@ -10,6 +10,7 @@ import type {
   CreatePaymentPlanInput,
   UpdatePaymentPlanInput,
   RecordPaymentInput,
+  UpdateAppointmentPaymentInput,
 } from '../types/debtDashboard';
 
 export async function fetchStatistics(
@@ -115,4 +116,15 @@ export async function reactivatePlan(id: string): Promise<PaymentPlan> {
     `/debt-dashboard/payment-plans/${id}/reactivate`
   );
   return data;
+}
+
+export async function updateAppointmentPayment(
+  appointmentId: string,
+  input: UpdateAppointmentPaymentInput
+): Promise<PatientAppointmentDetail> {
+  const { data } = await api.patch(
+    `/debt-dashboard/appointments/${appointmentId}/payment`,
+    input
+  );
+  return data.appointment;
 }

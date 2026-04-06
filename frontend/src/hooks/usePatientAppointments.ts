@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { fetchPatientAppointments } from '@/lib/debtDashboardApi';
 import type { PatientAppointmentDetail } from '@/types/debtDashboard';
 
@@ -7,7 +7,7 @@ export function usePatientAppointments(patientId: string | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!patientId) {
       setData([]);
       return;
@@ -20,5 +20,9 @@ export function usePatientAppointments(patientId: string | null) {
       .finally(() => setLoading(false));
   }, [patientId]);
 
-  return { data, loading, error };
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return { data, loading, error, refetch: load };
 }

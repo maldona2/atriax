@@ -4,7 +4,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { authenticate } from '../middleware/auth.js';
 import { requireRole } from '../middleware/requireRole.js';
 import { debtDashboardService } from '../services/debtDashboardService.js';
-import { db, appointments } from '../db/client.js';
+import { db, appointments, paymentRecords } from '../db/client.js';
 
 const createPaymentPlanSchema = z.object({
   patientId: z.string().uuid(),
@@ -23,6 +23,13 @@ const updatePaymentPlanSchema = z.object({
 const recordPaymentSchema = z.object({
   paymentDate: z.string().datetime({ offset: true }),
   paymentStatus: z.enum(['on_time', 'late']),
+});
+
+const updateAppointmentPaymentSchema = z.object({
+  amountCents: z.number().int().nonnegative(),
+  paymentDate: z.string().datetime({ offset: true }),
+  paymentMethod: z.enum(['cash', 'card', 'transfer', 'insurance', 'other']),
+  paymentStatus: z.enum(['unpaid', 'paid', 'partial', 'refunded']),
 });
 
 const router = Router();
@@ -328,6 +335,79 @@ router.post(
       const { id } = req.params;
       const plan = await debtDashboardService.reactivatePlan(tenantId, id);
       res.json(plan);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// PATCH /api/debt-dashboard/appointments/:appointmentId/payment
+router.patch(
+  '/appointments/:appointmentId/payment',
+  professionalOnly,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(req);
+      const { appointmentId } = req.params;
+      const parsed = updateAppointmentPaymentSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const err = new Error('Invalid request body');
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        return next(err);
+      }
+      const { amountCents, paymentDate, paymentMethod, paymentStatus } =
+        parsed.data;
+
+      const [appointment] = await db
+        .select({ id: appointments.id, patientId: appointments.patientId })
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.id, appointmentId),
+            eq(appointments.tenantId, tenantId)
+          )
+        );
+
+      if (!appointment) {
+        const err = new Error('Turno no encontrado');
+        (err as Error & { statusCode?: number }).statusCode = 404;
+        return next(err);
+      }
+
+      const [updated] = await db.transaction(async (tx) => {
+        await tx.insert(paymentRecords).values({
+          tenantId,
+          patientId: appointment.patientId,
+          appointmentId,
+          amountCents,
+          paymentMethod,
+          paymentDate: new Date(paymentDate),
+        });
+
+        return tx
+          .update(appointments)
+          .set({
+            paymentStatus,
+            totalAmountCents: amountCents,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(appointments.id, appointmentId),
+              eq(appointments.tenantId, tenantId)
+            )
+          )
+          .returning({
+            id: appointments.id,
+            scheduledAt: appointments.scheduledAt,
+            status: appointments.status,
+            paymentStatus: appointments.paymentStatus,
+            totalAmountCents: appointments.totalAmountCents,
+            notes: appointments.notes,
+          });
+      });
+
+      res.json({ appointment: updated });
     } catch (err) {
       next(err);
     }
