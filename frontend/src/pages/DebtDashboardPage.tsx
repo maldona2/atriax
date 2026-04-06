@@ -1027,15 +1027,22 @@ function AppointmentPaymentDialog({
 function PatientAppointmentsSheet({
   patient,
   onClose,
+  onPaymentSaved,
 }: {
   patient: PatientPaymentRecord | null;
   onClose: () => void;
+  onPaymentSaved?: () => void;
 }) {
   const { data: appts, loading, refetch } = usePatientAppointments(
     patient?.patientId ?? null
   );
   const [editingAppt, setEditingAppt] =
     useState<PatientAppointmentDetail | null>(null);
+
+  function handlePaymentSaved() {
+    refetch();
+    onPaymentSaved?.();
+  }
 
   return (
     <>
@@ -1149,7 +1156,7 @@ function PatientAppointmentsSheet({
       <AppointmentPaymentDialog
         appt={editingAppt}
         onClose={() => setEditingAppt(null)}
-        onSaved={refetch}
+        onSaved={handlePaymentSaved}
       />
     </>
   );
@@ -1163,7 +1170,16 @@ function HistoryTab() {
   const [selectedPatient, setSelectedPatient] =
     useState<PatientPaymentRecord | null>(null);
 
-  const { records, totalCount, loading } = usePaymentHistory(filters);
+  const { records, totalCount, loading, refetch } = usePaymentHistory(filters);
+
+  // Keep the open sheet's summary bar in sync after a payment is saved
+  useEffect(() => {
+    if (!selectedPatient) return;
+    const updated = records.find(
+      (r) => r.patientId === selectedPatient.patientId
+    );
+    if (updated) setSelectedPatient(updated);
+  }, [records]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -1416,6 +1432,7 @@ function HistoryTab() {
       <PatientAppointmentsSheet
         patient={selectedPatient}
         onClose={() => setSelectedPatient(null)}
+        onPaymentSaved={refetch}
       />
     </>
   );
