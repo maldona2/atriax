@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 import api from '@/lib/api';
 import type { Patient, PatientDetail } from '@/types';
 import type { PatientFormData } from '@/hooks/usePatients';
@@ -172,18 +171,15 @@ export function PatientsPage() {
         />
       </div>
 
-      {/* Right panel: mobile Sheet */}
-      <Sheet open={mobileDetailOpen} onOpenChange={setMobileDetailOpen}>
-        <SheetContent
-          side="right"
-          className="flex w-full flex-col overflow-hidden p-0 sm:max-w-md md:max-w-lg"
-        >
+      {/* Right panel: mobile full-screen (no backdrop) */}
+      {mobileDetailOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-background md:hidden">
           <PatientDetailPanel
             patientId={selectedPatientId}
             onClose={() => setMobileDetailOpen(false)}
           />
-        </SheetContent>
-      </Sheet>
+        </div>
+      )}
 
       {/* New/Edit patient dialog */}
       <PatientFormDialog

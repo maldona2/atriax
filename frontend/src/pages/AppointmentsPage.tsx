@@ -305,18 +305,15 @@ export function AppointmentsPage() {
         <AppointmentDetailPanel appointmentId={selectedAppointmentId} />
       </div>
 
-      {/* Right panel: mobile Sheet */}
-      <Sheet open={mobileDetailOpen} onOpenChange={setMobileDetailOpen}>
-        <SheetContent
-          side="right"
-          className="flex w-full flex-col overflow-hidden p-0 sm:max-w-md md:max-w-lg"
-        >
+      {/* Right panel: mobile full-screen (no backdrop) */}
+      {mobileDetailOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-background md:hidden">
           <AppointmentDetailPanel
             appointmentId={selectedAppointmentId}
             onClose={() => setMobileDetailOpen(false)}
           />
-        </SheetContent>
-      </Sheet>
+        </div>
+      )}
 
       {/* New appointment sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
