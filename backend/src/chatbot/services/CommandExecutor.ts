@@ -21,13 +21,15 @@ export interface ExecutionResult {
 
 /**
  * Combines date and time strings into a full ISO datetime string.
- * Assumes Argentina timezone (UTC-3).
+ * Preserves the local date/time without UTC conversion.
  */
 function buildScheduledAt(date: string, time: string): string {
   // If already an ISO string, return as-is
   if (date.includes('T')) return date;
-  // Build ISO string with timezone offset
-  return `${date}T${time}:00-03:00`;
+
+  // Simply concatenate date and time with timezone offset
+  // This preserves the local date/time as specified
+  return `${date}T${time}:00.000-03:00`;
 }
 
 /**
@@ -271,6 +273,11 @@ export class CommandExecutor {
 
     const scheduledAt = buildScheduledAt(normalizedDate, timeStr);
 
+    logger.info(
+      { dateStr, timeStr, normalizedDate, scheduledAt },
+      'Building appointment scheduled_at timestamp'
+    );
+
     // Validate duration if provided
     const durationMinutes = params.duration_minutes as number | undefined;
     if (
@@ -286,6 +293,55 @@ export class CommandExecutor {
       return { success: false, error: 'INVALID_EMAIL', statusCode: 400 };
     }
 
+    // Resolve treatment if provided
+    let treatments: appointmentService.TreatmentLineItem[] | undefined;
+    let resolvedTreatmentId: string | undefined;
+    const treatmentName = params.treatment_name as string | undefined;
+    const treatmentId =
+      (params.treatment_id as string | undefined) ?? context.lastTreatmentId;
+
+    if (treatmentName || treatmentId) {
+      resolvedTreatmentId = treatmentId;
+
+      if (!resolvedTreatmentId && treatmentName) {
+        const resolved = await this.resolveTreatmentName(
+          tenantId,
+          treatmentName
+        );
+        if (!resolved) {
+          return {
+            success: false,
+            error: 'TREATMENT_NOT_FOUND',
+            statusCode: 404,
+          };
+        }
+        if (resolved === 'ambiguous') {
+          return {
+            success: false,
+            error: 'AMBIGUOUS_TREATMENT',
+            statusCode: 300,
+          };
+        }
+        resolvedTreatmentId = resolved.id;
+      }
+
+      if (resolvedTreatmentId) {
+        const treatment = await treatmentService.getById(
+          tenantId,
+          resolvedTreatmentId
+        );
+        if (treatment) {
+          treatments = [
+            {
+              treatment_id: treatment.id,
+              quantity: 1,
+              unit_price_cents: treatment.price_cents,
+            },
+          ];
+        }
+      }
+    }
+
     const input: appointmentService.CreateAppointmentInput = {
       patient_id: patientId,
       scheduled_at: scheduledAt,
@@ -294,10 +350,20 @@ export class CommandExecutor {
       payment_status: params.payment_status as
         | appointmentService.PaymentStatus
         | undefined,
+      treatments,
       userRole: 'professional',
     };
 
     const result = await appointmentService.create(tenantId, input);
+
+    logger.info(
+      {
+        appointmentId: result.id,
+        scheduled_at: result.scheduled_at,
+        input_scheduled_at: input.scheduled_at,
+      },
+      'Appointment created - checking scheduled_at values'
+    );
 
     // Fetch with patient name for response
     const detail = await appointmentService.getById(tenantId, result.id);
@@ -307,6 +373,7 @@ export class CommandExecutor {
       data: detail ?? result,
       appointmentId: result.id,
       patientId,
+      treatmentId: resolvedTreatmentId,
     };
   }
 

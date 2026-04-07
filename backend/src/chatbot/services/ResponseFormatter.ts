@@ -14,6 +14,13 @@ interface AppointmentData {
   duration_minutes?: number | null;
   notes?: string | null;
   total_amount_cents?: number | null;
+  treatments?: Array<{
+    id?: string;
+    treatment_id?: string;
+    treatment_name?: string;
+    quantity?: number;
+    unit_price_cents?: number;
+  }>;
 }
 
 interface PatientData {
@@ -131,7 +138,19 @@ export class ResponseFormatter {
     const dateTime = apt.scheduled_at
       ? formatDateTimeES(apt.scheduled_at)
       : 'la fecha indicada';
-    return `✅ Turno creado correctamente para ${patient} el ${dateTime}.`;
+
+    let treatmentInfo = '';
+    if (apt.treatments && apt.treatments.length > 0) {
+      const treatmentNames = apt.treatments
+        .map((t) => t.treatment_name)
+        .filter(Boolean)
+        .join(', ');
+      if (treatmentNames) {
+        treatmentInfo = ` con tratamiento de ${treatmentNames}`;
+      }
+    }
+
+    return `✅ Turno creado correctamente para ${patient} el ${dateTime}${treatmentInfo}.`;
   }
 
   appointmentsList(appointments: AppointmentData[], total?: number): string {

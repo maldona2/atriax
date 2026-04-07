@@ -36,7 +36,7 @@ Para mensajes válidos, devuelve un JSON con:
     // Parámetros extraídos del mensaje según la operación:
     // Para citas (appointment):
     //   patient_name, patient_id, date (ISO YYYY-MM-DD), time (HH:MM), status, payment_status,
-    //   duration_minutes, appointment_id, date_from, date_to, notes
+    //   duration_minutes, appointment_id, date_from, date_to, notes, treatment_name (nombre del tratamiento)
     // Para pacientes (patient):
     //   first_name, last_name, phone, email, date_of_birth, patient_notes, patient_id, search_query
     // Para sesiones (session):
@@ -60,6 +60,7 @@ Para mensajes válidos, devuelve un JSON con:
 Fecha actual del sistema: ${todayISO}
 Reglas de extracción:
 - Fechas relativas: "hoy" → ${todayISO}, "mañana" → ${tomorrowISO}, usar SIEMPRE la fecha actual del sistema como referencia
+- Horas: extraer SIEMPRE en formato 24 horas (HH:MM). Ejemplos: "21hs" → "21:00", "9:30" → "09:30", "15hs" → "15:00"
 - "el paciente" / "ella" / "él" → usar contexto previo (patient_id = "__CONTEXT__")
 - "esa cita" / "el turno" → usar contexto previo (appointment_id = "__CONTEXT__")
 - Estado de citas: "confirmar"→"confirmed", "completar"→"completed", "cancelar"→"cancelled", "no vino"→"no-show"
@@ -86,7 +87,7 @@ Mapeo OBLIGATORIO de operaciones:
 - "eliminar/borrar tratamiento [nombre]" → operation:"delete", entity:"treatment", params:{name:"..."}
 - "actualizar tratamiento [nombre]" → operation:"update", entity:"treatment", params:{name:"..."}
 
-Solo devuelve el JSON, sin texto adicional.`;
+IMPORTANTE: Devuelve ÚNICAMENTE el objeto JSON, sin texto adicional antes o después.`;
 }
 
 /**
@@ -179,6 +180,13 @@ function patternMatchIntent(text: string): Intent {
     );
     if (nameMatch) {
       params.patient_name = nameMatch[1].trim();
+    }
+    // Extract treatment name: text after "con tratamiento" or "tratamiento de"
+    const treatmentMatch = rawText.match(
+      /\b(?:con\s+)?tratamiento\s+(?:de\s+)?([A-Za-záéíóúüñÁÉÍÓÚÜÑ]+(?:\s+[A-Za-záéíóúüñÁÉÍÓÚÜÑ]+)*)/i
+    );
+    if (treatmentMatch) {
+      params.treatment_name = treatmentMatch[1].trim();
     }
     return {
       operation: 'create',
@@ -303,6 +311,38 @@ function extractDateTimeParams(text: string): Record<string, unknown> {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     params.date = tomorrow.toISOString().split('T')[0];
+  } else {
+    // Try to extract specific date like "8 de abril" or "abril 8"
+    const dateMatch = text.match(
+      /\b(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b/i
+    );
+    if (dateMatch) {
+      const day = parseInt(dateMatch[1]);
+      const monthNames: Record<string, number> = {
+        enero: 0,
+        febrero: 1,
+        marzo: 2,
+        abril: 3,
+        mayo: 4,
+        junio: 5,
+        julio: 6,
+        agosto: 7,
+        septiembre: 8,
+        octubre: 9,
+        noviembre: 10,
+        diciembre: 11,
+      };
+      const month = monthNames[dateMatch[2].toLowerCase()];
+      if (month !== undefined) {
+        const year = today.getFullYear();
+        const date = new Date(year, month, day);
+        // If the date is in the past, assume next year
+        if (date < today) {
+          date.setFullYear(year + 1);
+        }
+        params.date = date.toISOString().split('T')[0];
+      }
+    }
   }
 
   // Extract time HH:MM or HH hs
@@ -403,7 +443,18 @@ export class IntentRecognizer {
         return patternMatchIntent(text);
       }
 
-      const parsed = JSON.parse(content) as OpenAIIntentResponse;
+      // Extract JSON from response (handle cases where OpenAI adds extra text)
+      let jsonContent = content;
+
+      // Try to find JSON object boundaries
+      const jsonStart = content.indexOf('{');
+      const jsonEnd = content.lastIndexOf('}');
+
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        jsonContent = content.substring(jsonStart, jsonEnd + 1);
+      }
+
+      const parsed = JSON.parse(jsonContent) as OpenAIIntentResponse;
 
       // Validate and sanitize
       const validOperations: IntentOperation[] = [

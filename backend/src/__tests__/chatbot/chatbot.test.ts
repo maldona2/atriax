@@ -174,6 +174,24 @@ describe('Missing Parameter Detection', () => {
     expect(missing).toBeNull();
   });
 
+  it('Create appointment with treatment does not require treatment param', () => {
+    const intent: Intent = {
+      operation: 'create',
+      entity: 'appointment',
+      params: {
+        patient_id: '123',
+        date: '2024-04-01',
+        time: '10:00',
+        treatment_name: 'dutasteride',
+      },
+      confidence: 0.9,
+      rawText: 'crear turno con tratamiento',
+    };
+    const context: ConversationContext = {};
+    const missing = findMissingParam(intent, context);
+    expect(missing).toBeNull();
+  });
+
   it('Create appointment with context patient does not require patient param', () => {
     const intent: Intent = {
       operation: 'create',
@@ -371,6 +389,26 @@ describe('Spanish Language Responses', () => {
     });
     expect(response).toContain('Juan');
     expect(response).toContain('Pérez');
+  });
+
+  it('Appointment created with treatment includes treatment name', () => {
+    const response = formatter.appointmentCreated({
+      patient_first_name: 'Matias',
+      patient_last_name: 'Maldonado',
+      scheduled_at: '2024-04-15T21:00:00-03:00',
+      treatments: [
+        {
+          treatment_id: 'treatment-123',
+          treatment_name: 'dutasteride',
+          quantity: 1,
+          unit_price_cents: 40000,
+        },
+      ],
+    });
+    expect(response).toContain('Matias');
+    expect(response).toContain('Maldonado');
+    expect(response).toContain('dutasteride');
+    expect(response).toContain('tratamiento');
   });
 
   it('Patient created response contains patient name', () => {

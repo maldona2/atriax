@@ -1033,9 +1033,11 @@ function PatientAppointmentsSheet({
   onClose: () => void;
   onPaymentSaved?: () => void;
 }) {
-  const { data: appts, loading, refetch } = usePatientAppointments(
-    patient?.patientId ?? null
-  );
+  const {
+    data: appts,
+    loading,
+    refetch,
+  } = usePatientAppointments(patient?.patientId ?? null);
   const [editingAppt, setEditingAppt] =
     useState<PatientAppointmentDetail | null>(null);
 
@@ -1046,7 +1048,10 @@ function PatientAppointmentsSheet({
 
   return (
     <>
-      <Sheet open={patient !== null} onOpenChange={(open) => !open && onClose()}>
+      <Sheet
+        open={patient !== null}
+        onOpenChange={(open) => !open && onClose()}
+      >
         <SheetContent className="flex w-full flex-col overflow-hidden sm:max-w-xl">
           <SheetHeader className="border-b pb-4">
             <SheetTitle className="text-lg">{patient?.patientName}</SheetTitle>
@@ -1118,9 +1123,7 @@ function PatientAppointmentsSheet({
                       }`}
                     >
                       <TableCell className="text-sm">
-                        {new Date(appt.scheduledAt).toLocaleDateString(
-                          'es-AR'
-                        )}
+                        {new Date(appt.scheduledAt).toLocaleDateString('es-AR')}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {apptStatusLabels[appt.status] ?? appt.status}

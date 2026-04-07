@@ -42,7 +42,10 @@ interface AppointmentListViewProps {
 function groupByDate(appointments: Appointment[]) {
   const groups: Record<string, Appointment[]> = {};
   for (const apt of appointments) {
-    const key = apt.scheduled_at.slice(0, 10);
+    // Parse the ISO string and format it in the local timezone
+    // This ensures consistency with how dates are displayed elsewhere
+    const date = parseISO(apt.scheduled_at);
+    const key = format(date, 'yyyy-MM-dd');
     if (!groups[key]) groups[key] = [];
     groups[key].push(apt);
   }

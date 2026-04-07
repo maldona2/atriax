@@ -65,7 +65,8 @@ function injectFieldValue(
     case 'search_query':
       return { search_query: value };
     case 'treatment_name_or_id':
-      return { name: value };
+    case 'treatment_name':
+      return { treatment_name: value };
     case 'price_cents': {
       const numVal = parseFloat(
         value.replace(/[^0-9.,]/g, '').replace(',', '.')
@@ -431,6 +432,14 @@ export class ChatbotService {
       return {
         response:
           'Encontré varios tratamientos con ese nombre. Por favor, sé más específico.',
+        context,
+      };
+    }
+
+    if (error === 'TREATMENT_NOT_FOUND') {
+      return {
+        response:
+          'No se encontró ningún tratamiento con ese nombre. ¿Podría verificar el nombre del tratamiento?',
         context,
       };
     }

@@ -31,7 +31,7 @@ router.get('/reminders/stats', async (req, res) => {
   try {
     const today = new Date();
     const count = await getDailyReminderCount(today);
-    
+
     res.json({
       success: true,
       data: {
