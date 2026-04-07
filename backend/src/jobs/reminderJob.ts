@@ -22,7 +22,7 @@ async function sendWithRetry(
   let lastError: unknown;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
-      sendAppointmentReminder(patientEmail, data, appointmentId);
+      await sendAppointmentReminder(patientEmail, data, appointmentId);
       return;
     } catch (err) {
       lastError = err;
