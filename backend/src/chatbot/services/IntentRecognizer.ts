@@ -9,12 +9,19 @@ interface OpenAIIntentResponse {
   confidence: number;
 }
 
+function getLocalDateString(date: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
 function buildSystemPrompt(): string {
-  const today = new Date();
-  const todayISO = today.toISOString().split('T')[0];
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowISO = tomorrow.toISOString().split('T')[0];
+  const todayISO = getLocalDateString();
+  const [y, m, d] = todayISO.split('-').map(Number);
+  const tomorrowISO = getLocalDateString(new Date(y, m - 1, d + 1));
 
   return `Eres un clasificador de intenciones EXCLUSIVO para un sistema de gestión de turnos médicos.
 
@@ -303,14 +310,14 @@ function patternMatchIntent(text: string): Intent {
 
 function extractDateTimeParams(text: string): Record<string, unknown> {
   const params: Record<string, unknown> = {};
-  const today = new Date();
+  const todayISO = getLocalDateString();
+  const [y, m, d] = todayISO.split('-').map(Number);
+  const todayLocal = new Date(y, m - 1, d);
 
   if (/\bhoy\b/.test(text)) {
-    params.date = today.toISOString().split('T')[0];
+    params.date = todayISO;
   } else if (/\bma[nñ]ana\b/.test(text)) {
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    params.date = tomorrow.toISOString().split('T')[0];
+    params.date = getLocalDateString(new Date(y, m - 1, d + 1));
   } else {
     // Try to extract specific date like "8 de abril" or "abril 8"
     const dateMatch = text.match(
@@ -334,13 +341,12 @@ function extractDateTimeParams(text: string): Record<string, unknown> {
       };
       const month = monthNames[dateMatch[2].toLowerCase()];
       if (month !== undefined) {
-        const year = today.getFullYear();
-        const date = new Date(year, month, day);
+        const date = new Date(y, month, day);
         // If the date is in the past, assume next year
-        if (date < today) {
-          date.setFullYear(year + 1);
+        if (date < todayLocal) {
+          date.setFullYear(y + 1);
         }
-        params.date = date.toISOString().split('T')[0];
+        params.date = getLocalDateString(date);
       }
     }
   }
@@ -363,21 +369,21 @@ function resolveTemporalParams(
   params: Record<string, unknown>
 ): Record<string, unknown> {
   const resolved = { ...params };
-  const today = new Date();
+  const todayISO = getLocalDateString();
+  const [y, m, d] = todayISO.split('-').map(Number);
+  const todayLocal = new Date(y, m - 1, d);
 
   // Handle relative date strings that might come from OpenAI
   if (typeof resolved.date === 'string') {
     const dateStr = resolved.date.toLowerCase();
     if (dateStr === 'hoy' || dateStr === 'today') {
-      resolved.date = today.toISOString().split('T')[0];
+      resolved.date = todayISO;
     } else if (dateStr === 'mañana' || dateStr === 'tomorrow') {
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      resolved.date = tomorrow.toISOString().split('T')[0];
+      resolved.date = getLocalDateString(new Date(y, m - 1, d + 1));
     } else if (
       /^(lunes|martes|miércoles|jueves|viernes|sábado|domingo)$/i.test(dateStr)
     ) {
-      resolved.date = getNextWeekday(dateStr.toLowerCase(), today);
+      resolved.date = getNextWeekday(dateStr.toLowerCase(), todayLocal);
     }
   }
 
@@ -395,14 +401,14 @@ function getNextWeekday(dayName: string, from: Date): string {
     sábado: 6,
   };
   const target = days[dayName];
-  if (target === undefined) return from.toISOString().split('T')[0];
+  if (target === undefined) return getLocalDateString(from);
 
   const result = new Date(from);
   const current = result.getDay();
   let diff = target - current;
   if (diff <= 0) diff += 7;
   result.setDate(result.getDate() + diff);
-  return result.toISOString().split('T')[0];
+  return getLocalDateString(result);
 }
 
 export class IntentRecognizer {
