@@ -255,6 +255,10 @@ export function AppointmentsPage() {
                   setSelectedAppointment(updated);
                   refetch({ silent: true });
                 }}
+                onDelete={() => {
+                  setSheetOpen(false);
+                  refetch({ silent: true });
+                }}
               />
             ) : (
               <NewAppointmentSheet

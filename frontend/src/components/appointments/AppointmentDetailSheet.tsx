@@ -9,6 +9,7 @@ import {
   FileText,
   DollarSign,
   Banknote,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -19,6 +20,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import api from '@/lib/api';
 import { statusConfig, paymentConfig } from './constants';
 import { CalendarSyncStatus } from './CalendarSyncStatus';
+import { DeleteConfirmationDialog } from './DeleteConfirmationDialog';
 import type {
   Appointment,
   AppointmentDetail,
@@ -30,12 +32,14 @@ interface AppointmentDetailSheetProps {
   appointment: Appointment;
   onClose: () => void;
   onStatusChange?: (updated: Appointment) => void;
+  onDelete?: (appointmentId: string) => void;
 }
 
 export function AppointmentDetailSheet({
   appointment,
   onClose,
   onStatusChange,
+  onDelete,
 }: AppointmentDetailSheetProps) {
   const [detail, setDetail] = useState<AppointmentDetail | null>(null);
   const [activeStatus, setActiveStatus] = useState(appointment.status);
@@ -43,6 +47,8 @@ export function AppointmentDetailSheet({
     appointment.payment_status ?? 'unpaid'
   );
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     api
@@ -97,6 +103,21 @@ export function AppointmentDetailSheet({
       toast.error('No se pudo actualizar el pago');
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await api.delete(`/appointments/${appointment.id}`);
+      toast.success('Turno eliminado correctamente');
+      onDelete?.(appointment.id);
+      onClose();
+    } catch {
+      toast.error('No se pudo eliminar el turno');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -305,6 +326,15 @@ export function AppointmentDetailSheet({
 
       <div className="border-t bg-muted/30 p-4">
         <div className="flex gap-3">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-11 w-11 shrink-0"
+            onClick={() => setShowDeleteDialog(true)}
+            disabled={isDeleting}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
           <Button variant="outline" className="h-11 flex-1" onClick={onClose}>
             Cerrar
           </Button>
@@ -316,6 +346,14 @@ export function AppointmentDetailSheet({
           </Button>
         </div>
       </div>
+
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
+        appointmentInfo={`${format(scheduledDate, "EEEE d 'de' MMMM, HH:mm", { locale: es })}`}
+      />
     </div>
   );
 }
