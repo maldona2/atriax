@@ -4,6 +4,9 @@ export interface PaymentStatistics {
   collectionRate: number;
   patientsWithBalance: number;
   averageDebtCents: number;
+  totalTreatmentCostsCents: number;
+  realIncomeCents: number;
+  profitMarginPercentage: number;
   lastUpdated: string;
 }
 

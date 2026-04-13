@@ -6,6 +6,7 @@ export interface TreatmentRow {
   tenant_id: string;
   name: string;
   price_cents: number;
+  cost_cents: number | null;
   initial_frequency_weeks: number | null;
   initial_sessions_count: number | null;
   maintenance_frequency_weeks: number | null;
@@ -17,6 +18,7 @@ export interface TreatmentRow {
 export interface CreateTreatmentInput {
   name: string;
   price_cents: number;
+  cost_cents?: number | null;
   initial_frequency_weeks?: number | null;
   initial_sessions_count?: number | null;
   maintenance_frequency_weeks?: number | null;
@@ -31,6 +33,7 @@ function toRow(t: typeof treatments.$inferSelect): TreatmentRow {
     tenant_id: t.tenantId,
     name: t.name,
     price_cents: t.priceCents,
+    cost_cents: t.costCents ?? null,
     initial_frequency_weeks: t.initialFrequencyWeeks,
     initial_sessions_count: t.initialSessionsCount,
     maintenance_frequency_weeks: t.maintenanceFrequencyWeeks,
@@ -69,6 +72,7 @@ export async function create(
       tenantId,
       name: data.name,
       priceCents: data.price_cents,
+      costCents: data.cost_cents ?? null,
       initialFrequencyWeeks: data.initial_frequency_weeks ?? null,
       initialSessionsCount: data.initial_sessions_count ?? null,
       maintenanceFrequencyWeeks: data.maintenance_frequency_weeks ?? null,
@@ -88,6 +92,7 @@ export async function update(
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (data.name !== undefined) updates.name = data.name;
   if (data.price_cents !== undefined) updates.priceCents = data.price_cents;
+  if (data.cost_cents !== undefined) updates.costCents = data.cost_cents;
   if (data.initial_frequency_weeks !== undefined)
     updates.initialFrequencyWeeks = data.initial_frequency_weeks;
   if (data.initial_sessions_count !== undefined)

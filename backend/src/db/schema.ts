@@ -171,6 +171,7 @@ export const treatments = pgTable(
       .references(() => tenants.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     priceCents: integer('price_cents').notNull(),
+    costCents: integer('cost_cents'),
     initialFrequencyWeeks: integer('initial_frequency_weeks'),
     initialSessionsCount: integer('initial_sessions_count'),
     maintenanceFrequencyWeeks: integer('maintenance_frequency_weeks'),

@@ -5,6 +5,8 @@ import {
   patients,
   paymentRecords,
   paymentPlans,
+  appointmentTreatments,
+  treatments,
 } from '../db/client.js';
 
 export interface CreatePaymentPlanInput {
@@ -32,6 +34,9 @@ export interface PaymentStatistics {
   collectionRate: number;
   patientsWithBalance: number;
   averageDebtCents: number;
+  totalTreatmentCostsCents: number;
+  realIncomeCents: number;
+  profitMarginPercentage: number;
   lastUpdated: string;
 }
 
@@ -100,6 +105,42 @@ export interface PaymentMethodAnalytics {
 }
 
 export class DebtDashboardService {
+  async calculateTreatmentCosts(
+    tenantId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<number> {
+    const baseConditions = [
+      eq(appointments.tenantId, tenantId),
+      eq(appointments.paymentStatus, 'paid'),
+    ];
+    if (startDate) {
+      baseConditions.push(gte(appointments.scheduledAt, new Date(startDate)));
+    }
+    if (endDate) {
+      baseConditions.push(lte(appointments.scheduledAt, new Date(endDate)));
+    }
+
+    // Query paid appointments and join with appointment_treatments and treatments
+    // to calculate total treatment costs
+    const [result] = await db
+      .select({
+        totalCostCents: sql<number>`coalesce(sum(${appointmentTreatments.quantity} * ${treatments.costCents}), 0)`,
+      })
+      .from(appointments)
+      .innerJoin(
+        appointmentTreatments,
+        eq(appointments.id, appointmentTreatments.appointmentId)
+      )
+      .innerJoin(
+        treatments,
+        eq(appointmentTreatments.treatmentId, treatments.id)
+      )
+      .where(and(...baseConditions, isNotNull(treatments.costCents)));
+
+    return Number(result?.totalCostCents ?? 0);
+  }
+
   async calculateStatistics(
     tenantId: string,
     startDate?: string,
@@ -161,12 +202,29 @@ export class DebtDashboardService {
         ? Math.round(totalUnpaidCents / patientsWithBalance)
         : 0;
 
+    // Calculate treatment costs
+    const totalTreatmentCostsCents = await this.calculateTreatmentCosts(
+      tenantId,
+      startDate,
+      endDate
+    );
+
+    // Calculate real income and profit margin
+    const realIncomeCents = totalPaidCents - totalTreatmentCostsCents;
+    const profitMarginPercentage =
+      totalPaidCents > 0
+        ? Math.round((realIncomeCents / totalPaidCents) * 10000) / 100
+        : 0;
+
     return {
       totalPaidCents,
       totalUnpaidCents,
       collectionRate: Math.round(collectionRate * 100) / 100,
       patientsWithBalance,
       averageDebtCents,
+      totalTreatmentCostsCents,
+      realIncomeCents,
+      profitMarginPercentage,
       lastUpdated: new Date().toISOString(),
     };
   }

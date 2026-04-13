@@ -3,6 +3,7 @@ export interface Treatment {
   tenant_id: string;
   name: string;
   price_cents: number;
+  cost_cents: number | null;
   initial_frequency_weeks: number | null;
   initial_sessions_count: number | null;
   maintenance_frequency_weeks: number | null;

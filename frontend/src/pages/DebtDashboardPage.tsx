@@ -116,6 +116,7 @@ function StatCard({
   icon: Icon,
   subtitle,
   loading,
+  valueColor,
 }: {
   title: string;
   value: string;
@@ -124,6 +125,7 @@ function StatCard({
   icon: React.ElementType;
   subtitle?: string;
   loading?: boolean;
+  valueColor?: 'positive' | 'negative';
 }) {
   return (
     <Card className="relative overflow-hidden">
@@ -134,7 +136,17 @@ function StatCard({
             {loading ? (
               <Skeleton className="h-9 w-32" />
             ) : (
-              <p className="text-3xl font-bold tracking-tight">{value}</p>
+              <p
+                className={`text-3xl font-bold tracking-tight ${
+                  valueColor === 'positive'
+                    ? 'text-primary'
+                    : valueColor === 'negative'
+                      ? 'text-destructive'
+                      : ''
+                }`}
+              >
+                {value}
+              </p>
             )}
             {subtitle && (
               <p className="text-xs text-muted-foreground">{subtitle}</p>
@@ -1480,7 +1492,7 @@ export function DebtDashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Total Cobrado"
           value={stats ? formatCurrency(stats.totalPaidCents) : '—'}
@@ -1510,6 +1522,40 @@ export function DebtDashboardPage() {
           icon={TrendingUp}
           changeType="positive"
           loading={statistics.loading}
+        />
+        <StatCard
+          title="Costos de Tratamientos"
+          value={stats ? formatCurrency(stats.totalTreatmentCostsCents) : '—'}
+          icon={CreditCard}
+          subtitle="Costos de productos/servicios"
+          loading={statistics.loading}
+        />
+        <StatCard
+          title="Ingreso Real"
+          value={stats ? formatCurrency(stats.realIncomeCents) : '—'}
+          icon={TrendingUp}
+          subtitle="Ingresos Totales - Costos de Tratamientos"
+          loading={statistics.loading}
+          valueColor={
+            stats
+              ? stats.realIncomeCents >= 0
+                ? 'positive'
+                : 'negative'
+              : undefined
+          }
+        />
+        <StatCard
+          title="Margen de Ganancia"
+          value={stats ? `${stats.profitMarginPercentage.toFixed(1)}%` : '—'}
+          icon={TrendingUp}
+          loading={statistics.loading}
+          valueColor={
+            stats
+              ? stats.profitMarginPercentage >= 0
+                ? 'positive'
+                : 'negative'
+              : undefined
+          }
         />
       </div>
 

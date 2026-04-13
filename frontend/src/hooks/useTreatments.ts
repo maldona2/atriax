@@ -6,6 +6,7 @@ import type { Treatment, PatientTreatment } from '@/types';
 interface CreateTreatmentInput {
   name: string;
   price_cents: number;
+  cost_cents?: number | null;
   initial_frequency_weeks?: number | null;
   initial_sessions_count?: number | null;
   maintenance_frequency_weeks?: number | null;

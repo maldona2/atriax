@@ -10,6 +10,7 @@ const professionalOnly = [authenticate, requireRole('professional')];
 const createTreatmentSchema = z.object({
   name: z.string().min(1),
   price_cents: z.number().int().min(0),
+  cost_cents: z.number().int().min(0).optional().nullable(),
   initial_frequency_weeks: z.number().int().min(1).optional().nullable(),
   initial_sessions_count: z.number().int().min(1).optional().nullable(),
   maintenance_frequency_weeks: z.number().int().min(1).optional().nullable(),
@@ -49,6 +50,15 @@ router.post(
     try {
       const parsed = createTreatmentSchema.safeParse(req.body);
       if (!parsed.success) {
+        // Check for cost validation errors
+        const costError = parsed.error.issues.find(
+          (issue) => issue.path[0] === 'cost_cents'
+        );
+        if (costError) {
+          const err = new Error('El costo debe ser un número no negativo');
+          (err as Error & { statusCode?: number }).statusCode = 400;
+          return next(err);
+        }
         const err = new Error('Invalid treatment data');
         (err as Error & { statusCode?: number }).statusCode = 400;
         return next(err);
@@ -69,6 +79,15 @@ router.put(
     try {
       const parsed = updateTreatmentSchema.safeParse(req.body);
       if (!parsed.success) {
+        // Check for cost validation errors
+        const costError = parsed.error.issues.find(
+          (issue) => issue.path[0] === 'cost_cents'
+        );
+        if (costError) {
+          const err = new Error('El costo debe ser un número no negativo');
+          (err as Error & { statusCode?: number }).statusCode = 400;
+          return next(err);
+        }
         const err = new Error('Invalid treatment data');
         (err as Error & { statusCode?: number }).statusCode = 400;
         return next(err);

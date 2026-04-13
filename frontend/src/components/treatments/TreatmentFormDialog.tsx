@@ -22,6 +22,7 @@ interface TreatmentFormDialogProps {
   onSubmit: (data: {
     name: string;
     price_cents: number;
+    cost_cents?: number | null;
     initial_frequency_weeks?: number | null;
     initial_sessions_count?: number | null;
     maintenance_frequency_weeks?: number | null;
@@ -37,6 +38,7 @@ export function TreatmentFormDialog({
 }: TreatmentFormDialogProps) {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
+  const [cost, setCost] = useState('');
   const [initialFrequency, setInitialFrequency] = useState('');
   const [initialSessions, setInitialSessions] = useState('');
   const [maintenanceFrequency, setMaintenanceFrequency] = useState('');
@@ -48,6 +50,11 @@ export function TreatmentFormDialog({
     if (treatment) {
       setName(treatment.name);
       setPrice((treatment.price_cents / 100).toString());
+      setCost(
+        treatment.cost_cents !== null
+          ? (treatment.cost_cents / 100).toString()
+          : ''
+      );
       setInitialFrequency(treatment.initial_frequency_weeks?.toString() ?? '');
       setInitialSessions(treatment.initial_sessions_count?.toString() ?? '');
       setMaintenanceFrequency(
@@ -62,6 +69,7 @@ export function TreatmentFormDialog({
     } else {
       setName('');
       setPrice('');
+      setCost('');
       setInitialFrequency('');
       setInitialSessions('');
       setMaintenanceFrequency('');
@@ -74,8 +82,10 @@ export function TreatmentFormDialog({
     e.preventDefault();
 
     const cents = Math.round(parseFloat(price || '0') * 100);
+    const costCents = cost ? Math.round(parseFloat(cost) * 100) : null;
 
-    if (!name.trim() || cents < 0) return;
+    if (!name.trim() || cents < 0 || (costCents !== null && costCents < 0))
+      return;
 
     setSubmitting(true);
 
@@ -83,6 +93,7 @@ export function TreatmentFormDialog({
       await onSubmit({
         name: name.trim(),
         price_cents: cents,
+        cost_cents: costCents,
         initial_frequency_weeks: initialFrequency
           ? parseInt(initialFrequency, 10)
           : undefined,
@@ -105,6 +116,13 @@ export function TreatmentFormDialog({
     const value = e.target.value;
     if (/^\d*\.?\d{0,2}$/.test(value) || value === '') {
       setPrice(value);
+    }
+  }
+
+  function handleCostChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    if (/^\d*\.?\d{0,2}$/.test(value) || value === '') {
+      setCost(value);
     }
   }
 
@@ -161,6 +179,21 @@ export function TreatmentFormDialog({
                 />
                 <p className="text-xs text-muted-foreground">
                   Se guarda en centavos internamente
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cost">Costo del tratamiento</Label>
+                <Input
+                  id="cost"
+                  type="text"
+                  inputMode="decimal"
+                  value={cost}
+                  onChange={handleCostChange}
+                  placeholder="Opcional - costo de productos/servicios"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Costo de productos, servicios o insumos utilizados
                 </p>
               </div>
 
