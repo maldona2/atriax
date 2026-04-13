@@ -34,12 +34,14 @@ export class WhatsAppReplyHandler {
 
   /**
    * Process an inbound message from a patient.
-   * @param tenantId  - Tenant that owns this conversation
+   * Tenant is resolved automatically from the patient's phone number —
+   * no WHATSAPP_DEFAULT_TENANT_ID env var required.
+   *
    * @param fromPhone - Patient's phone number as received from Meta (E.164, no leading +)
    * @param text      - Raw message text
    */
   async handle(
-    tenantId: string,
+    _tenantId: string, // kept for backwards-compat with the route; ignored
     fromPhone: string,
     text: string
   ): Promise<void> {
@@ -49,28 +51,31 @@ export class WhatsAppReplyHandler {
     // Normalise: Meta sends digits without '+', patients table may store with '+'
     const phoneVariants = [fromPhone, `+${fromPhone}`];
 
-    // Find patient by phone in this tenant
+    // Resolve tenant from the patient's phone — works across all tenants
     const [patient] = await db
-      .select({ id: patients.id, firstName: patients.firstName })
+      .select({
+        id: patients.id,
+        firstName: patients.firstName,
+        tenantId: patients.tenantId,
+      })
       .from(patients)
       .where(
-        and(
-          eq(patients.tenantId, tenantId),
-          or(
-            eq(patients.phone, phoneVariants[0]!),
-            eq(patients.phone, phoneVariants[1]!)
-          )
+        or(
+          eq(patients.phone, phoneVariants[0]!),
+          eq(patients.phone, phoneVariants[1]!)
         )
       )
       .limit(1);
 
     if (!patient) {
       logger.warn(
-        { tenantId, fromPhone },
+        { fromPhone },
         'WhatsAppReplyHandler: no patient found for phone'
       );
       return;
     }
+
+    const tenantId = patient.tenantId!;
 
     // Find most recent pending appointment for this patient
     const [appointment] = await db

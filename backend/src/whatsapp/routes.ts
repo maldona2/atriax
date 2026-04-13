@@ -54,9 +54,12 @@ router.post(
   assertFeatureEnabled,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const rawBody: Buffer = Buffer.isBuffer(req.body)
-        ? req.body
-        : Buffer.from(JSON.stringify(req.body));
+      const rawBody: Buffer =
+        (req as unknown as Record<string, unknown>)['rawBody'] instanceof Buffer
+          ? ((req as unknown as Record<string, unknown>)['rawBody'] as Buffer)
+          : Buffer.isBuffer(req.body)
+            ? req.body
+            : Buffer.from(JSON.stringify(req.body));
       const signature = req.headers['x-hub-signature-256'] as
         | string
         | undefined;
@@ -85,21 +88,12 @@ router.post(
         return;
       }
 
-      const tenantId = process.env.WHATSAPP_DEFAULT_TENANT_ID ?? '';
-      if (!tenantId) {
-        logger.error(
-          'WhatsApp webhook: WHATSAPP_DEFAULT_TENANT_ID not configured'
-        );
-        res.status(200).json({ status: 'configuration_error' });
-        return;
-      }
-
       // Process each inbound text message asynchronously — always return 200 to Meta
       const messages = payload.entry?.[0]?.changes?.[0]?.value?.messages ?? [];
       for (const msg of messages) {
         if (msg.type !== 'text' || !msg.text?.body) continue;
         whatsAppReplyHandler
-          .handle(tenantId, msg.from, msg.text.body)
+          .handle('', msg.from, msg.text.body)
           .catch((err) => {
             logger.error(
               { err, from: msg.from },
