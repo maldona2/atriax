@@ -10,8 +10,34 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import api from '@/lib/api';
 import type { Patient } from '@/types';
+
+interface CountryCode {
+  code: string;
+  name: string;
+  dialCode: string;
+}
+
+const COUNTRY_CODES: CountryCode[] = [
+  { code: '54', name: 'Argentina', dialCode: '+54' },
+  { code: '55', name: 'Brasil', dialCode: '+55' },
+  { code: '56', name: 'Chile', dialCode: '+56' },
+  { code: '57', name: 'Colombia', dialCode: '+57' },
+  { code: '52', name: 'México', dialCode: '+52' },
+  { code: '51', name: 'Perú', dialCode: '+51' },
+  { code: '598', name: 'Uruguay', dialCode: '+598' },
+  { code: '58', name: 'Venezuela', dialCode: '+58' },
+  { code: '1', name: 'Estados Unidos', dialCode: '+1' },
+  { code: '34', name: 'España', dialCode: '+34' },
+];
 
 interface QuickAddPatientDialogProps {
   onPatientCreated: (patient: Patient) => void;
@@ -27,21 +53,36 @@ export function QuickAddPatientDialog({
     last_name: '',
     phone: '',
     email: '',
+    countryCode: '54',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.first_name || !form.last_name) return;
 
+    // Format phone number in WhatsApp format (country code + phone, no spaces)
+    const formattedPhone = form.phone.trim()
+      ? `${form.countryCode}${form.phone.replace(/\D/g, '')}`
+      : '';
+
     setSubmitting(true);
     try {
       const { data } = await api.post<Patient>('/patients', {
-        ...form,
+        first_name: form.first_name,
+        last_name: form.last_name,
+        phone: formattedPhone,
+        email: form.email,
         date_of_birth: '',
         notes: '',
       });
       onPatientCreated(data);
-      setForm({ first_name: '', last_name: '', phone: '', email: '' });
+      setForm({
+        first_name: '',
+        last_name: '',
+        phone: '',
+        email: '',
+        countryCode: '54',
+      });
       setOpen(false);
     } catch (error) {
       console.error('Error creating patient:', error);
@@ -99,15 +140,35 @@ export function QuickAddPatientDialog({
 
           <div className="space-y-2">
             <Label htmlFor="phone">Teléfono</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={form.phone}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, phone: e.target.value }))
-              }
-              placeholder="+54 9 11 1234-5678"
-            />
+            <div className="flex gap-2">
+              <Select
+                value={form.countryCode}
+                onValueChange={(value) =>
+                  setForm((f) => ({ ...f, countryCode: value }))
+                }
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRY_CODES.map((country) => (
+                    <SelectItem key={country.code} value={country.code}>
+                      {country.dialCode}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                id="phone"
+                type="tel"
+                value={form.phone}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, phone: e.target.value }))
+                }
+                placeholder="3813000120"
+                className="flex-1"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
