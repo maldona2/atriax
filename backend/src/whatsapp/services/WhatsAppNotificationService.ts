@@ -1,9 +1,9 @@
 /**
  * WhatsAppNotificationService - Outbound patient notification channel via WhatsApp.
  *
- * Mirrors the role of mailService.ts but delivers plain-text WhatsApp messages
- * through the Meta Cloud API. All sends are fire-and-forget safe: errors are
- * logged and swallowed so a failed WhatsApp send never breaks an appointment operation.
+ * Uses pre-approved Meta message templates for all business-initiated messages.
+ * All sends are fire-and-forget safe: errors are logged and swallowed so a
+ * failed WhatsApp send never breaks an appointment operation.
  *
  * Usage:
  *   const wa = new WhatsAppNotificationService();
@@ -12,11 +12,12 @@
 
 import { MetaAPIClient } from './MetaAPIClient.js';
 import {
-  appointmentBookedMessage,
-  appointmentConfirmedMessage,
-  appointmentCancelledMessage,
-  appointmentReminderMessage,
+  appointmentBookedTemplate,
+  appointmentConfirmedTemplate,
+  appointmentCancelledTemplate,
+  appointmentReminderTemplate,
   type AppointmentNotificationData,
+  type WhatsAppTemplateMessage,
 } from '../templates.js';
 import logger from '../../utils/logger.js';
 
@@ -36,35 +37,47 @@ export class WhatsAppNotificationService {
     phone: string,
     data: AppointmentNotificationData
   ): Promise<void> {
-    await this._send(phone, appointmentBookedMessage(data), 'booked');
+    await this._sendTemplate(phone, appointmentBookedTemplate(data), 'booked');
   }
 
   async sendAppointmentConfirmed(
     phone: string,
     data: AppointmentNotificationData
   ): Promise<void> {
-    await this._send(phone, appointmentConfirmedMessage(data), 'confirmed');
+    await this._sendTemplate(
+      phone,
+      appointmentConfirmedTemplate(data),
+      'confirmed'
+    );
   }
 
   async sendAppointmentCancelled(
     phone: string,
     data: AppointmentNotificationData
   ): Promise<void> {
-    await this._send(phone, appointmentCancelledMessage(data), 'cancelled');
+    await this._sendTemplate(
+      phone,
+      appointmentCancelledTemplate(data),
+      'cancelled'
+    );
   }
 
   async sendAppointmentReminder(
     phone: string,
     data: AppointmentNotificationData
   ): Promise<void> {
-    await this._send(phone, appointmentReminderMessage(data), 'reminder');
+    await this._sendTemplate(
+      phone,
+      appointmentReminderTemplate(data),
+      'reminder'
+    );
   }
 
   // ─── Private ────────────────────────────────────────────────────────────────
 
-  private async _send(
+  private async _sendTemplate(
     phone: string,
-    text: string,
+    template: WhatsAppTemplateMessage,
     type: string
   ): Promise<void> {
     if (!featureEnabled) {
@@ -84,7 +97,12 @@ export class WhatsAppNotificationService {
     }
 
     try {
-      const result = await this.client.sendTextMessage(phone, text);
+      const result = await this.client.sendTemplateMessage(
+        phone,
+        template.templateName,
+        template.languageCode,
+        template.bodyParameters
+      );
       if (!result.success) {
         logger.warn(
           { type, phone, error: result.error },

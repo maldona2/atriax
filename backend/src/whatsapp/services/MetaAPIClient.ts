@@ -74,6 +74,48 @@ export class MetaAPIClient {
   }
 
   /**
+   * Sends a pre-approved template message to a WhatsApp recipient.
+   * Use this for all business-initiated outbound notifications.
+   */
+  async sendTemplateMessage(
+    to: string,
+    templateName: string,
+    languageCode: string,
+    bodyParameters: string[]
+  ): Promise<MetaApiSendResult> {
+    const normalisedTo = MetaAPIClient.normalisePhone(to).replace('+', '');
+    const components =
+      bodyParameters.length > 0
+        ? [
+            {
+              type: 'body',
+              parameters: bodyParameters.map((text) => ({
+                type: 'text',
+                text,
+              })),
+            },
+          ]
+        : [];
+
+    const payload = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: normalisedTo,
+      type: 'template',
+      template: {
+        name: templateName,
+        language: { code: languageCode },
+        components,
+      },
+    };
+
+    return this._sendWithRetry(
+      payload,
+      `sendTemplate[${templateName}] to ${normalisedTo}`
+    );
+  }
+
+  /**
    * Sends an OTP verification code via WhatsApp message.
    */
   async sendVerificationCode(

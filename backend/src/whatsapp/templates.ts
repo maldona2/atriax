@@ -80,6 +80,108 @@ export function appointmentReminderMessage(
   );
 }
 
+// ─── Template message builders (for business-initiated outbound messages) ────
+//
+// WhatsApp requires pre-approved templates for business-initiated conversations.
+// Each function returns the template name, language, and ordered body parameters
+// that map to {{1}}, {{2}}, ... placeholders in the approved template.
+//
+// Template bodies to register in Meta Business Manager:
+//
+// turno_agendado (4 params):
+//   Hola {{1}}, tu turno ha sido registrado exitosamente.
+//   Profesional: {{2}}
+//   Fecha y hora: {{3}}
+//   Duración: {{4}} min
+//   Responde *SI* para confirmar o *CANCELAR* para cancelar.
+//
+// turno_confirmado (4 params):
+//   Hola {{1}}, tu turno ha sido confirmado.
+//   Profesional: {{2}}
+//   Fecha y hora: {{3}}
+//   Duración: {{4}} min
+//   Te esperamos. Responde *CANCELAR* si necesitas cancelar.
+//
+// turno_cancelado (3 params):
+//   Hola {{1}}, tu turno ha sido cancelado.
+//   Profesional: {{2}}
+//   Fecha y hora: {{3}}
+//   Comunícate con el consultorio para reprogramar.
+//
+// recordatorio_turno (4 params):
+//   Hola {{1}}, te recordamos que tienes un turno mañana.
+//   Profesional: {{2}}
+//   Fecha y hora: {{3}}
+//   Duración: {{4}} min
+//   Responde *SI* para confirmar o *CANCELAR* si no puedes asistir.
+
+export interface WhatsAppTemplateMessage {
+  templateName: string;
+  languageCode: string;
+  bodyParameters: string[];
+}
+
+export function appointmentBookedTemplate(
+  data: AppointmentNotificationData
+): WhatsAppTemplateMessage {
+  return {
+    templateName: 'turno_agendado',
+    languageCode: 'es',
+    bodyParameters: [
+      data.patientName,
+      data.professionalName,
+      formatDate(data.scheduledAt),
+      String(data.durationMinutes),
+    ],
+  };
+}
+
+export function appointmentConfirmedTemplate(
+  data: AppointmentNotificationData
+): WhatsAppTemplateMessage {
+  return {
+    templateName: 'turno_confirmado',
+    languageCode: 'es',
+    bodyParameters: [
+      data.patientName,
+      data.professionalName,
+      formatDate(data.scheduledAt),
+      String(data.durationMinutes),
+    ],
+  };
+}
+
+export function appointmentCancelledTemplate(
+  data: AppointmentNotificationData
+): WhatsAppTemplateMessage {
+  return {
+    templateName: 'turno_cancelado',
+    languageCode: 'es',
+    bodyParameters: [
+      data.patientName,
+      data.professionalName,
+      formatDate(data.scheduledAt),
+    ],
+  };
+}
+
+export function appointmentReminderTemplate(
+  data: AppointmentNotificationData
+): WhatsAppTemplateMessage {
+  return {
+    templateName: 'recordatorio_turno',
+    languageCode: 'es',
+    bodyParameters: [
+      data.patientName,
+      data.professionalName,
+      formatDate(data.scheduledAt),
+      String(data.durationMinutes),
+    ],
+  };
+}
+
+// ─── Reply messages (free-form text, within 24h customer-initiated window) ───
+
 export function replyConfirmedMessage(professionalName: string): string {
   return (
     `✅ *Turno confirmado*\n\n` +
