@@ -83,6 +83,9 @@ export async function sendReminders(): Promise<void> {
   let totalSent = 0;
   let totalFailed = 0;
   let totalSkipped = 0;
+  let skippedNoEmail = 0;
+  let skippedAlreadySent = 0;
+  let skippedOptedOut = 0;
 
   try {
     const rows = await db
@@ -139,6 +142,10 @@ export async function sendReminders(): Promise<void> {
         try {
           // Handle missing email
           if (!row.patientEmail) {
+            logger.info(
+              { appointmentId: row.appointmentId },
+              'Reminder job: skipping — no patient email'
+            );
             await recordDelivery({
               tenantId: row.tenantId,
               appointmentId: row.appointmentId,
@@ -147,6 +154,7 @@ export async function sendReminders(): Promise<void> {
               status: 'skipped',
               errorMessage: 'no email address',
             });
+            skippedNoEmail++;
             totalSkipped++;
             continue;
           }
@@ -154,6 +162,11 @@ export async function sendReminders(): Promise<void> {
           // Skip if already sent
           const alreadySent = await hasReminderBeenSent(row.appointmentId);
           if (alreadySent) {
+            logger.info(
+              { appointmentId: row.appointmentId },
+              'Reminder job: skipping — reminder already sent'
+            );
+            skippedAlreadySent++;
             totalSkipped++;
             continue;
           }
@@ -161,6 +174,11 @@ export async function sendReminders(): Promise<void> {
           // Skip opted-out patients
           const optedOut = await checkOptOut(row.tenantId, row.patientId);
           if (optedOut) {
+            logger.info(
+              { appointmentId: row.appointmentId },
+              'Reminder job: skipping — patient opted out'
+            );
+            skippedOptedOut++;
             totalSkipped++;
             continue;
           }
@@ -244,6 +262,11 @@ export async function sendReminders(): Promise<void> {
         sent: totalSent,
         failed: totalFailed,
         skipped: totalSkipped,
+        skippedReasons: {
+          noEmail: skippedNoEmail,
+          alreadySent: skippedAlreadySent,
+          optedOut: skippedOptedOut,
+        },
         processingMs,
       },
       'Reminder job completed'
