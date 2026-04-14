@@ -126,7 +126,7 @@ export function appointmentBookedTemplate(
 ): WhatsAppTemplateMessage {
   return {
     templateName: 'turno_agendado',
-    languageCode: 'es',
+    languageCode: 'es_AR',
     bodyParameters: [
       data.patientName,
       data.professionalName,
@@ -141,7 +141,7 @@ export function appointmentConfirmedTemplate(
 ): WhatsAppTemplateMessage {
   return {
     templateName: 'turno_confirmado',
-    languageCode: 'es',
+    languageCode: 'es_AR',
     bodyParameters: [
       data.patientName,
       data.professionalName,
@@ -156,7 +156,7 @@ export function appointmentCancelledTemplate(
 ): WhatsAppTemplateMessage {
   return {
     templateName: 'turno_cancelado',
-    languageCode: 'es',
+    languageCode: 'es_AR',
     bodyParameters: [
       data.patientName,
       data.professionalName,
@@ -170,7 +170,7 @@ export function appointmentReminderTemplate(
 ): WhatsAppTemplateMessage {
   return {
     templateName: 'recordatorio_turno',
-    languageCode: 'es',
+    languageCode: 'es_AR',
     bodyParameters: [
       data.patientName,
       data.professionalName,
