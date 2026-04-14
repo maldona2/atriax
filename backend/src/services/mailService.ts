@@ -42,7 +42,7 @@ async function send(
   }
 
   try {
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: RESEND_FROM,
       to,
       subject,
@@ -50,6 +50,9 @@ async function send(
       text,
       ...(attachments && attachments.length > 0 && { attachments }),
     });
+    if (error) {
+      throw new Error(error.message ?? 'Resend API error');
+    }
     logger.info('Email sent to %s: %s', to, subject);
   } catch (err) {
     logger.error({ err }, 'Failed to send email to %s: %s', to, subject);
