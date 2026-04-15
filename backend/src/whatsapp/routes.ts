@@ -88,12 +88,25 @@ router.post(
         return;
       }
 
-      // Process each inbound text message asynchronously — always return 200 to Meta
+      // Process each inbound message asynchronously — always return 200 to Meta
       const messages = payload.entry?.[0]?.changes?.[0]?.value?.messages ?? [];
       for (const msg of messages) {
-        if (msg.type !== 'text' || !msg.text?.body) continue;
+        let messageText: string | undefined;
+
+        // Extract text from either text messages or interactive button replies
+        if (msg.type === 'text' && msg.text?.body) {
+          messageText = msg.text.body;
+        } else if (
+          msg.type === 'interactive' &&
+          msg.interactive?.button_reply?.title
+        ) {
+          messageText = msg.interactive.button_reply.title;
+        }
+
+        if (!messageText) continue;
+
         whatsAppReplyHandler
-          .handle('', msg.from, msg.text.body)
+          .handle('', msg.from, messageText)
           .catch((err) => {
             logger.error(
               { err, from: msg.from },

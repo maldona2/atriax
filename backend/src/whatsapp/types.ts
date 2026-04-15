@@ -37,6 +37,18 @@ export interface MetaInboundMessage {
   timestamp: string;
   type: 'text' | 'image' | 'audio' | 'video' | 'document' | 'interactive';
   text?: { body: string };
+  interactive?: {
+    type: 'button_reply' | 'list_reply';
+    button_reply?: {
+      id: string;
+      title: string;
+    };
+    list_reply?: {
+      id: string;
+      title: string;
+      description?: string;
+    };
+  };
 }
 
 export interface MetaMessageStatus {
