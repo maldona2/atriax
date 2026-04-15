@@ -17,6 +17,7 @@ import {
   replyConfirmedMessage,
   replyCancelledMessage,
   doctorAppointmentConfirmedTemplate,
+  doctorAppointmentCancelledTemplate,
 } from '../templates.js';
 import logger from '../../utils/logger.js';
 
@@ -159,6 +160,27 @@ export class WhatsAppReplyHandler {
         logger.warn(
           { phone: professional.phone, error: doctorResult.error },
           'WhatsAppReplyHandler: failed to notify doctor'
+        );
+      }
+    }
+
+    // Notify doctor when patient cancels
+    if (action === 'cancel' && professional?.phone) {
+      const tmpl = doctorAppointmentCancelledTemplate(
+        patient.firstName,
+        appointment.scheduledAt,
+        appointment.durationMinutes ?? 30
+      );
+      const doctorResult = await this.client.sendTemplateMessage(
+        professional.phone,
+        tmpl.templateName,
+        tmpl.languageCode,
+        tmpl.bodyParameters
+      );
+      if (!doctorResult.success) {
+        logger.warn(
+          { phone: professional.phone, error: doctorResult.error },
+          'WhatsAppReplyHandler: failed to notify doctor of cancellation'
         );
       }
     }

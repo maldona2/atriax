@@ -138,11 +138,13 @@ describe('WhatsAppReplyHandler', () => {
     expect(mockUpdateAppointment).toHaveBeenCalledWith('tenant-1', 'appt-1', {
       status: 'cancelled',
     });
-    // Only 1 message: no doctor notification on cancel
-    expect(client.sendTextMessage).toHaveBeenCalledTimes(1);
-    expect(client.sendTemplateMessage).not.toHaveBeenCalled();
     const [, text] = (client.sendTextMessage as jest.Mock).mock.calls[0]!;
     expect(text).toContain('cancelado');
+    // Doctor notified via template
+    expect(client.sendTemplateMessage).toHaveBeenCalledTimes(1);
+    const [, templateName] = (client.sendTemplateMessage as jest.Mock).mock
+      .calls[0]!;
+    expect(templateName).toBe('turno_cancelado_doctor');
   });
 
   it('accepts CONFIRMAR as synonym for SI', async () => {
@@ -268,6 +270,45 @@ describe('WhatsAppReplyHandler', () => {
     await handler.handle('tenant-1', '5491112345678', 'SI');
 
     // Only sendTextMessage for patient; no doctor template notification
+    expect(client.sendTextMessage).toHaveBeenCalledTimes(1);
+    expect(client.sendTemplateMessage).not.toHaveBeenCalled();
+  });
+
+  it('notifies doctor when patient replies CANCELAR', async () => {
+    const doctorPhone = '5491199990000';
+    setupDbChain([
+      [{ id: 'patient-1', firstName: 'María', tenantId: 'tenant-1' }],
+      [APPT],
+      [{ fullName: 'Dr. Juan Pérez', phone: doctorPhone }],
+    ]);
+    const client = makeClient();
+    const handler = new WhatsAppReplyHandler(
+      client as unknown as MetaAPIClient
+    );
+    await handler.handle('tenant-1', '5491112345678', 'CANCELAR');
+
+    expect(client.sendTextMessage).toHaveBeenCalledTimes(1);
+    expect(client.sendTemplateMessage).toHaveBeenCalledTimes(1);
+    const [callPhone, templateName, , bodyParams] = (
+      client.sendTemplateMessage as jest.Mock
+    ).mock.calls[0]!;
+    expect(callPhone).toBe(doctorPhone);
+    expect(templateName).toBe('turno_cancelado_doctor');
+    expect(bodyParams[0]).toBe('María');
+  });
+
+  it('skips doctor cancel notification if professional has no phone', async () => {
+    setupDbChain([
+      [{ id: 'patient-1', firstName: 'María', tenantId: 'tenant-1' }],
+      [APPT],
+      [{ fullName: 'Dr. Juan Pérez', phone: null }],
+    ]);
+    const client = makeClient();
+    const handler = new WhatsAppReplyHandler(
+      client as unknown as MetaAPIClient
+    );
+    await handler.handle('tenant-1', '5491112345678', 'CANCELAR');
+
     expect(client.sendTextMessage).toHaveBeenCalledTimes(1);
     expect(client.sendTemplateMessage).not.toHaveBeenCalled();
   });

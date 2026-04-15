@@ -201,6 +201,11 @@ export function replyCancelledMessage(professionalName: string): string {
 //   El/La paciente {{1}} confirmó su turno.
 //   Fecha y hora: {{2}}
 //   Duración: {{3}} min
+//
+// turno_cancelado_doctor (3 params):
+//   El/La paciente {{1}} canceló su turno.
+//   Fecha y hora: {{2}}
+//   Duración: {{3}} min
 export function doctorAppointmentConfirmedTemplate(
   patientName: string,
   scheduledAt: Date,
@@ -208,6 +213,22 @@ export function doctorAppointmentConfirmedTemplate(
 ): WhatsAppTemplateMessage {
   return {
     templateName: 'turno_confirmado_doctor',
+    languageCode: 'es_AR',
+    bodyParameters: [
+      patientName,
+      formatDate(scheduledAt),
+      String(durationMinutes),
+    ],
+  };
+}
+
+export function doctorAppointmentCancelledTemplate(
+  patientName: string,
+  scheduledAt: Date,
+  durationMinutes: number
+): WhatsAppTemplateMessage {
+  return {
+    templateName: 'turno_cancelado_doctor',
     languageCode: 'es_AR',
     bodyParameters: [
       patientName,
