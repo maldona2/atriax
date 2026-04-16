@@ -201,7 +201,7 @@ export function appointmentBookedV2Template(
   data: AppointmentNotificationData
 ): WhatsAppTemplateMessage {
   return {
-    templateName: 'turno_agendado_v2',
+    templateName: 'turno_agendado',
     languageCode: 'es_AR',
     bodyParameters: [
       data.patientName,
@@ -217,7 +217,7 @@ export function appointmentReminderV2Template(
   data: AppointmentNotificationData
 ): WhatsAppTemplateMessage {
   return {
-    templateName: 'recordatorio_turno_v2',
+    templateName: 'recordatorio_turno',
     languageCode: 'es_AR',
     bodyParameters: [
       data.patientName,
