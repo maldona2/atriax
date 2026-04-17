@@ -32,6 +32,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -63,6 +71,7 @@ export function NewAppointmentSheet({
 }: NewAppointmentSheetProps) {
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [sessionNotesExpanded, setSessionNotesExpanded] = useState(false);
+  const [patientOpen, setPatientOpen] = useState(false);
   const [isDateModified, setIsDateModified] = useState(false);
   const prevPatientId = useRef<string>('');
 
@@ -85,6 +94,7 @@ export function NewAppointmentSheet({
     }
   }, [suggestedDate, isDateModified, setForm]);
 
+  const selectedPatient = patients.find((p) => p.id === form.patient_id) ?? null;
   const lineItems = form.treatments ?? [];
   const totalCents = lineItems.reduce(
     (sum, t) => sum + t.quantity * t.unit_price_cents,
@@ -164,24 +174,50 @@ export function NewAppointmentSheet({
                 <User className="h-4 w-4 text-primary" />
                 Paciente
               </label>
-              <Select
-                value={form.patient_id}
-                onValueChange={(value) =>
-                  setForm((f) => ({ ...f, patient_id: value }))
-                }
-              >
-                <SelectTrigger className="h-10 w-full rounded-lg bg-background sm:h-12">
-                  <SelectValue placeholder="Selecciona un paciente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {patients.map((p) => (
-                    <SelectItem key={p.id} value={p.id} className="py-2.5">
-                      <span className="font-medium">{p.last_name}</span>,{' '}
-                      {p.first_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={patientOpen}
+                  type="button"
+                  className={cn(
+                    'h-10 w-full justify-between rounded-lg bg-background font-normal sm:h-12',
+                    !form.patient_id && 'text-muted-foreground'
+                  )}
+                  onClick={() => setPatientOpen((v) => !v)}
+                >
+                  {selectedPatient
+                    ? `${selectedPatient.last_name}, ${selectedPatient.first_name}`
+                    : 'Selecciona un paciente'}
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+                {patientOpen && (
+                  <div className="absolute z-50 mt-1 w-full rounded-lg border bg-popover shadow-md">
+                    <Command>
+                      <CommandInput placeholder="Buscar paciente..." />
+                      <CommandList>
+                        <CommandEmpty>Sin resultados.</CommandEmpty>
+                        <CommandGroup>
+                          {patients.map((p) => (
+                            <CommandItem
+                              key={p.id}
+                              value={`${p.last_name} ${p.first_name}`}
+                              onSelect={() => {
+                                setForm((f) => ({ ...f, patient_id: p.id }));
+                                setPatientOpen(false);
+                              }}
+                              data-checked={form.patient_id === p.id}
+                            >
+                              <span className="font-medium">{p.last_name}</span>,{' '}
+                              {p.first_name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </div>
+                )}
+              </div>
               <QuickAddPatientDialog onPatientCreated={onPatientCreated} />
             </div>
 
