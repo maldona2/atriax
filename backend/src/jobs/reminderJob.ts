@@ -239,22 +239,23 @@ export async function sendReminders(): Promise<void> {
               prof?.subscriptionPlan === 'gold' &&
               prof?.subscriptionStatus === 'active';
             if (row.patientPhone && isGold) {
-              // Generate a 48h cancel token so the patient can cancel
-              // directly from the reminder message
-              createCancellationToken(row.appointmentId, row.tenantId, 48)
-                .then((token) => {
-                  const cancelUrl = buildCancelUrl(token);
-                  return whatsAppNotificationService.sendAppointmentReminderV2(
-                    row.patientPhone!,
-                    { ...notificationData, cancelUrl }
-                  );
-                })
-                .catch((err) => {
-                  logger.warn(
-                    { err, appointmentId: row.appointmentId },
-                    'Reminder job: WhatsApp send failed'
-                  );
-                });
+              try {
+                const token = await createCancellationToken(
+                  row.appointmentId,
+                  row.tenantId,
+                  48
+                );
+                const cancelUrl = buildCancelUrl(token);
+                await whatsAppNotificationService.sendAppointmentReminderV2(
+                  row.patientPhone,
+                  { ...notificationData, cancelUrl }
+                );
+              } catch (err) {
+                logger.warn(
+                  { err, appointmentId: row.appointmentId },
+                  'Reminder job: WhatsApp send failed'
+                );
+              }
             }
           }
         } catch (err) {
