@@ -246,7 +246,7 @@ export async function sendReminders(): Promise<void> {
                   48
                 );
                 const cancelUrl = buildCancelUrl(token);
-                await whatsAppNotificationService.sendAppointmentReminderV2(
+                await whatsAppNotificationService.sendAppointmentReminder(
                   row.patientPhone,
                   { ...notificationData, cancelUrl }
                 );

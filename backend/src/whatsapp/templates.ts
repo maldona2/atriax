@@ -87,14 +87,13 @@ export function appointmentReminderMessage(
 // Each function returns the template name, language, and ordered body parameters
 // that map to {{1}}, {{2}}, ... placeholders in the approved template.
 //
-// Template bodies to register in Meta Business Manager:
+// Template bodies registered in Meta Business Manager:
 //
-// turno_agendado (4 params):
-//   Hola {{1}}, tu turno ha sido registrado exitosamente.
-//   Profesional: {{2}}
-//   Fecha y hora: {{3}}
-//   Duración: {{4}} min
-//   Responde *SI* para confirmar o *CANCELAR* para cancelar.
+// turno_agendado (5 params):
+//   Hola {{1}}, tu turno con {{2}} está agendado.
+//   📅 Fecha: {{3}}
+//   ⏱ Duración: {{4}} min
+//   Para cancelar tu turno: {{5}}
 //
 // turno_confirmado (4 params):
 //   Hola {{1}}, tu turno ha sido confirmado.
@@ -109,32 +108,16 @@ export function appointmentReminderMessage(
 //   Fecha y hora: {{3}}
 //   Comunícate con el consultorio para reprogramar.
 //
-// recordatorio_turno (4 params):
-//   Hola {{1}}, te recordamos que tienes un turno mañana.
-//   Profesional: {{2}}
-//   Fecha y hora: {{3}}
-//   Duración: {{4}} min
-//   Responde *SI* para confirmar o *CANCELAR* si no puedes asistir.
+// recordatorio_turno (5 params):
+//   Hola {{1}}, recordatorio: turno mañana con {{2}}.
+//   📅 Fecha: {{3}}
+//   ⏱ Duración: {{4}} min
+//   Si no podés asistir, cancelá aquí: {{5}}
 
 export interface WhatsAppTemplateMessage {
   templateName: string;
   languageCode: string;
   bodyParameters: string[];
-}
-
-export function appointmentBookedTemplate(
-  data: AppointmentNotificationData
-): WhatsAppTemplateMessage {
-  return {
-    templateName: 'turno_agendado',
-    languageCode: 'es_AR',
-    bodyParameters: [
-      data.patientName,
-      data.professionalName,
-      formatDate(data.scheduledAt),
-      String(data.durationMinutes),
-    ],
-  };
 }
 
 export function appointmentConfirmedTemplate(
@@ -166,38 +149,7 @@ export function appointmentCancelledTemplate(
   };
 }
 
-export function appointmentReminderTemplate(
-  data: AppointmentNotificationData
-): WhatsAppTemplateMessage {
-  return {
-    templateName: 'recordatorio_turno',
-    languageCode: 'es_AR',
-    bodyParameters: [
-      data.patientName,
-      data.professionalName,
-      formatDate(data.scheduledAt),
-      String(data.durationMinutes),
-    ],
-  };
-}
-
-// ─── V2 templates — include cancel URL as 5th parameter ──────────────────────
-//
-// Register these in Meta Business Manager:
-//
-// turno_agendado_v2 (5 params):
-//   Hola {{1}}, tu turno con {{2}} está agendado.
-//   📅 Fecha: {{3}}
-//   ⏱ Duración: {{4}} min
-//   Para cancelar tu turno: {{5}}
-//
-// recordatorio_turno_v2 (5 params):
-//   Hola {{1}}, recordatorio: turno mañana con {{2}}.
-//   📅 Fecha: {{3}}
-//   ⏱ Duración: {{4}} min
-//   Si no podés asistir, cancelá aquí: {{5}}
-
-export function appointmentBookedV2Template(
+export function appointmentBookedTemplate(
   data: AppointmentNotificationData
 ): WhatsAppTemplateMessage {
   return {
@@ -213,7 +165,7 @@ export function appointmentBookedV2Template(
   };
 }
 
-export function appointmentReminderV2Template(
+export function appointmentReminderTemplate(
   data: AppointmentNotificationData
 ): WhatsAppTemplateMessage {
   return {

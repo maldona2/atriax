@@ -13,11 +13,9 @@
 import { MetaAPIClient } from './MetaAPIClient.js';
 import {
   appointmentBookedTemplate,
-  appointmentBookedV2Template,
   appointmentConfirmedTemplate,
   appointmentCancelledTemplate,
   appointmentReminderTemplate,
-  appointmentReminderV2Template,
   type AppointmentNotificationData,
   type WhatsAppTemplateMessage,
 } from '../templates.js';
@@ -72,52 +70,6 @@ export class WhatsAppNotificationService {
       phone,
       appointmentReminderTemplate(data),
       'reminder'
-    );
-  }
-
-  /**
-   * Sends turno_agendado_v2 — includes a one-click cancel URL.
-   * Falls back to turno_agendado if cancelUrl is missing.
-   */
-  async sendAppointmentBookedV2(
-    phone: string,
-    data: AppointmentNotificationData
-  ): Promise<void> {
-    if (!data.cancelUrl) {
-      await this._sendTemplate(
-        phone,
-        appointmentBookedTemplate(data),
-        'booked'
-      );
-      return;
-    }
-    await this._sendTemplate(
-      phone,
-      appointmentBookedV2Template(data),
-      'booked_v2'
-    );
-  }
-
-  /**
-   * Sends recordatorio_turno_v2 — includes a one-click cancel URL.
-   * Falls back to recordatorio_turno if cancelUrl is missing.
-   */
-  async sendAppointmentReminderV2(
-    phone: string,
-    data: AppointmentNotificationData
-  ): Promise<void> {
-    if (!data.cancelUrl) {
-      await this._sendTemplate(
-        phone,
-        appointmentReminderTemplate(data),
-        'reminder'
-      );
-      return;
-    }
-    await this._sendTemplate(
-      phone,
-      appointmentReminderV2Template(data),
-      'reminder_v2'
     );
   }
 

@@ -559,7 +559,7 @@ export async function create(
       try {
         const token = await createCancellationToken(row.id, tenantId);
         const cancelUrl = buildCancelUrl(token);
-        void whatsAppNotificationService.sendAppointmentBookedV2(
+        void whatsAppNotificationService.sendAppointmentBooked(
           ctx.patientPhone,
           { ...notificationData, cancelUrl }
         );
