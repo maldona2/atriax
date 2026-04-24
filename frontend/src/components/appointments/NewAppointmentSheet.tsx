@@ -510,7 +510,10 @@ export function NewAppointmentSheet({
         </ScrollArea>
 
         {/* Footer - always visible */}
-        <div className="shrink-0 border-t bg-muted/30 p-3 sm:p-4">
+        <div
+          className="shrink-0 border-t bg-muted/30 p-3 sm:p-4"
+          style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+        >
           <Button
             type="submit"
             className="h-10 w-full rounded-lg text-sm font-medium sm:h-12 sm:text-base"
