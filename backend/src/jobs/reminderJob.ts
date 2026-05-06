@@ -14,6 +14,124 @@ import {
 } from '../services/cancellationTokenService.js';
 import logger from '../utils/logger.js';
 
+const IMMEDIATE_REMINDER_MIN_HOURS = 1;
+const IMMEDIATE_REMINDER_MAX_HOURS = 36;
+
+/**
+ * Sends a reminder immediately if the appointment is within the next 36 hours
+ * and a reminder hasn't been sent yet. Handles same-day and next-day appointments
+ * created after the daily cron already ran.
+ */
+export async function maybeSendImmediateReminder(
+  tenantId: string,
+  appointmentId: string
+): Promise<void> {
+  const now = new Date();
+  const minMs = IMMEDIATE_REMINDER_MIN_HOURS * 60 * 60 * 1000;
+  const maxMs = IMMEDIATE_REMINDER_MAX_HOURS * 60 * 60 * 1000;
+  const windowStart = new Date(now.getTime() + minMs);
+  const windowEnd = new Date(now.getTime() + maxMs);
+
+  const [appt] = await db
+    .select({
+      appointmentId: appointments.id,
+      tenantId: appointments.tenantId,
+      scheduledAt: appointments.scheduledAt,
+      durationMinutes: appointments.durationMinutes,
+      patientId: appointments.patientId,
+      status: appointments.status,
+      patientEmail: patients.email,
+      patientPhone: patients.phone,
+      patientFirstName: patients.firstName,
+      patientLastName: patients.lastName,
+    })
+    .from(appointments)
+    .innerJoin(patients, eq(patients.id, appointments.patientId))
+    .where(
+      and(
+        eq(appointments.id, appointmentId),
+        eq(appointments.tenantId, tenantId),
+        inArray(appointments.status, ['pending', 'confirmed']),
+        between(appointments.scheduledAt, windowStart, windowEnd)
+      )
+    )
+    .limit(1);
+
+  if (!appt) return;
+
+  if (!appt.patientEmail) return;
+
+  const alreadySent = await hasReminderBeenSent(appointmentId);
+  if (alreadySent) return;
+
+  const optedOut = await checkOptOut(tenantId, appt.patientId);
+  if (optedOut) return;
+
+  const [prof] = await db
+    .select({
+      fullName: users.fullName,
+      address: users.address,
+      subscriptionPlan: users.subscriptionPlan,
+      subscriptionStatus: users.subscriptionStatus,
+    })
+    .from(users)
+    .where(and(eq(users.tenantId, tenantId), eq(users.role, 'professional')))
+    .limit(1);
+
+  const notificationData = {
+    patientName: `${appt.patientFirstName} ${appt.patientLastName}`,
+    professionalName: prof?.fullName ?? 'El profesional',
+    scheduledAt: appt.scheduledAt ?? new Date(),
+    durationMinutes: appt.durationMinutes ?? 60,
+    address: prof?.address ?? null,
+  };
+
+  let sendError: string | null = null;
+  try {
+    await sendWithRetry(appt.patientEmail, notificationData, appointmentId);
+  } catch (err) {
+    sendError = err instanceof Error ? err.message : String(err);
+  }
+
+  await recordDelivery({
+    tenantId,
+    appointmentId,
+    patientId: appt.patientId,
+    patientEmail: appt.patientEmail,
+    status: sendError ? 'failed' : 'sent',
+    errorMessage: sendError,
+    retryCount: sendError ? MAX_RETRIES : 0,
+  });
+
+  if (!sendError) {
+    const isGold =
+      prof?.subscriptionPlan === 'gold' &&
+      prof?.subscriptionStatus === 'active';
+    if (appt.patientPhone && isGold) {
+      try {
+        const token = await createCancellationToken(
+          appointmentId,
+          tenantId,
+          48
+        );
+        const cancelUrl = buildCancelUrl(token);
+        await whatsAppNotificationService.sendAppointmentReminder(
+          appt.patientPhone,
+          { ...notificationData, cancelUrl }
+        );
+      } catch (err) {
+        logger.warn(
+          { err, appointmentId },
+          'Immediate reminder: WhatsApp send failed'
+        );
+      }
+    }
+    logger.info({ appointmentId }, 'Immediate reminder sent');
+  } else {
+    logger.warn({ appointmentId, sendError }, 'Immediate reminder failed');
+  }
+}
+
 const BATCH_SIZE = 100;
 const MAX_RETRIES = 3;
 const RETRY_DELAYS_MS = [60_000, 300_000, 900_000]; // 1min, 5min, 15min

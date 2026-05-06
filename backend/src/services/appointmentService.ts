@@ -21,6 +21,8 @@ import {
 import { syncQueue } from './syncQueue.js';
 import { googleAuthService } from './googleAuthService.js';
 import * as patientTreatmentService from './patientTreatmentService.js';
+import { maybeSendImmediateReminder } from '../jobs/reminderJob.js';
+import logger from '../utils/logger.js';
 
 async function enqueueSyncIfConnected(
   tenantId: string,
@@ -576,6 +578,12 @@ export async function create(
   // fire-and-forget calendar sync for auto-confirmed appointments
   if (initialStatus === 'confirmed') {
     void enqueueSyncIfConnected(tenantId, 'create', row.id);
+    void maybeSendImmediateReminder(tenantId, row.id).catch((err) =>
+      logger.warn(
+        { err, appointmentId: row.id },
+        'Immediate reminder failed on create'
+      )
+    );
   }
 
   return result;
@@ -707,6 +715,12 @@ export async function update(
   // fire-and-forget calendar sync
   if (data.status === 'confirmed') {
     void enqueueSyncIfConnected(tenantId, 'create', row.id);
+    void maybeSendImmediateReminder(tenantId, row.id).catch((err) =>
+      logger.warn(
+        { err, appointmentId: row.id },
+        'Immediate reminder failed on confirm'
+      )
+    );
   } else if (data.status === 'cancelled') {
     void enqueueSyncIfConnected(tenantId, 'delete', row.id);
   } else if (data.status === undefined) {
