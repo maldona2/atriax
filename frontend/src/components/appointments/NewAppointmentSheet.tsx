@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronUp,
   ClipboardList,
+  Wallet,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -46,6 +47,7 @@ import { Separator } from '@/components/ui/separator';
 import { QuickAddPatientDialog } from './QuickAddPatientDialog';
 import { MedicalHistorySection } from './MedicalHistorySection';
 import { SuggestedDateIndicator } from './SuggestedDateIndicator';
+import { paymentConfig } from './constants';
 import { useSuggestedAppointmentDate } from '@/hooks/useSuggestedAppointmentDate';
 import type { AppointmentFormData } from '@/hooks/useAppointments';
 import type { Patient, Treatment } from '@/types';
@@ -396,6 +398,36 @@ export function NewAppointmentSheet({
                   )}
                 </>
               )}
+            </div>
+
+            {/* Payment status */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <Wallet className="h-4 w-4 text-primary" />
+                Estado de pago
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['unpaid', 'paid'] as const).map((key) => {
+                  const cfg = paymentConfig[key];
+                  const active = (form.payment_status ?? 'unpaid') === key;
+                  return (
+                    <Button
+                      key={key}
+                      type="button"
+                      variant={active ? 'default' : 'outline'}
+                      className={cn(
+                        'h-10 rounded-lg sm:h-12',
+                        active && cfg.className
+                      )}
+                      onClick={() =>
+                        setForm((f) => ({ ...f, payment_status: key }))
+                      }
+                    >
+                      {cfg.label}
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Notes */}
