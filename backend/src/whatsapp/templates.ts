@@ -11,7 +11,10 @@ export interface AppointmentNotificationData {
   durationMinutes: number;
   notes?: string | null;
   cancelUrl?: string;
+  address?: string | null;
 }
+
+const ADDRESS_FALLBACK = 'A confirmar';
 
 function formatDate(date: Date): string {
   return date.toLocaleString('es-AR', {
@@ -35,6 +38,7 @@ export function appointmentBookedMessage(
     `👨‍⚕️ *Profesional:* ${data.professionalName}\n` +
     `📅 *Fecha y hora:* ${date}\n` +
     `⏱ *Duración:* ${data.durationMinutes} min\n` +
+    (data.address ? `📍 *Dirección:* ${data.address}\n` : '') +
     (data.notes ? `📝 *Notas:* ${data.notes}\n` : '') +
     `\nResponde *SI* para confirmar o *CANCELAR* para cancelar el turno.`
   );
@@ -49,8 +53,9 @@ export function appointmentConfirmedMessage(
     `Hola ${data.patientName}, tu turno ha sido confirmado.\n\n` +
     `👨‍⚕️ *Profesional:* ${data.professionalName}\n` +
     `📅 *Fecha y hora:* ${date}\n` +
-    `⏱ *Duración:* ${data.durationMinutes} min\n\n` +
-    `Te esperamos. Responde *CANCELAR* si necesitas cancelar el turno.`
+    `⏱ *Duración:* ${data.durationMinutes} min\n` +
+    (data.address ? `📍 *Dirección:* ${data.address}\n` : '') +
+    `\nTe esperamos. Responde *CANCELAR* si necesitas cancelar el turno.`
   );
 }
 
@@ -76,8 +81,9 @@ export function appointmentReminderMessage(
     `Hola ${data.patientName}, te recordamos que tienes un turno mañana.\n\n` +
     `👨‍⚕️ *Profesional:* ${data.professionalName}\n` +
     `📅 *Fecha y hora:* ${date}\n` +
-    `⏱ *Duración:* ${data.durationMinutes} min\n\n` +
-    `Responde *SI* para confirmar o *CANCELAR* si no puedes asistir.`
+    `⏱ *Duración:* ${data.durationMinutes} min\n` +
+    (data.address ? `📍 *Dirección:* ${data.address}\n` : '') +
+    `\nResponde *SI* para confirmar o *CANCELAR* si no puedes asistir.`
   );
 }
 
@@ -89,17 +95,19 @@ export function appointmentReminderMessage(
 //
 // Template bodies registered in Meta Business Manager:
 //
-// turno_agendado (5 params):
+// turno_agendado (6 params):
 //   Hola {{1}}, tu turno con {{2}} está agendado.
 //   📅 Fecha: {{3}}
 //   ⏱ Duración: {{4}} min
 //   Para cancelar tu turno: {{5}}
+//   📍 Dirección: {{6}}
 //
-// turno_confirmado (4 params):
+// turno_confirmado (5 params):
 //   Hola {{1}}, tu turno ha sido confirmado.
 //   Profesional: {{2}}
 //   Fecha y hora: {{3}}
 //   Duración: {{4}} min
+//   📍 Dirección: {{5}}
 //   Te esperamos. Responde *CANCELAR* si necesitas cancelar.
 //
 // turno_cancelado (3 params):
@@ -108,11 +116,15 @@ export function appointmentReminderMessage(
 //   Fecha y hora: {{3}}
 //   Comunícate con el consultorio para reprogramar.
 //
-// recordatorio_turno (5 params):
+// recordatorio_turno (6 params):
 //   Hola {{1}}, recordatorio: turno mañana con {{2}}.
 //   📅 Fecha: {{3}}
 //   ⏱ Duración: {{4}} min
 //   Si no podés asistir, cancelá aquí: {{5}}
+//   📍 Dirección: {{6}}
+//
+// NOTA: cuando profesional no tiene dirección cargada, se envía "A confirmar"
+// como fallback (Meta rechaza parámetros vacíos).
 
 export interface WhatsAppTemplateMessage {
   templateName: string;
@@ -131,6 +143,7 @@ export function appointmentConfirmedTemplate(
       data.professionalName,
       formatDate(data.scheduledAt),
       String(data.durationMinutes),
+      data.address ?? ADDRESS_FALLBACK,
     ],
   };
 }
@@ -161,6 +174,7 @@ export function appointmentBookedTemplate(
       formatDate(data.scheduledAt),
       String(data.durationMinutes),
       data.cancelUrl ?? '',
+      data.address ?? ADDRESS_FALLBACK,
     ],
   };
 }
@@ -177,6 +191,7 @@ export function appointmentReminderTemplate(
       formatDate(data.scheduledAt),
       String(data.durationMinutes),
       data.cancelUrl ?? '',
+      data.address ?? ADDRESS_FALLBACK,
     ],
   };
 }
