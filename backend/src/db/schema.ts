@@ -828,7 +828,7 @@ export const subscriptions = pgTable(
     preapprovalId: text('preapproval_id').unique().notNull(),
     plan: text('plan', { enum: ['pro', 'gold'] }).notNull(),
     status: text('status', {
-      enum: ['authorized', 'cancelled', 'paused', 'failed'],
+      enum: ['pending', 'authorized', 'cancelled', 'paused', 'failed'],
     }).notNull(),
     billingPeriodStart: timestamp('billing_period_start', {
       withTimezone: true,

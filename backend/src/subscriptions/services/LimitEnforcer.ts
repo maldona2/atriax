@@ -47,28 +47,19 @@ export class LimitEnforcer {
   }
 
   /**
-   * Check if user can create an appointment today.
-   * Returns detailed status including remaining count.
-   * Fails open: if usage counter cannot be retrieved, allows creation.
+   * Read-only check of the user's current daily appointment limit status.
+   * Used for UI display via getDailyAppointmentStatus.
+   *
+   * Fails closed: if the usage counter cannot be retrieved, creation is denied
+   * rather than allowed, so a database outage cannot be used to bypass limits.
    */
   async checkDailyAppointmentLimit(userId: string): Promise<LimitCheckResult> {
     const resetTime = getNextMidnightUTC();
     const planName = await this.getUserPlanName(userId);
     const limit = this.planManager.getDailyAppointmentLimit(planName);
 
-    // Handle invalid limit values as unlimited (fail-open)
-    if (limit < SENTINEL_VALUE || (limit < 0 && limit !== SENTINEL_VALUE)) {
-      return {
-        allowed: true,
-        limit: SENTINEL_VALUE,
-        currentUsage: 0,
-        remaining: SENTINEL_VALUE,
-        resetTime,
-      };
-    }
-
     // Unlimited users bypass limit checks
-    if (limit === SENTINEL_VALUE) {
+    if (limit === SENTINEL_VALUE || limit < 0) {
       return {
         allowed: true,
         limit: SENTINEL_VALUE,
@@ -84,14 +75,15 @@ export class LimitEnforcer {
     } catch (err) {
       logger.error(
         { userId, error: err },
-        'Failed to retrieve usage counter, allowing creation (fail-open)'
+        'Failed to retrieve usage counter, denying creation (fail-closed)'
       );
       return {
-        allowed: true,
+        allowed: false,
         limit,
         currentUsage: 0,
-        remaining: limit,
+        remaining: 0,
         resetTime,
+        reason: 'service_unavailable',
       };
     }
 
@@ -111,16 +103,91 @@ export class LimitEnforcer {
   }
 
   /**
-   * Increment usage counter after successful appointment creation.
-   * Should be called after appointment is persisted.
+   * Atomically reserve one daily appointment slot for the user.
+   *
+   * Combines the limit check and the usage increment into a single atomic
+   * database operation, eliminating the check-then-increment race where
+   * concurrent requests could each pass the check before any of them
+   * incremented the counter. Call this BEFORE persisting the appointment, and
+   * call releaseDailyAppointment if the persist subsequently fails.
+   *
+   * Fails closed: if the counter cannot be updated, creation is denied.
    */
-  async incrementDailyAppointmentUsage(userId: string): Promise<void> {
-    await this.usageTracker.incrementUsage(userId);
+  async reserveDailyAppointment(userId: string): Promise<LimitCheckResult> {
+    const resetTime = getNextMidnightUTC();
+    const planName = await this.getUserPlanName(userId);
+    const limit = this.planManager.getDailyAppointmentLimit(planName);
+
+    // Unlimited users bypass limit checks (best-effort usage tracking only).
+    if (limit === SENTINEL_VALUE || limit < 0) {
+      try {
+        await this.usageTracker.incrementUsage(userId);
+      } catch (err) {
+        logger.warn(
+          { userId, error: err },
+          'Failed to track usage for unlimited plan (non-fatal)'
+        );
+      }
+      return {
+        allowed: true,
+        limit: SENTINEL_VALUE,
+        currentUsage: 0,
+        remaining: SENTINEL_VALUE,
+        resetTime,
+      };
+    }
+
+    try {
+      const { consumed, count } = await this.usageTracker.tryConsume(
+        userId,
+        limit
+      );
+
+      if (!consumed) {
+        return {
+          allowed: false,
+          limit,
+          currentUsage: count,
+          remaining: 0,
+          resetTime,
+          reason: `Daily appointment limit of ${limit} exceeded`,
+        };
+      }
+
+      return {
+        allowed: true,
+        limit,
+        currentUsage: count,
+        remaining: Math.max(0, limit - count),
+        resetTime,
+      };
+    } catch (err) {
+      logger.error(
+        { userId, error: err },
+        'Failed to reserve appointment slot, denying creation (fail-closed)'
+      );
+      return {
+        allowed: false,
+        limit,
+        currentUsage: 0,
+        remaining: 0,
+        resetTime,
+        reason: 'service_unavailable',
+      };
+    }
+  }
+
+  /**
+   * Release a previously reserved slot. Call this when appointment creation
+   * fails after reserveDailyAppointment succeeded, to avoid leaking a count.
+   */
+  async releaseDailyAppointment(userId: string): Promise<void> {
+    await this.usageTracker.decrementUsage(userId);
   }
 
   /**
    * Get current limit status for user (for UI display).
-   * Same as checkDailyAppointmentLimit but semantically for status queries.
+   * Read-only; does not consume a slot.
    */
   async getDailyAppointmentStatus(userId: string): Promise<LimitCheckResult> {
     return this.checkDailyAppointmentLimit(userId);

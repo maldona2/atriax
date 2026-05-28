@@ -71,11 +71,9 @@ router.post(
 
       const payload = await validateAndConsumeCancellationToken(token);
       if (!payload) {
-        res
-          .status(410)
-          .json({
-            error: 'El link de cancelación no es válido o ya fue utilizado.',
-          });
+        res.status(410).json({
+          error: 'El link de cancelación no es válido o ya fue utilizado.',
+        });
         return;
       }
 
@@ -144,33 +142,44 @@ router.post(
         return next(err);
       }
 
-      const limitCheck =
-        await appointmentLimitEnforcer.checkDailyAppointmentLimit(userId);
-      if (!limitCheck.allowed) {
-        res.status(429).json({
-          error: 'Daily appointment limit exceeded',
-          limit: limitCheck.limit,
-          used: limitCheck.currentUsage,
-          remaining: limitCheck.remaining,
-          resetTime: limitCheck.resetTime.toISOString(),
+      const tenantId = getTenantId(req);
+
+      // Atomically reserve a daily slot before creating the appointment so
+      // concurrent requests cannot exceed the limit (check-then-increment race).
+      const reservation =
+        await appointmentLimitEnforcer.reserveDailyAppointment(userId);
+      if (!reservation.allowed) {
+        const isUnavailable = reservation.reason === 'service_unavailable';
+        res.status(isUnavailable ? 503 : 429).json({
+          error: isUnavailable
+            ? 'Service temporarily unavailable'
+            : 'Daily appointment limit exceeded',
+          limit: reservation.limit,
+          used: reservation.currentUsage,
+          remaining: reservation.remaining,
+          resetTime: reservation.resetTime.toISOString(),
         });
         return;
       }
 
-      const tenantId = getTenantId(req);
-      const appt = await appointmentService.create(tenantId, {
-        ...parsed.data,
-        userRole: req.user?.role,
-      });
-
-      void appointmentLimitEnforcer
-        .incrementDailyAppointmentUsage(userId)
-        .catch((err) => {
-          logger.error(
-            { userId, error: err },
-            'Failed to increment appointment usage counter'
-          );
+      let appt;
+      try {
+        appt = await appointmentService.create(tenantId, {
+          ...parsed.data,
+          userRole: req.user?.role,
         });
+      } catch (createErr) {
+        // The appointment was not persisted — release the reserved slot.
+        await appointmentLimitEnforcer
+          .releaseDailyAppointment(userId)
+          .catch((err) => {
+            logger.error(
+              { userId, error: err },
+              'Failed to release reserved appointment slot'
+            );
+          });
+        throw createErr;
+      }
 
       res.status(201).json(appt);
     } catch (e) {

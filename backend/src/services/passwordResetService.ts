@@ -140,13 +140,18 @@ export async function resetPassword(
 
   const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
-  await db
-    .update(users)
-    .set({ passwordHash, updatedAt: new Date() })
-    .where(eq(users.id, record.userId));
+  // Update the password and consume the token atomically. If either write
+  // fails the whole operation rolls back, so the token can never be left valid
+  // after the password has already changed (replay window).
+  await db.transaction(async (tx) => {
+    await tx
+      .update(users)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(eq(users.id, record.userId));
 
-  await db
-    .update(passwordResetTokens)
-    .set({ used: true })
-    .where(eq(passwordResetTokens.id, record.id));
+    await tx
+      .update(passwordResetTokens)
+      .set({ used: true })
+      .where(eq(passwordResetTokens.id, record.id));
+  });
 }

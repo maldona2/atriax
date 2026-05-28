@@ -489,13 +489,12 @@ export class WebhookHandler {
             })
             .where(eq(subscriptions.preapprovalId, preapprovalId));
 
-          // Downgrade user to pro plan (lowest available plan)
-          await this.updateUserSubscription(userId, 'pro');
-
-          // Update user subscription status to cancelled
+          // Downgrade user to the free plan and mark the subscription as
+          // cancelled. A cancelled paid subscription must NOT retain paid limits.
           await db
             .update(users)
             .set({
+              subscriptionPlan: 'free',
               subscriptionStatus: 'cancelled',
               updatedAt: new Date(),
             })
@@ -506,7 +505,7 @@ export class WebhookHandler {
               preapprovalId,
               userId,
             },
-            'PreApproval cancelled, user downgraded to pro plan'
+            'PreApproval cancelled, user downgraded to free plan'
           );
           break;
 
@@ -548,10 +547,13 @@ export class WebhookHandler {
             })
             .where(eq(subscriptions.preapprovalId, preapprovalId));
 
-          // Update user subscription status to cancelled (treat failed as cancelled)
+          // A failed payment must downgrade the user to the free plan, not just
+          // flag the status. LimitEnforcer reads subscriptionPlan, so leaving it
+          // on a paid plan would grant paid access indefinitely after a decline.
           await db
             .update(users)
             .set({
+              subscriptionPlan: 'free',
               subscriptionStatus: 'cancelled',
               updatedAt: new Date(),
             })
@@ -562,7 +564,7 @@ export class WebhookHandler {
               preapprovalId,
               userId,
             },
-            'PreApproval failed, user subscription cancelled'
+            'PreApproval failed, user downgraded to free plan'
           );
           break;
 
