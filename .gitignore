@@ -43,3 +43,6 @@ sendgrid.env
 !.ai/local/rules/.gitkeep
 .ai/local/skills/*
 !.ai/local/skills/.gitkeep
+
+# Radar (agente de bitácora, no se commitea)
+.radar/

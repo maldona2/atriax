@@ -8,7 +8,12 @@ import * as fc from 'fast-check';
 import crypto from 'crypto';
 
 jest.mock('../../db/client.js', () => ({
-  db: { select: jest.fn(), insert: jest.fn(), update: jest.fn() },
+  db: {
+    select: jest.fn(),
+    insert: jest.fn(),
+    update: jest.fn(),
+    transaction: jest.fn(),
+  },
   users: {},
   passwordResetTokens: {},
 }));
@@ -73,7 +78,12 @@ const svc =
 
 describe('passwordResetService property-based tests', () => {
   const { db } = jest.requireMock('../../db/client.js') as {
-    db: { select: jest.Mock; insert: jest.Mock; update: jest.Mock };
+    db: {
+      select: jest.Mock;
+      insert: jest.Mock;
+      update: jest.Mock;
+      transaction: jest.Mock;
+    };
   };
 
   beforeEach(() => {
@@ -275,6 +285,15 @@ describe('passwordResetService property-based tests', () => {
                 })
               ),
           }));
+
+          // resetPassword wraps both updates in a single transaction; run the
+          // callback with a tx that delegates to the same update mock.
+          db.transaction = jest
+            .fn()
+            .mockImplementation(
+              async (cb: (tx: { update: typeof db.update }) => unknown) =>
+                cb({ update: db.update })
+            );
 
           await svc.resetPassword(rawToken, newPassword);
 

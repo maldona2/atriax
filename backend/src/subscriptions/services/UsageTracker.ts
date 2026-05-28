@@ -68,6 +68,75 @@ export class UsageTracker {
   }
 
   /**
+   * Atomically increment the counter only if it is still below `limit`.
+   *
+   * This collapses the check-then-increment into a single statement so that
+   * concurrent requests cannot each read the same below-limit count and all
+   * proceed. On conflict the increment is gated by `count < limit`; when the
+   * limit is reached the UPDATE matches no row and RETURNING yields nothing.
+   *
+   * Returns `{ consumed: true, count }` when a slot was taken, or
+   * `{ consumed: false, count: limit }` when the user is already at the limit.
+   */
+  async tryConsume(
+    userId: string,
+    limit: number
+  ): Promise<{ consumed: boolean; count: number }> {
+    if (limit <= 0) {
+      return { consumed: false, count: 0 };
+    }
+
+    const today = getTodayUTC();
+    const now = new Date();
+
+    const [row] = await db
+      .insert(dailyAppointmentUsage)
+      .values({
+        userId,
+        usageDate: today,
+        count: 1,
+        lastUpdated: now,
+      })
+      .onConflictDoUpdate({
+        target: [dailyAppointmentUsage.userId, dailyAppointmentUsage.usageDate],
+        set: {
+          count: sql`${dailyAppointmentUsage.count} + 1`,
+          lastUpdated: now,
+        },
+        setWhere: sql`${dailyAppointmentUsage.count} < ${limit}`,
+      })
+      .returning({ count: dailyAppointmentUsage.count });
+
+    if (row) {
+      return { consumed: true, count: row.count };
+    }
+
+    return { consumed: false, count: limit };
+  }
+
+  /**
+   * Atomically decrement today's counter (floored at 0). Used to release a
+   * previously reserved slot when the appointment creation that followed it
+   * fails.
+   */
+  async decrementUsage(userId: string): Promise<void> {
+    const today = getTodayUTC();
+
+    await db
+      .update(dailyAppointmentUsage)
+      .set({
+        count: sql`GREATEST(${dailyAppointmentUsage.count} - 1, 0)`,
+        lastUpdated: new Date(),
+      })
+      .where(
+        and(
+          eq(dailyAppointmentUsage.userId, userId),
+          eq(dailyAppointmentUsage.usageDate, today)
+        )
+      );
+  }
+
+  /**
    * Get usage record with metadata for user today.
    * Returns null if no record exists.
    */

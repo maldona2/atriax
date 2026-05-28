@@ -462,7 +462,7 @@ describe('WebhookHandler', () => {
       await db.delete(users).where(eq(users.id, testUserId));
     });
 
-    it('should handle cancelled action - downgrade user to pro plan', async () => {
+    it('should handle cancelled action - downgrade user to free plan', async () => {
       // Create test user and subscription
       const testUserId = `550e8400-e29b-41d4-a716-${Date.now().toString().slice(-12).padStart(12, '0')}`;
       const testPreapprovalId = `preapproval-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -503,14 +503,14 @@ describe('WebhookHandler', () => {
 
       expect(updatedSubscription[0].status).toBe('cancelled');
 
-      // Verify user downgraded to pro plan
+      // Verify user downgraded to free plan
       const updatedUser = await db
         .select()
         .from(users)
         .where(eq(users.id, testUserId))
         .limit(1);
 
-      expect(updatedUser[0].subscriptionPlan).toBe('pro');
+      expect(updatedUser[0].subscriptionPlan).toBe('free');
       expect(updatedUser[0].subscriptionStatus).toBe('cancelled');
 
       // Verify webhook was logged
@@ -650,13 +650,14 @@ describe('WebhookHandler', () => {
 
       expect(updatedSubscription[0].status).toBe('failed');
 
-      // Verify user subscription status updated to cancelled
+      // Verify user downgraded to free plan and status set to cancelled
       const updatedUser = await db
         .select()
         .from(users)
         .where(eq(users.id, testUserId))
         .limit(1);
 
+      expect(updatedUser[0].subscriptionPlan).toBe('free');
       expect(updatedUser[0].subscriptionStatus).toBe('cancelled');
 
       // Verify webhook was logged

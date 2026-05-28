@@ -17,6 +17,16 @@ export class WebhookValidator {
     appSecret = process.env.WHATSAPP_APP_SECRET ?? '',
     verifyToken = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN ?? ''
   ) {
+    // Fail fast on misconfiguration. An empty app secret would let anyone forge
+    // a valid HMAC-SHA256('', payload) signature and drive webhook actions.
+    if (!appSecret) {
+      throw new Error('WHATSAPP_APP_SECRET is required and must not be empty');
+    }
+    if (!verifyToken) {
+      throw new Error(
+        'WHATSAPP_WEBHOOK_VERIFY_TOKEN is required and must not be empty'
+      );
+    }
     this.appSecret = appSecret;
     this.verifyToken = verifyToken;
   }

@@ -279,11 +279,14 @@ export class SubscriptionAPI {
       const billingPeriodEnd = new Date(now);
       billingPeriodEnd.setMonth(billingPeriodEnd.getMonth() + 1);
 
+      // Insert as 'pending'. The subscription is only activated once Mercado
+      // Pago confirms the payment via the authorized webhook — inserting as
+      // 'authorized' would grant paid access before the payment clears.
       await db.insert(subscriptions).values({
         userId: authenticatedUser.id,
         preapprovalId: preApprovalResponse.preApprovalId,
         plan,
-        status: 'authorized',
+        status: 'pending',
         billingPeriodStart: now,
         billingPeriodEnd,
       });

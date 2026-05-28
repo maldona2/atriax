@@ -1,6 +1,10 @@
 export default {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
+  // Cap parallelism and recycle workers that grow past the limit, so the suite
+  // cannot demand more memory than the machine has (workers x heap > RAM).
+  maxWorkers: '50%',
+  workerIdleMemoryLimit: '1GB',
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',

@@ -20,12 +20,26 @@ function formatDate(date: Date): string {
   });
 }
 
+/**
+ * Escape HTML special characters to prevent stored XSS when interpolating
+ * user-controlled fields (patient/professional names, notes, address) into the
+ * email HTML body.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function baseHtml(title: string, body: string): string {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>${title}</title>
+  <title>${escapeHtml(title)}</title>
   <style>
     body { font-family: sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
     .container { max-width: 560px; margin: 32px auto; background: #fff;
@@ -63,17 +77,17 @@ export function bookedTemplate(data: AppointmentEmailData): {
     subject,
     `<div class="header"><h1>✅ Turno agendado</h1></div>
      <div class="body">
-       <p>Hola <strong>${data.patientName}</strong>,</p>
+       <p>Hola <strong>${escapeHtml(data.patientName)}</strong>,</p>
        <p>Tu turno ha sido agendado exitosamente.</p>
        <div class="detail">
          <p class="label">Profesional</p>
-         <p><strong>${data.professionalName}</strong></p>
+         <p><strong>${escapeHtml(data.professionalName)}</strong></p>
          <p class="label">Fecha y hora</p>
          <p><strong>${dateStr}</strong></p>
          <p class="label">Duración</p>
          <p>${data.durationMinutes} minutos</p>
-         ${data.address ? `<p class="label">Dirección</p><p>${data.address}</p>` : ''}
-         ${data.notes ? `<p class="label">Notas</p><p>${data.notes}</p>` : ''}
+         ${data.address ? `<p class="label">Dirección</p><p>${escapeHtml(data.address)}</p>` : ''}
+         ${data.notes ? `<p class="label">Notas</p><p>${escapeHtml(data.notes)}</p>` : ''}
        </div>
        <p>Si necesitás cancelar o reprogramar, ponete en contacto a la brevedad.</p>
      </div>`
@@ -96,16 +110,16 @@ export function confirmedTemplate(data: AppointmentEmailData): {
     subject,
     `<div class="header"><h1>🗓 Turno confirmado</h1></div>
      <div class="body">
-       <p>Hola <strong>${data.patientName}</strong>,</p>
+       <p>Hola <strong>${escapeHtml(data.patientName)}</strong>,</p>
        <p>Tu turno ha sido <strong>confirmado</strong>.</p>
        <div class="detail">
          <p class="label">Profesional</p>
-         <p><strong>${data.professionalName}</strong></p>
+         <p><strong>${escapeHtml(data.professionalName)}</strong></p>
          <p class="label">Fecha y hora</p>
          <p><strong>${dateStr}</strong></p>
          <p class="label">Duración</p>
          <p>${data.durationMinutes} minutos</p>
-         ${data.address ? `<p class="label">Dirección</p><p>${data.address}</p>` : ''}
+         ${data.address ? `<p class="label">Dirección</p><p>${escapeHtml(data.address)}</p>` : ''}
        </div>
        <p>Te esperamos. ¡Hasta pronto!</p>
      </div>`
@@ -128,8 +142,8 @@ export function cancelledTemplate(data: AppointmentEmailData): {
     subject,
     `<div class="header" style="background:#b91c1c"><h1>❌ Turno cancelado</h1></div>
      <div class="body">
-       <p>Hola <strong>${data.patientName}</strong>,</p>
-       <p>Lamentablemente tu turno del <strong>${dateStr}</strong> con <strong>${data.professionalName}</strong> ha sido <strong>cancelado</strong>.</p>
+       <p>Hola <strong>${escapeHtml(data.patientName)}</strong>,</p>
+       <p>Lamentablemente tu turno del <strong>${dateStr}</strong> con <strong>${escapeHtml(data.professionalName)}</strong> ha sido <strong>cancelado</strong>.</p>
        <p>Comunicate para reprogramarlo cuando quieras.</p>
      </div>`
   );
@@ -160,16 +174,16 @@ export function reminderTemplate(data: AppointmentEmailData): {
     subject,
     `<div class="header" style="background:#0369a1"><h1>⏰ Recordatorio de turno</h1></div>
      <div class="body">
-       <p>Hola <strong>${data.patientName}</strong>,</p>
+       <p>Hola <strong>${escapeHtml(data.patientName)}</strong>,</p>
        <p>Te recordamos que mañana tenés turno.</p>
        <div class="detail">
          <p class="label">Profesional</p>
-         <p><strong>${data.professionalName}</strong></p>
+         <p><strong>${escapeHtml(data.professionalName)}</strong></p>
          <p class="label">Fecha y hora</p>
          <p><strong>${dateStr}</strong></p>
          <p class="label">Duración</p>
          <p>${data.durationMinutes} minutos</p>
-         ${data.address ? `<p class="label">Dirección</p><p>${data.address}</p>` : ''}
+         ${data.address ? `<p class="label">Dirección</p><p>${escapeHtml(data.address)}</p>` : ''}
        </div>
        <p>Si no podés asistir, avisanos lo antes posible.</p>
        ${unsubscribeHtml}
@@ -191,7 +205,7 @@ export function verificationTemplate(
     subject,
     `<div class="header"><h1>Verificá tu cuenta</h1></div>
      <div class="body">
-       <p>Hola <strong>${firstName}</strong>,</p>
+       <p>Hola <strong>${escapeHtml(firstName)}</strong>,</p>
        <p>Gracias por registrarte. Hacé clic en el botón para verificar tu cuenta:</p>
        <p style="text-align:center;margin:28px 0">
          <a href="${verifyUrl}"
@@ -258,7 +272,7 @@ export function welcomeTemplate(firstName: string): {
     subject,
     `<div class="header" style="background:#166534"><h1>¡Bienvenido/a!</h1></div>
      <div class="body">
-       <p>Hola <strong>${firstName}</strong>,</p>
+       <p>Hola <strong>${escapeHtml(firstName)}</strong>,</p>
        <p>Tu cuenta ha sido verificada exitosamente. ¡Ya podés empezar a usar la plataforma!</p>
      </div>`
   );

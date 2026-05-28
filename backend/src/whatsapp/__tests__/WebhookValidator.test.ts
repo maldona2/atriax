@@ -55,6 +55,20 @@ describe('WebhookValidator - validateChallenge', () => {
   });
 });
 
+describe('WebhookValidator - constructor', () => {
+  it('throws when the app secret is empty', () => {
+    expect(() => new WebhookValidator('', VERIFY_TOKEN)).toThrow(
+      /WHATSAPP_APP_SECRET/
+    );
+  });
+
+  it('throws when the verify token is empty', () => {
+    expect(() => new WebhookValidator(APP_SECRET, '')).toThrow(
+      /WHATSAPP_WEBHOOK_VERIFY_TOKEN/
+    );
+  });
+});
+
 describe('WebhookValidator - validateSignature', () => {
   it('accepts a valid HMAC-SHA256 signature', () => {
     const v = makeValidator();

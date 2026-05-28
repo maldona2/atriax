@@ -609,15 +609,22 @@ export async function update(
   data: UpdateAppointmentInput
 ): Promise<AppointmentRow | null> {
   const setValue: Partial<typeof appointments.$inferInsert> = {};
+  let currentPaymentStatus: PaymentStatus | null = null;
 
   if (data.status !== undefined) {
     const [current] = await db
-      .select({ status: appointments.status })
+      .select({
+        status: appointments.status,
+        paymentStatus: appointments.paymentStatus,
+      })
       .from(appointments)
       .where(and(eq(appointments.id, id), eq(appointments.tenantId, tenantId)))
       .limit(1);
 
     if (!current) return null;
+
+    currentPaymentStatus =
+      (current.paymentStatus as PaymentStatus | null) ?? null;
 
     const currentStatus = current.status as AppointmentStatus;
     const allowed = VALID_TRANSITIONS[currentStatus] ?? [];
@@ -637,40 +644,53 @@ export async function update(
     setValue.durationMinutes = data.duration_minutes ?? 60;
   if (data.status !== undefined) setValue.status = data.status;
   if (data.status === 'cancelled') {
-    setValue.paymentStatus = null;
-    setValue.totalAmountCents = null;
+    // Preserve the payment record for already-paid appointments; only clear it
+    // when the appointment was not paid, so paid history is not destroyed.
+    if (currentPaymentStatus !== 'paid') {
+      setValue.paymentStatus = null;
+      setValue.totalAmountCents = null;
+    }
   } else if (data.payment_status !== undefined) {
     setValue.paymentStatus = data.payment_status;
   }
   if (data.notes !== undefined) setValue.notes = data.notes ?? null;
 
   if (data.treatments !== undefined) {
-    await db
-      .delete(appointmentTreatments)
-      .where(eq(appointmentTreatments.appointmentId, id));
-
-    if (data.treatments.length > 0) {
-      setValue.totalAmountCents = computeTotalCents(data.treatments);
-      await db.insert(appointmentTreatments).values(
-        data.treatments.map((t) => ({
-          appointmentId: id,
-          treatmentId: t.treatment_id,
-          quantity: t.quantity,
-          unitPriceCents: t.unit_price_cents,
-        }))
-      );
-    } else {
-      setValue.totalAmountCents = null;
-    }
+    setValue.totalAmountCents =
+      data.treatments.length > 0 ? computeTotalCents(data.treatments) : null;
   }
 
   setValue.updatedAt = new Date();
 
-  const [row] = await db
-    .update(appointments)
-    .set(setValue)
-    .where(and(eq(appointments.id, id), eq(appointments.tenantId, tenantId)))
-    .returning();
+  // Replace treatments and update the appointment in a single transaction so a
+  // failed treatment insert cannot leave the appointment with no treatments and
+  // an inconsistent total.
+  const row = await db.transaction(async (tx) => {
+    if (data.treatments !== undefined) {
+      await tx
+        .delete(appointmentTreatments)
+        .where(eq(appointmentTreatments.appointmentId, id));
+
+      if (data.treatments.length > 0) {
+        await tx.insert(appointmentTreatments).values(
+          data.treatments.map((t) => ({
+            appointmentId: id,
+            treatmentId: t.treatment_id,
+            quantity: t.quantity,
+            unitPriceCents: t.unit_price_cents,
+          }))
+        );
+      }
+    }
+
+    const [updated] = await tx
+      .update(appointments)
+      .set(setValue)
+      .where(and(eq(appointments.id, id), eq(appointments.tenantId, tenantId)))
+      .returning();
+
+    return updated ?? null;
+  });
 
   if (!row) return null;
 
@@ -738,8 +758,11 @@ export async function cancel(
     .update(appointments)
     .set({
       status: 'cancelled',
-      paymentStatus: null,
-      totalAmountCents: null,
+      // Preserve the payment record for already-paid appointments; only clear
+      // it when the appointment was not paid, so paid history (used by the debt
+      // dashboard and reports) is not destroyed on cancellation.
+      paymentStatus: sql`CASE WHEN ${appointments.paymentStatus} = 'paid' THEN ${appointments.paymentStatus} ELSE NULL END`,
+      totalAmountCents: sql`CASE WHEN ${appointments.paymentStatus} = 'paid' THEN ${appointments.totalAmountCents} ELSE NULL END`,
       updatedAt: new Date(),
     })
     .where(and(eq(appointments.id, id), eq(appointments.tenantId, tenantId)))
