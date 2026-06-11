@@ -39,10 +39,6 @@ vi.mock('@/hooks/useDashboard', () => ({
   }),
 }));
 
-vi.mock('@/hooks/useSubscription', () => ({
-  useSubscription: () => ({ status: { features: { whatsappIntegration: true } } }),
-}));
-
 describe('DashboardPage', () => {
   it('renders cycle alerts and section headings', () => {
     render(
@@ -53,6 +49,6 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Inicio')).toBeInTheDocument();
     expect(screen.getByText('Recordatorios de ciclo')).toBeInTheDocument();
     expect(screen.getByText('Ana Pérez')).toBeInTheDocument();
-    expect(screen.getByText('WhatsApp')).toBeInTheDocument();
+    expect(screen.getByText('Botox')).toBeInTheDocument();
   });
 });

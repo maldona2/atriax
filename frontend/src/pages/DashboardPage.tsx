@@ -1,5 +1,4 @@
 import { useDashboard } from '@/hooks/useDashboard';
-import { useSubscription } from '@/hooks/useSubscription';
 import { CycleAlertsPanel } from '@/components/dashboard/CycleAlertsPanel';
 import { TodayAppointmentsPanel } from '@/components/dashboard/TodayAppointmentsPanel';
 import { KpisPanel } from '@/components/dashboard/KpisPanel';
@@ -27,8 +26,6 @@ function DashboardSkeleton() {
 
 export function DashboardPage() {
   const { data, loading, error, refetch } = useDashboard();
-  const { status } = useSubscription();
-  const canSendWhatsApp = status?.features?.whatsappIntegration === true;
 
   if (loading && !data) {
     return <DashboardSkeleton />;
@@ -67,8 +64,7 @@ export function DashboardPage() {
         <CycleAlertsPanel
           upcoming={data.cycleAlerts.upcoming}
           overdue={data.cycleAlerts.overdue}
-          canSendWhatsApp={canSendWhatsApp}
-          onReminderSent={refetch}
+          onRefresh={refetch}
         />
       </div>
     </div>

@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Bell, MessageCircle, X, ArrowRight } from 'lucide-react';
+import { Bell, X, ArrowRight } from 'lucide-react';
 import type { CycleAlert } from '@/types/dashboard';
-import { sendCycleReminder, dismissCycleAlert } from '@/lib/dashboardApi';
+import { dismissCycleAlert } from '@/lib/dashboardApi';
 import {
   Dialog,
   DialogContent,
@@ -16,8 +16,7 @@ import { TreatmentRegistrySection } from '@/components/patients/TreatmentRegistr
 interface Props {
   upcoming: CycleAlert[];
   overdue: CycleAlert[];
-  canSendWhatsApp: boolean;
-  onReminderSent: () => void;
+  onRefresh: () => void;
 }
 
 type TabKey = 'overdue' | 'upcoming';
@@ -71,52 +70,30 @@ function dueLabel(alert: CycleAlert, overdue: boolean): string {
 function TreatmentRow({
   alert,
   overdue,
-  canSendWhatsApp,
-  onReminderSent,
+  onRefresh,
   onSelect,
 }: {
   alert: CycleAlert;
   overdue: boolean;
-  canSendWhatsApp: boolean;
-  onReminderSent: () => void;
+  onRefresh: () => void;
   onSelect: () => void;
 }) {
-  const [sending, setSending] = useState(false);
   const [dismissing, setDismissing] = useState(false);
-  const busy = sending || dismissing;
-
-  function errorMessage(err: unknown): string | undefined {
-    return err &&
-      typeof err === 'object' &&
-      'response' in err &&
-      (err as { response?: { data?: { error?: { message?: string } } } })
-        .response?.data?.error?.message
-      ? (err as { response: { data: { error: { message: string } } } }).response
-          .data.error.message
-      : undefined;
-  }
-
-  async function handleSend() {
-    setSending(true);
-    try {
-      await sendCycleReminder(alert.patientTreatmentId);
-      toast.success(`Recordatorio enviado a ${alert.patientName}`);
-      onReminderSent();
-    } catch (err: unknown) {
-      toast.error(errorMessage(err) || 'No se pudo enviar el recordatorio');
-    } finally {
-      setSending(false);
-    }
-  }
 
   async function handleDismiss() {
     setDismissing(true);
     try {
       await dismissCycleAlert(alert.patientTreatmentId);
       toast.success(`Alerta de ${alert.patientName} descartada`);
-      onReminderSent();
+      onRefresh();
     } catch (err: unknown) {
-      toast.error(errorMessage(err) || 'No se pudo descartar la alerta');
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'response' in err &&
+        (err as { response?: { data?: { error?: { message?: string } } } })
+          .response?.data?.error?.message;
+      toast.error(message || 'No se pudo descartar la alerta');
     } finally {
       setDismissing(false);
     }
@@ -140,31 +117,20 @@ function TreatmentRow({
       >
         {dueLabel(alert, overdue)}
       </span>
-      <div className="flex shrink-0 items-center gap-1 max-md:ml-auto">
-        {canSendWhatsApp && alert.patientPhone && (
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={busy}
-            className="inline-flex h-[26px] items-center gap-1.5 rounded-md px-2 text-xs font-medium text-[oklch(0.72_0.17_150)] transition-colors hover:bg-[oklch(0.72_0.17_150/12%)] disabled:opacity-50"
-          >
-            <MessageCircle className="size-3.5" strokeWidth={1.75} />
-            {sending ? 'Enviando…' : 'WhatsApp'}
-          </button>
-        )}
-        {overdue && (
+      {overdue && (
+        <div className="flex shrink-0 items-center gap-1 max-md:ml-auto">
           <button
             type="button"
             onClick={handleDismiss}
-            disabled={busy}
+            disabled={dismissing}
             title="Descartar alerta"
             aria-label="Descartar alerta"
             className="inline-flex h-[26px] items-center justify-center rounded-md px-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
           >
             <X className="size-3.5" strokeWidth={1.75} />
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -211,14 +177,12 @@ function TabButton({
 function ReminderList({
   alerts,
   overdue,
-  canSendWhatsApp,
-  onReminderSent,
+  onRefresh,
   onSelect,
 }: {
   alerts: CycleAlert[];
   overdue: boolean;
-  canSendWhatsApp: boolean;
-  onReminderSent: () => void;
+  onRefresh: () => void;
   onSelect: (alert: CycleAlert) => void;
 }) {
   const groups = useMemo(() => groupByPatient(alerts), [alerts]);
@@ -255,8 +219,7 @@ function ReminderList({
               key={a.patientTreatmentId}
               alert={a}
               overdue={overdue}
-              canSendWhatsApp={canSendWhatsApp}
-              onReminderSent={onReminderSent}
+              onRefresh={onRefresh}
               onSelect={() => onSelect(a)}
             />
           ))}
@@ -266,12 +229,7 @@ function ReminderList({
   );
 }
 
-export function CycleAlertsPanel({
-  upcoming,
-  overdue,
-  canSendWhatsApp,
-  onReminderSent,
-}: Props) {
+export function CycleAlertsPanel({ upcoming, overdue, onRefresh }: Props) {
   const empty = upcoming.length === 0 && overdue.length === 0;
   const [activeTab, setActiveTab] = useState<TabKey>(
     overdue.length > 0 ? 'overdue' : 'upcoming'
@@ -323,8 +281,7 @@ export function CycleAlertsPanel({
           <ReminderList
             alerts={activeAlerts}
             overdue={activeTab === 'overdue'}
-            canSendWhatsApp={canSendWhatsApp}
-            onReminderSent={onReminderSent}
+            onRefresh={onRefresh}
             onSelect={setSelected}
           />
           <div className="flex items-center justify-between border-t px-4 py-2.5 text-xs text-muted-foreground">
