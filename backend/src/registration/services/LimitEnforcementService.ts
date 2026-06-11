@@ -3,7 +3,26 @@ import { db, users, patientCounts } from '../../db/client.js';
 import type { LimitEnforcer } from '../interfaces/LimitEnforcer.js';
 
 const FREE_TIER_PATIENT_LIMIT = 5;
-const DEFAULT_PAID_PATIENT_LIMIT = 50;
+const PRO_TIER_PATIENT_LIMIT = 50;
+
+/** Sentinel for unlimited patient capacity (matches subscriptions SENTINEL_VALUE). */
+export const UNLIMITED = -1;
+
+/**
+ * Pure mapping from subscription plan name to patient limit.
+ * Gold is unlimited (consistent with PlanManager); unknown plans fall back to free.
+ */
+export function patientLimitForPlan(plan: string): number {
+  switch (plan) {
+    case 'gold':
+      return UNLIMITED;
+    case 'pro':
+      return PRO_TIER_PATIENT_LIMIT;
+    case 'free':
+    default:
+      return FREE_TIER_PATIENT_LIMIT;
+  }
+}
 
 /**
  * LimitEnforcementService implements subscription-based limits
@@ -11,13 +30,15 @@ const DEFAULT_PAID_PATIENT_LIMIT = 50;
  */
 export class LimitEnforcementService implements LimitEnforcer {
   async canCreatePatient(userId: string): Promise<boolean> {
+    const limit = await this.getPatientLimit(userId);
+    if (limit === UNLIMITED) return true;
+
     const [countRow] = await db
       .select()
       .from(patientCounts)
       .where(eq(patientCounts.userId, userId))
       .limit(1);
 
-    const limit = await this.getPatientLimit(userId);
     const current = countRow?.count ?? 0;
     return current < limit;
   }
@@ -95,7 +116,6 @@ export class LimitEnforcementService implements LimitEnforcer {
       .limit(1);
 
     if (!user) return FREE_TIER_PATIENT_LIMIT;
-    if (user.subscriptionPlan === 'free') return FREE_TIER_PATIENT_LIMIT;
-    return DEFAULT_PAID_PATIENT_LIMIT;
+    return patientLimitForPlan(user.subscriptionPlan);
   }
 }
