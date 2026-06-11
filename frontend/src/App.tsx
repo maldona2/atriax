@@ -25,6 +25,7 @@ import { PatientsPage } from '@/pages/PatientsPage';
 import { PatientDetailPage } from '@/pages/PatientDetailPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { DebtDashboardPage } from '@/pages/DebtDashboardPage';
+import { DashboardPage } from '@/pages/DashboardPage';
 import { HelpPage } from '@/pages/HelpPage';
 import TermsPage from '@/pages/TermsPage';
 import PrivacyPage from '@/pages/PrivacyPage';
@@ -92,6 +93,7 @@ function App() {
                   </ProtectedRoute>
                 }
               >
+                <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="appointments" element={<AppointmentsPage />} />
                 <Route
                   path="appointments/:id"
@@ -105,7 +107,7 @@ function App() {
                 <Route path="help/:section" element={<HelpPage />} />
                 <Route
                   index
-                  element={<Navigate to="/app/appointments" replace />}
+                  element={<Navigate to="/app/dashboard" replace />}
                 />
               </Route>
               <Route

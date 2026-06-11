@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import {
+  Home,
   Calendar,
   Syringe,
   Users,
@@ -22,6 +23,7 @@ export function AppLayout() {
   const sidebarItems =
     status?.features?.appointments === false
       ? ([
+          { to: '/app/dashboard', label: 'Inicio', icon: Home },
           { to: '/app/patients', label: 'Pacientes', icon: Users },
           {
             to: '/app/profile?tab=treatments',
@@ -36,6 +38,7 @@ export function AppLayout() {
           { to: '/app/help', label: 'Ayuda', icon: HelpCircle },
         ] as const)
       : ([
+          { to: '/app/dashboard', label: 'Inicio', icon: Home },
           { to: '/app/appointments', label: 'Turnos', icon: Calendar },
           { to: '/app/patients', label: 'Pacientes', icon: Users },
           {
