@@ -60,4 +60,30 @@ router.post(
   }
 );
 
+// POST /api/dashboard/cycle-reminder/:patientTreatmentId/dismiss
+router.post(
+  '/cycle-reminder/:patientTreatmentId/dismiss',
+  professionalOnly,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(req);
+      const parsed = patientTreatmentIdSchema.safeParse(
+        req.params.patientTreatmentId
+      );
+      if (!parsed.success) {
+        const err = new Error('patientTreatmentId must be a valid UUID');
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        return next(err);
+      }
+      const result = await dashboardService.dismissCycleAlert(
+        tenantId,
+        parsed.data
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 export default router;

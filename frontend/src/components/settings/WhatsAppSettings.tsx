@@ -9,6 +9,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -180,9 +181,10 @@ export function WhatsAppSettings({ isGoldPlan }: WhatsAppSettingsProps) {
         )}
 
         {loading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <RefreshCw className="h-4 w-4 animate-spin" />
-            Cargando estado...
+          <div className="space-y-3">
+            <Skeleton className="h-12 w-full rounded-lg" />
+            <Skeleton className="h-12 w-full rounded-lg" />
+            <Skeleton className="h-9 w-32" />
           </div>
         ) : (
           <div className="space-y-4">

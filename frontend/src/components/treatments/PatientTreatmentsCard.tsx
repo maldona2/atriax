@@ -8,6 +8,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
@@ -110,7 +111,11 @@ export function PatientTreatmentsCard({
       </CardHeader>
       <CardContent className="p-6">
         {loading ? (
-          <p className="text-sm text-muted-foreground">Cargando...</p>
+          <div className="space-y-3">
+            <Skeleton className="h-16 w-full rounded-lg" />
+            <Skeleton className="h-16 w-full rounded-lg" />
+            <Skeleton className="h-16 w-full rounded-lg" />
+          </div>
         ) : activeTreatments.length === 0 &&
           availableTreatments.length === 0 &&
           completedTreatments.length === 0 ? (

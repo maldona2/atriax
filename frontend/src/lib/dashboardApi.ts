@@ -14,3 +14,12 @@ export async function sendCycleReminder(
   );
   return data;
 }
+
+export async function dismissCycleAlert(
+  patientTreatmentId: string
+): Promise<{ status: string }> {
+  const { data } = await api.post(
+    `/dashboard/cycle-reminder/${patientTreatmentId}/dismiss`
+  );
+  return data;
+}

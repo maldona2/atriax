@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Upload, ImageOff, Loader2, ZoomIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useSessionPhotos } from '@/hooks/useSessionPhotos';
 import api from '@/lib/api';
@@ -152,7 +153,11 @@ export function PhotoUploadComponent({
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Cargando fotos...</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="aspect-square w-full rounded-lg" />
+          ))}
+        </div>
       ) : photos.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-6 text-muted-foreground">
           <ImageOff className="mb-2 h-8 w-8 opacity-40" />

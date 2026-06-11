@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Trash2, Upload, ImageOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useSessionPhotos } from '@/hooks/useSessionPhotos';
 import { toast } from 'sonner';
 
@@ -67,7 +68,11 @@ export function SessionPhotoGallery({ sessionId }: SessionPhotoGalleryProps) {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Cargando fotos...</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="aspect-square w-full rounded-md" />
+          ))}
+        </div>
       ) : photos.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-2">
           <ImageOff className="h-8 w-8" />

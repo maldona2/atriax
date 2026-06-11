@@ -404,3 +404,28 @@ export async function sendCycleReminder(
   await self.markCycleReminderSent(tenantId, patientTreatmentId);
   return { status: 'sent' };
 }
+
+export interface DismissCycleAlertResult {
+  status: 'dismissed';
+}
+
+/**
+ * Dismiss an overdue (or upcoming) cycle alert without sending WhatsApp.
+ * Reuses the cooldown stamp: lastCycleReminderAt = now hides the alert for the
+ * cooldown window; it reappears afterwards if still due.
+ */
+export async function dismissCycleAlert(
+  tenantId: string,
+  patientTreatmentId: string
+): Promise<DismissCycleAlertResult> {
+  const ctx = await self.fetchCycleReminderContext(
+    tenantId,
+    patientTreatmentId
+  );
+  if (!ctx || !ctx.isActive) {
+    throw httpError(404, 'Tratamiento no encontrado');
+  }
+
+  await self.markCycleReminderSent(tenantId, patientTreatmentId);
+  return { status: 'dismissed' };
+}

@@ -10,6 +10,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Card,
   CardContent,
@@ -154,9 +155,10 @@ export function GoogleCalendarSettings() {
         )}
 
         {loading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <RefreshCw className="h-4 w-4 animate-spin" />
-            Cargando estado...
+          <div className="space-y-3">
+            <Skeleton className="h-12 w-full rounded-lg" />
+            <Skeleton className="h-12 w-full rounded-lg" />
+            <Skeleton className="h-9 w-32" />
           </div>
         ) : (
           <div className="space-y-4">

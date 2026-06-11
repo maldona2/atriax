@@ -52,6 +52,7 @@ export function useTreatmentHistory(patientId: string | null) {
     setLoading(true);
     setError(null);
 
+    let cancelled = false;
     try {
       const { data } = await api.get<TreatmentHistoryResponse>(
         `/patients/${patientId}/treatment-history`,
@@ -69,8 +70,16 @@ export function useTreatmentHistory(patientId: string | null) {
       setTreatmentHistory(data);
       setError(null);
     } catch (err) {
-      // Ignore abort errors
-      if (err instanceof Error && err.name === 'AbortError') {
+      // Ignore cancellations (fetch AbortError + axios CanceledError). These
+      // fire when a pending request is aborted (e.g. React StrictMode's
+      // double-mount), and must not surface as a user-facing error — nor flip
+      // loading off while the replacement request is still in flight.
+      const e = err as { name?: string; code?: string };
+      cancelled =
+        e?.name === 'AbortError' ||
+        e?.name === 'CanceledError' ||
+        e?.code === 'ERR_CANCELED';
+      if (cancelled) {
         return;
       }
 
@@ -81,7 +90,9 @@ export function useTreatmentHistory(patientId: string | null) {
       setError(errorMessage);
       setTreatmentHistory(null);
     } finally {
-      setLoading(false);
+      if (!cancelled) {
+        setLoading(false);
+      }
     }
   }, [patientId]);
 

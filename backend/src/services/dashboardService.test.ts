@@ -290,3 +290,46 @@ describe('sendCycleReminder', () => {
     ).rejects.toMatchObject({ statusCode: 409 });
   });
 });
+
+describe('dismissCycleAlert', () => {
+  const ctxBase = {
+    patientTreatmentId: 'pt-1',
+    patientName: 'Ana Pérez',
+    patientPhone: '+5491100000000',
+    treatmentName: 'Botox',
+    professionalName: 'Dra. López',
+    address: 'Av. 1',
+    isActive: true,
+    subscriptionPlan: 'silver',
+    subscriptionStatus: 'active',
+    lastCycleReminderAt: null as Date | null,
+  };
+
+  afterEach(() => jest.restoreAllMocks());
+
+  it('stamps lastCycleReminderAt without sending WhatsApp', async () => {
+    jest
+      .spyOn(dashboardService, 'fetchCycleReminderContext')
+      .mockResolvedValue({ ...ctxBase });
+    const sendSpy = jest
+      .spyOn(whatsAppNotificationService, 'sendCycleReminder')
+      .mockResolvedValue();
+    const markSpy = jest
+      .spyOn(dashboardService, 'markCycleReminderSent')
+      .mockResolvedValue();
+
+    const res = await dashboardService.dismissCycleAlert('t-1', 'pt-1');
+    expect(res.status).toBe('dismissed');
+    expect(sendSpy).not.toHaveBeenCalled();
+    expect(markSpy).toHaveBeenCalledWith('t-1', 'pt-1');
+  });
+
+  it('throws 404 when the patient treatment is not found', async () => {
+    jest
+      .spyOn(dashboardService, 'fetchCycleReminderContext')
+      .mockResolvedValue(null);
+    await expect(
+      dashboardService.dismissCycleAlert('t-1', 'missing')
+    ).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
