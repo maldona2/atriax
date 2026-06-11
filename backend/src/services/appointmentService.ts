@@ -22,6 +22,7 @@ import { syncQueue } from './syncQueue.js';
 import { googleAuthService } from './googleAuthService.js';
 import * as patientTreatmentService from './patientTreatmentService.js';
 import { maybeSendImmediateReminder } from '../jobs/reminderJob.js';
+import { CLINIC_TIME_ZONE } from '../config/timezone.js';
 import logger from '../utils/logger.js';
 
 async function enqueueSyncIfConnected(
@@ -160,19 +161,22 @@ export async function list(
 ): Promise<AppointmentRow[]> {
   const conditions = [eq(appointments.tenantId, tenantId)];
 
+  // Bucket appointments by their day in the clinic's timezone, not the Postgres
+  // session timezone (UTC in production). Without `AT TIME ZONE`, a timestamptz
+  // near midnight is cast to the wrong calendar day for the clinic.
   if (filters.date) {
     conditions.push(
-      sql`${appointments.scheduledAt}::date = ${filters.date}::date`
+      sql`(${appointments.scheduledAt} AT TIME ZONE ${CLINIC_TIME_ZONE})::date = ${filters.date}::date`
     );
   }
   if (filters.dateFrom) {
     conditions.push(
-      sql`${appointments.scheduledAt}::date >= ${filters.dateFrom}::date`
+      sql`(${appointments.scheduledAt} AT TIME ZONE ${CLINIC_TIME_ZONE})::date >= ${filters.dateFrom}::date`
     );
   }
   if (filters.dateTo) {
     conditions.push(
-      sql`${appointments.scheduledAt}::date <= ${filters.dateTo}::date`
+      sql`(${appointments.scheduledAt} AT TIME ZONE ${CLINIC_TIME_ZONE})::date <= ${filters.dateTo}::date`
     );
   }
   if (filters.status) {

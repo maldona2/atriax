@@ -12,6 +12,7 @@ import { computeNextDueDate } from './patientTreatmentService.js';
 import * as appointmentService from './appointmentService.js';
 import type { AppointmentRow } from './appointmentService.js';
 import { debtDashboardService } from './debtDashboardService.js';
+import { CLINIC_TIME_ZONE } from '../config/timezone.js';
 import * as self from './dashboardService.js';
 
 export interface CycleAlertRow {
@@ -246,16 +247,17 @@ export interface DashboardData {
   debtSummary: DebtSummary;
 }
 
-function todayStringInBuenosAires(now: Date): string {
-  // en-CA yields YYYY-MM-DD
+function todayStringInClinicZone(now: Date): string {
+  // en-CA yields YYYY-MM-DD. Must use the same zone appointmentService.list
+  // filters by, so "today's" date string and the DB day bucket agree.
   return now.toLocaleDateString('en-CA', {
-    timeZone: 'America/Argentina/Buenos_Aires',
+    timeZone: CLINIC_TIME_ZONE,
   });
 }
 
 export async function getDashboard(tenantId: string): Promise<DashboardData> {
   const now = new Date();
-  const today = todayStringInBuenosAires(now);
+  const today = todayStringInClinicZone(now);
 
   const [todayAppointments, cycleAlerts, stats] = await Promise.all([
     appointmentService.list(tenantId, { date: today }),
