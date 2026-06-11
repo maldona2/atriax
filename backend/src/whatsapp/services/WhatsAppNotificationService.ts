@@ -16,12 +16,14 @@ import {
   appointmentConfirmedTemplate,
   appointmentCancelledTemplate,
   appointmentReminderTemplate,
+  cycleReminderTemplate,
   type AppointmentNotificationData,
+  type CycleReminderData,
   type WhatsAppTemplateMessage,
 } from '../templates.js';
 import logger from '../../utils/logger.js';
 
-export type { AppointmentNotificationData };
+export type { AppointmentNotificationData, CycleReminderData };
 
 const featureEnabled =
   (process.env.FEATURE_WHATSAPP_ENABLED ?? 'true').toLowerCase() !== 'false';
@@ -71,6 +73,13 @@ export class WhatsAppNotificationService {
       appointmentReminderTemplate(data),
       'reminder'
     );
+  }
+
+  async sendCycleReminder(
+    phone: string,
+    data: CycleReminderData
+  ): Promise<void> {
+    await this._sendTemplate(phone, cycleReminderTemplate(data), 'cycle');
   }
 
   // ─── Private ────────────────────────────────────────────────────────────────

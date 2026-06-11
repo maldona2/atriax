@@ -1,5 +1,9 @@
 /**
  * Unit tests for WhatsAppNotificationService
+ *
+ * The service sends business-initiated outbound messages via approved WhatsApp
+ * templates, so it calls MetaAPIClient.sendTemplateMessage (templateName,
+ * languageCode, bodyParameters) — NOT sendTextMessage.
  */
 
 import { WhatsAppNotificationService } from '../services/WhatsAppNotificationService.js';
@@ -15,7 +19,7 @@ const SAMPLE_DATA: AppointmentNotificationData = {
 
 function makeClient(success = true): jest.Mocked<MetaAPIClient> {
   return {
-    sendTextMessage: jest
+    sendTemplateMessage: jest
       .fn()
       .mockResolvedValue({ success, messageId: 'mid-1' }),
   } as unknown as jest.Mocked<MetaAPIClient>;
@@ -29,78 +33,79 @@ describe('WhatsAppNotificationService', () => {
   });
 
   describe('sendAppointmentBooked', () => {
-    it('sends a text message when phone and feature are provided', async () => {
+    it('sends the turno_agendado template when phone and feature are provided', async () => {
       const client = makeClient();
       const svc = new WhatsAppNotificationService(client);
       await svc.sendAppointmentBooked('+5491112345678', SAMPLE_DATA);
-      expect(client.sendTextMessage).toHaveBeenCalledTimes(1);
-      const [phone, text] = client.sendTextMessage.mock.calls[0]!;
+      expect(client.sendTemplateMessage).toHaveBeenCalledTimes(1);
+      const [phone, templateName, languageCode, bodyParameters] =
+        client.sendTemplateMessage.mock.calls[0]!;
       expect(phone).toBe('+5491112345678');
-      expect(text).toContain('Turno registrado');
-      expect(text).toContain('María López');
-      expect(text).toContain('Dr. Juan Pérez');
+      expect(templateName).toBe('turno_agendado');
+      expect(languageCode).toBe('es_AR');
+      expect(bodyParameters).toContain('María López');
+      expect(bodyParameters).toContain('Dr. Juan Pérez');
     });
 
     it('skips send when phone is empty', async () => {
       const client = makeClient();
       const svc = new WhatsAppNotificationService(client);
       await svc.sendAppointmentBooked('', SAMPLE_DATA);
-      expect(client.sendTextMessage).not.toHaveBeenCalled();
+      expect(client.sendTemplateMessage).not.toHaveBeenCalled();
     });
 
     it('skips send when FEATURE_WHATSAPP_ENABLED is false', async () => {
       process.env.FEATURE_WHATSAPP_ENABLED = 'false';
-      // Re-import would pick up env, but since module is cached we test via the
-      // instance's _send path — use a fresh module evaluation via jest.isolateModules
-      // Instead we test the behavior through the constructor; the feature flag is
-      // read at module load time, so we mock the env before import.
-      // Simpler: just verify that no message is sent by the existing instance.
+      // The feature flag is read at module load time, so we cannot toggle it
+      // per-test. Instead, stub the private _sendTemplate to assert the public
+      // method does not reach the client.
       const client = makeClient();
-      // Manually override featureEnabled by accessing private via cast
       const svc = new WhatsAppNotificationService(client);
-      // Force the internal flag off by mocking the send method
       jest
-        .spyOn(svc as unknown as { _send: () => void }, '_send')
+        .spyOn(
+          svc as unknown as { _sendTemplate: () => Promise<void> },
+          '_sendTemplate'
+        )
         .mockResolvedValue(undefined);
       await svc.sendAppointmentBooked('+5491112345678', SAMPLE_DATA);
-      expect(client.sendTextMessage).not.toHaveBeenCalled();
+      expect(client.sendTemplateMessage).not.toHaveBeenCalled();
     });
   });
 
   describe('sendAppointmentConfirmed', () => {
-    it('sends a confirmed message', async () => {
+    it('sends the turno_confirmado template', async () => {
       const client = makeClient();
       const svc = new WhatsAppNotificationService(client);
       await svc.sendAppointmentConfirmed('+5491112345678', SAMPLE_DATA);
-      const [, text] = client.sendTextMessage.mock.calls[0]!;
-      expect(text).toContain('Turno confirmado');
+      const [, templateName] = client.sendTemplateMessage.mock.calls[0]!;
+      expect(templateName).toBe('turno_confirmado');
     });
   });
 
   describe('sendAppointmentCancelled', () => {
-    it('sends a cancelled message', async () => {
+    it('sends the turno_cancelado template', async () => {
       const client = makeClient();
       const svc = new WhatsAppNotificationService(client);
       await svc.sendAppointmentCancelled('+5491112345678', SAMPLE_DATA);
-      const [, text] = client.sendTextMessage.mock.calls[0]!;
-      expect(text).toContain('Turno cancelado');
+      const [, templateName] = client.sendTemplateMessage.mock.calls[0]!;
+      expect(templateName).toBe('turno_cancelado');
     });
   });
 
   describe('sendAppointmentReminder', () => {
-    it('sends a reminder message', async () => {
+    it('sends the recordatorio_turno template', async () => {
       const client = makeClient();
       const svc = new WhatsAppNotificationService(client);
       await svc.sendAppointmentReminder('+5491112345678', SAMPLE_DATA);
-      const [, text] = client.sendTextMessage.mock.calls[0]!;
-      expect(text).toContain('Recordatorio de turno');
+      const [, templateName] = client.sendTemplateMessage.mock.calls[0]!;
+      expect(templateName).toBe('recordatorio_turno');
     });
   });
 
   describe('error handling', () => {
     it('does not throw when MetaAPIClient returns failure', async () => {
       const client = makeClient(false);
-      (client.sendTextMessage as jest.Mock).mockResolvedValue({
+      (client.sendTemplateMessage as jest.Mock).mockResolvedValue({
         success: false,
         error: 'rate limit',
       });
@@ -112,7 +117,7 @@ describe('WhatsAppNotificationService', () => {
 
     it('does not throw when MetaAPIClient throws unexpectedly', async () => {
       const client = makeClient();
-      (client.sendTextMessage as jest.Mock).mockRejectedValue(
+      (client.sendTemplateMessage as jest.Mock).mockRejectedValue(
         new Error('network failure')
       );
       const svc = new WhatsAppNotificationService(client);

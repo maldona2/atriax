@@ -17,6 +17,7 @@ export interface PatientTreatmentRow {
   last_appointment_id: string | null;
   is_active: boolean;
   completed_at: Date | null;
+  last_cycle_reminder_at: Date | null;
   created_at: Date | null;
   updated_at: Date | null;
   treatment?: treatmentService.TreatmentRow | null;
@@ -49,6 +50,7 @@ function toRow(
     last_appointment_id: t.lastAppointmentId,
     is_active: t.isActive,
     completed_at: t.completedAt ?? null,
+    last_cycle_reminder_at: t.lastCycleReminderAt ?? null,
     created_at: t.createdAt,
     updated_at: t.updatedAt,
     treatment,
@@ -218,31 +220,57 @@ export async function remove(tenantId: string, id: string): Promise<boolean> {
   return !!row;
 }
 
+export interface NextDueDateParams {
+  baseDate: Date | null;
+  currentSession: number;
+  initialSessionsCount: number | null;
+  initialFrequencyWeeks: number | null;
+  maintenanceFrequencyWeeks: number | null;
+}
+
+/**
+ * Pure cycle-date math. Returns the next expected visit date by adding the
+ * applicable frequency (initial vs maintenance phase) to baseDate, or null when
+ * it cannot be computed (no baseDate or the applicable frequency is unset).
+ */
+export function computeNextDueDate(params: NextDueDateParams): Date | null {
+  const {
+    baseDate,
+    currentSession,
+    initialSessionsCount,
+    initialFrequencyWeeks,
+    maintenanceFrequencyWeeks,
+  } = params;
+
+  if (!baseDate) return null;
+
+  const initialPhaseComplete =
+    initialSessionsCount !== null && currentSession >= initialSessionsCount;
+
+  let weeksToAdd: number | null = null;
+  if (!initialPhaseComplete && initialFrequencyWeeks !== null) {
+    weeksToAdd = initialFrequencyWeeks;
+  } else if (initialPhaseComplete && maintenanceFrequencyWeeks !== null) {
+    weeksToAdd = maintenanceFrequencyWeeks;
+  }
+
+  if (weeksToAdd === null) return null;
+
+  const next = new Date(baseDate);
+  next.setDate(next.getDate() + weeksToAdd * 7);
+  return next;
+}
+
 export function calculateNextAppointment(
   treatment: treatmentService.TreatmentRow,
   patientTreatment: PatientTreatmentRow,
   lastAppointmentDate: Date | null
 ): Date | null {
-  if (!lastAppointmentDate) return null;
-
-  const initialPhaseComplete =
-    treatment.initial_sessions_count !== null &&
-    patientTreatment.current_session >= treatment.initial_sessions_count;
-
-  let weeksToAdd: number | null = null;
-
-  if (!initialPhaseComplete && treatment.initial_frequency_weeks !== null) {
-    weeksToAdd = treatment.initial_frequency_weeks;
-  } else if (
-    initialPhaseComplete &&
-    treatment.maintenance_frequency_weeks !== null
-  ) {
-    weeksToAdd = treatment.maintenance_frequency_weeks;
-  }
-
-  if (weeksToAdd === null) return null;
-
-  const nextDate = new Date(lastAppointmentDate);
-  nextDate.setDate(nextDate.getDate() + weeksToAdd * 7);
-  return nextDate;
+  return computeNextDueDate({
+    baseDate: lastAppointmentDate,
+    currentSession: patientTreatment.current_session,
+    initialSessionsCount: treatment.initial_sessions_count,
+    initialFrequencyWeeks: treatment.initial_frequency_weeks,
+    maintenanceFrequencyWeeks: treatment.maintenance_frequency_weeks,
+  });
 }

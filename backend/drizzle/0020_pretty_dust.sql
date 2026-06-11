@@ -1,0 +1,1 @@
+ALTER TABLE "patient_treatments" ADD COLUMN "last_cycle_reminder_at" timestamp with time zone;

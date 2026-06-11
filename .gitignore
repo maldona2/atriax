@@ -46,3 +46,6 @@ sendgrid.env
 
 # Radar (agente de bitácora, no se commitea)
 .radar/
+
+# Superpowers visual brainstorm scratch
+.superpowers/

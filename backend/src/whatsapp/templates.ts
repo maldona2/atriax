@@ -14,6 +14,13 @@ export interface AppointmentNotificationData {
   address?: string | null;
 }
 
+export interface CycleReminderData {
+  patientName: string;
+  treatmentName: string;
+  professionalName: string;
+  address?: string | null;
+}
+
 const ADDRESS_FALLBACK = 'A confirmar';
 
 function formatDate(date: Date): string {
@@ -123,6 +130,12 @@ export function appointmentReminderMessage(
 //   Si no podés asistir, cancelá aquí: {{5}}
 //   📍 Dirección: {{6}}
 //
+// recordatorio_ciclo (4 params):
+//   Hola {{1}}, te escribimos de parte de {{3}}.
+//   Según tu tratamiento de {{2}}, ya estás en fecha para tu próxima sesión.
+//   📍 Dirección: {{4}}
+//   Respondé este mensaje para coordinar tu próximo turno.
+//
 // NOTA: cuando profesional no tiene dirección cargada, se envía "A confirmar"
 // como fallback (Meta rechaza parámetros vacíos).
 
@@ -191,6 +204,21 @@ export function appointmentReminderTemplate(
       formatDate(data.scheduledAt),
       String(data.durationMinutes),
       data.cancelUrl ?? '',
+      data.address ?? ADDRESS_FALLBACK,
+    ],
+  };
+}
+
+export function cycleReminderTemplate(
+  data: CycleReminderData
+): WhatsAppTemplateMessage {
+  return {
+    templateName: 'recordatorio_ciclo',
+    languageCode: 'es_AR',
+    bodyParameters: [
+      data.patientName,
+      data.treatmentName,
+      data.professionalName,
       data.address ?? ADDRESS_FALLBACK,
     ],
   };

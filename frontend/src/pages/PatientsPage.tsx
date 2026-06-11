@@ -65,15 +65,25 @@ export function PatientsPage() {
       date_of_birth: data.date_of_birth || null,
       notes: data.notes || null,
     };
-    if (editingPatient) {
-      await api.put(`/patients/${editingPatient.id}`, payload);
-      toast.success('Paciente actualizado');
-    } else {
-      await api.post('/patients', payload);
-      toast.success('Paciente creado');
+    try {
+      if (editingPatient) {
+        await api.put(`/patients/${editingPatient.id}`, payload);
+        toast.success('Paciente actualizado');
+      } else {
+        await api.post('/patients', payload);
+        toast.success('Paciente creado');
+      }
+      setEditingPatient(null);
+      refetch();
+    } catch (error: any) {
+      const message =
+        error.response?.data?.error?.message ||
+        (error.message?.includes('Network')
+          ? 'Error de conexión. Por favor, intenta de nuevo'
+          : 'Error al guardar el paciente. Por favor, intenta de nuevo');
+      toast.error(message);
+      throw error;
     }
-    setEditingPatient(null);
-    refetch();
   }
 
   return (
