@@ -4,6 +4,9 @@ import {
   type CycleAlertRow,
 } from './dashboardService.js';
 import type { AppointmentRow } from './appointmentService.js';
+import * as dashboardService from './dashboardService.js';
+import * as appointmentService from './appointmentService.js';
+import { debtDashboardService } from './debtDashboardService.js';
 
 const NOW = new Date('2026-06-11T12:00:00.000Z');
 
@@ -138,5 +141,70 @@ describe('computeKpis', () => {
       pendingCount: 0,
       todayRevenueCents: 0,
     });
+  });
+});
+
+describe('getCycleAlerts', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('composes fetchers and classifies', async () => {
+    jest
+      .spyOn(dashboardService, 'fetchActiveCycleRows')
+      .mockResolvedValue([row()]);
+    jest
+      .spyOn(dashboardService, 'fetchFuturePatientIds')
+      .mockResolvedValue(new Set<string>());
+
+    const result = await dashboardService.getCycleAlerts('t-1', {
+      now: NOW,
+      windowDays: 7,
+      cooldownDays: 14,
+    });
+    expect(result.upcoming).toHaveLength(1);
+  });
+});
+
+describe('getDashboard', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('aggregates today appointments, cycle alerts, kpis and debt summary', async () => {
+    jest.spyOn(appointmentService, 'list').mockResolvedValue([
+      {
+        id: 'a-1',
+        tenant_id: 't-1',
+        patient_id: 'p-1',
+        scheduled_at: NOW,
+        duration_minutes: 60,
+        status: 'confirmed',
+        payment_status: 'paid',
+        total_amount_cents: 10000,
+        notes: null,
+        created_at: null,
+        updated_at: null,
+      },
+    ]);
+    jest
+      .spyOn(dashboardService, 'getCycleAlerts')
+      .mockResolvedValue({ upcoming: [], overdue: [] });
+    jest.spyOn(debtDashboardService, 'calculateStatistics').mockResolvedValue({
+      totalPaidCents: 0,
+      totalUnpaidCents: 50000,
+      collectionRate: 0,
+      patientsWithBalance: 3,
+      averageDebtCents: 0,
+      totalTreatmentCostsCents: 0,
+      realIncomeCents: 0,
+      profitMarginPercentage: 0,
+      lastUpdated: NOW.toISOString(),
+    });
+
+    const data = await dashboardService.getDashboard('t-1');
+    expect(data.todayAppointments).toHaveLength(1);
+    expect(data.kpis.todayRevenueCents).toBe(10000);
+    expect(data.debtSummary).toEqual({
+      totalPendingCents: 50000,
+      patientCount: 3,
+    });
+    expect(data.cycleAlerts).toEqual({ upcoming: [], overdue: [] });
   });
 });

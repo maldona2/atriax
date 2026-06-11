@@ -1,5 +1,16 @@
+import { and, eq, gte, ne } from 'drizzle-orm';
+import {
+  db,
+  patientTreatments,
+  treatments,
+  patients,
+  appointments,
+} from '../db/client.js';
 import { computeNextDueDate } from './patientTreatmentService.js';
+import * as appointmentService from './appointmentService.js';
 import type { AppointmentRow } from './appointmentService.js';
+import { debtDashboardService } from './debtDashboardService.js';
+import * as self from './dashboardService.js';
 
 export interface CycleAlertRow {
   patientTreatmentId: string;
@@ -118,5 +129,145 @@ export function computeKpis(today: AppointmentRow[]): DashboardKpis {
     confirmedCount,
     pendingCount,
     todayRevenueCents,
+  };
+}
+
+function envInt(name: string, fallback: number): number {
+  const raw = process.env[name];
+  const n = raw ? Number.parseInt(raw, 10) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+export function cycleWindowDays(): number {
+  return envInt('CYCLE_ALERT_WINDOW_DAYS', 7);
+}
+
+export function cycleCooldownDays(): number {
+  return envInt('CYCLE_REMINDER_COOLDOWN_DAYS', 14);
+}
+
+export async function fetchActiveCycleRows(
+  tenantId: string
+): Promise<CycleAlertRow[]> {
+  const rows = await db
+    .select({
+      patientTreatmentId: patientTreatments.id,
+      patientId: patientTreatments.patientId,
+      patientFirstName: patients.firstName,
+      patientLastName: patients.lastName,
+      patientPhone: patients.phone,
+      treatmentName: treatments.name,
+      currentSession: patientTreatments.currentSession,
+      startedAt: patientTreatments.startedAt,
+      lastCycleReminderAt: patientTreatments.lastCycleReminderAt,
+      initialSessionsCount: treatments.initialSessionsCount,
+      initialFrequencyWeeks: treatments.initialFrequencyWeeks,
+      maintenanceFrequencyWeeks: treatments.maintenanceFrequencyWeeks,
+      lastAppointmentScheduledAt: appointments.scheduledAt,
+    })
+    .from(patientTreatments)
+    .innerJoin(treatments, eq(treatments.id, patientTreatments.treatmentId))
+    .innerJoin(patients, eq(patients.id, patientTreatments.patientId))
+    .leftJoin(
+      appointments,
+      eq(appointments.id, patientTreatments.lastAppointmentId)
+    )
+    .where(
+      and(
+        eq(patientTreatments.tenantId, tenantId),
+        eq(patientTreatments.isActive, true)
+      )
+    );
+
+  return rows.map((r) => ({
+    patientTreatmentId: r.patientTreatmentId,
+    patientId: r.patientId,
+    patientName: `${r.patientFirstName} ${r.patientLastName}`,
+    patientPhone: r.patientPhone ?? null,
+    treatmentName: r.treatmentName,
+    currentSession: r.currentSession,
+    startedAt: r.startedAt ?? null,
+    lastAppointmentScheduledAt: r.lastAppointmentScheduledAt ?? null,
+    lastCycleReminderAt: r.lastCycleReminderAt ?? null,
+    initialSessionsCount: r.initialSessionsCount ?? null,
+    initialFrequencyWeeks: r.initialFrequencyWeeks ?? null,
+    maintenanceFrequencyWeeks: r.maintenanceFrequencyWeeks ?? null,
+  }));
+}
+
+export async function fetchFuturePatientIds(
+  tenantId: string,
+  now: Date
+): Promise<Set<string>> {
+  const rows = await db
+    .selectDistinct({ patientId: appointments.patientId })
+    .from(appointments)
+    .where(
+      and(
+        eq(appointments.tenantId, tenantId),
+        gte(appointments.scheduledAt, now),
+        ne(appointments.status, 'cancelled')
+      )
+    );
+  return new Set(rows.map((r) => r.patientId));
+}
+
+export async function getCycleAlerts(
+  tenantId: string,
+  opts?: Partial<ClassifyOptions>
+): Promise<CycleAlerts> {
+  const now = opts?.now ?? new Date();
+  const windowDays = opts?.windowDays ?? cycleWindowDays();
+  const cooldownDays = opts?.cooldownDays ?? cycleCooldownDays();
+
+  const [rows, futurePatientIds] = await Promise.all([
+    self.fetchActiveCycleRows(tenantId),
+    self.fetchFuturePatientIds(tenantId, now),
+  ]);
+
+  return classifyCycleAlerts(rows, futurePatientIds, {
+    now,
+    windowDays,
+    cooldownDays,
+  });
+}
+
+export interface DebtSummary {
+  totalPendingCents: number;
+  patientCount: number;
+}
+
+export interface DashboardData {
+  todayAppointments: AppointmentRow[];
+  cycleAlerts: CycleAlerts;
+  kpis: DashboardKpis;
+  debtSummary: DebtSummary;
+}
+
+function todayStringInBuenosAires(now: Date): string {
+  // en-CA yields YYYY-MM-DD
+  return now.toLocaleDateString('en-CA', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+  });
+}
+
+export async function getDashboard(tenantId: string): Promise<DashboardData> {
+  const now = new Date();
+  const today = todayStringInBuenosAires(now);
+
+  const [todayAppointments, cycleAlerts, stats] = await Promise.all([
+    appointmentService.list(tenantId, { date: today }),
+    self.getCycleAlerts(tenantId, { now }),
+    debtDashboardService.calculateStatistics(tenantId),
+  ]);
+
+  return {
+    todayAppointments,
+    cycleAlerts,
+    kpis: computeKpis(todayAppointments),
+    debtSummary: {
+      totalPendingCents: stats.totalUnpaidCents,
+      patientCount: stats.patientsWithBalance,
+    },
   };
 }
