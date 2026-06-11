@@ -7,6 +7,7 @@ import type { AppointmentRow } from './appointmentService.js';
 import * as dashboardService from './dashboardService.js';
 import * as appointmentService from './appointmentService.js';
 import { debtDashboardService } from './debtDashboardService.js';
+import { whatsAppNotificationService } from '../whatsapp/services/WhatsAppNotificationService.js';
 
 const NOW = new Date('2026-06-11T12:00:00.000Z');
 
@@ -206,5 +207,86 @@ describe('getDashboard', () => {
       patientCount: 3,
     });
     expect(data.cycleAlerts).toEqual({ upcoming: [], overdue: [] });
+  });
+});
+
+describe('sendCycleReminder', () => {
+  const ctxBase = {
+    patientTreatmentId: 'pt-1',
+    patientName: 'Ana Pérez',
+    patientPhone: '+5491100000000',
+    treatmentName: 'Botox',
+    professionalName: 'Dra. López',
+    address: 'Av. 1',
+    isActive: true,
+    subscriptionPlan: 'gold',
+    subscriptionStatus: 'active',
+    lastCycleReminderAt: null as Date | null,
+  };
+
+  afterEach(() => jest.restoreAllMocks());
+
+  it('sends and stamps lastCycleReminderAt for an eligible gold tenant', async () => {
+    jest
+      .spyOn(dashboardService, 'fetchCycleReminderContext')
+      .mockResolvedValue({ ...ctxBase });
+    const sendSpy = jest
+      .spyOn(whatsAppNotificationService, 'sendCycleReminder')
+      .mockResolvedValue();
+    const markSpy = jest
+      .spyOn(dashboardService, 'markCycleReminderSent')
+      .mockResolvedValue();
+
+    const res = await dashboardService.sendCycleReminder('t-1', 'pt-1');
+    expect(res.status).toBe('sent');
+    expect(sendSpy).toHaveBeenCalledWith('+5491100000000', {
+      patientName: 'Ana Pérez',
+      treatmentName: 'Botox',
+      professionalName: 'Dra. López',
+      address: 'Av. 1',
+    });
+    expect(markSpy).toHaveBeenCalledWith('t-1', 'pt-1');
+  });
+
+  it('throws 404 when the patient treatment is not found', async () => {
+    jest
+      .spyOn(dashboardService, 'fetchCycleReminderContext')
+      .mockResolvedValue(null);
+    await expect(
+      dashboardService.sendCycleReminder('t-1', 'missing')
+    ).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it('throws 403 when the tenant is not on an active gold plan', async () => {
+    jest
+      .spyOn(dashboardService, 'fetchCycleReminderContext')
+      .mockResolvedValue({
+        ...ctxBase,
+        subscriptionPlan: 'silver',
+      });
+    await expect(
+      dashboardService.sendCycleReminder('t-1', 'pt-1')
+    ).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it('throws 400 when the patient has no phone', async () => {
+    jest
+      .spyOn(dashboardService, 'fetchCycleReminderContext')
+      .mockResolvedValue({ ...ctxBase, patientPhone: null });
+    await expect(
+      dashboardService.sendCycleReminder('t-1', 'pt-1')
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('throws 409 when within the cooldown window', async () => {
+    jest
+      .spyOn(dashboardService, 'fetchCycleReminderContext')
+      .mockResolvedValue({
+        ...ctxBase,
+        lastCycleReminderAt: new Date(Date.now() - 1000),
+      });
+    await expect(
+      dashboardService.sendCycleReminder('t-1', 'pt-1')
+    ).rejects.toMatchObject({ statusCode: 409 });
   });
 });

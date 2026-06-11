@@ -5,7 +5,9 @@ import {
   treatments,
   patients,
   appointments,
+  users,
 } from '../db/client.js';
+import { whatsAppNotificationService } from '../whatsapp/services/WhatsAppNotificationService.js';
 import { computeNextDueDate } from './patientTreatmentService.js';
 import * as appointmentService from './appointmentService.js';
 import type { AppointmentRow } from './appointmentService.js';
@@ -270,4 +272,135 @@ export async function getDashboard(tenantId: string): Promise<DashboardData> {
       patientCount: stats.patientsWithBalance,
     },
   };
+}
+
+export interface CycleReminderContext {
+  patientTreatmentId: string;
+  patientName: string;
+  patientPhone: string | null;
+  treatmentName: string;
+  professionalName: string;
+  address: string | null;
+  isActive: boolean;
+  subscriptionPlan: string | null;
+  subscriptionStatus: string | null;
+  lastCycleReminderAt: Date | null;
+}
+
+export async function fetchCycleReminderContext(
+  tenantId: string,
+  patientTreatmentId: string
+): Promise<CycleReminderContext | null> {
+  const [row] = await db
+    .select({
+      patientTreatmentId: patientTreatments.id,
+      patientFirstName: patients.firstName,
+      patientLastName: patients.lastName,
+      patientPhone: patients.phone,
+      treatmentName: treatments.name,
+      isActive: patientTreatments.isActive,
+      lastCycleReminderAt: patientTreatments.lastCycleReminderAt,
+    })
+    .from(patientTreatments)
+    .innerJoin(treatments, eq(treatments.id, patientTreatments.treatmentId))
+    .innerJoin(patients, eq(patients.id, patientTreatments.patientId))
+    .where(
+      and(
+        eq(patientTreatments.id, patientTreatmentId),
+        eq(patientTreatments.tenantId, tenantId)
+      )
+    )
+    .limit(1);
+
+  if (!row) return null;
+
+  const [prof] = await db
+    .select({
+      fullName: users.fullName,
+      address: users.address,
+      subscriptionPlan: users.subscriptionPlan,
+      subscriptionStatus: users.subscriptionStatus,
+    })
+    .from(users)
+    .where(and(eq(users.tenantId, tenantId), eq(users.role, 'professional')))
+    .limit(1);
+
+  return {
+    patientTreatmentId: row.patientTreatmentId,
+    patientName: `${row.patientFirstName} ${row.patientLastName}`,
+    patientPhone: row.patientPhone ?? null,
+    treatmentName: row.treatmentName,
+    professionalName: prof?.fullName ?? 'El profesional',
+    address: prof?.address ?? null,
+    isActive: row.isActive,
+    subscriptionPlan: prof?.subscriptionPlan ?? null,
+    subscriptionStatus: prof?.subscriptionStatus ?? null,
+    lastCycleReminderAt: row.lastCycleReminderAt ?? null,
+  };
+}
+
+export async function markCycleReminderSent(
+  tenantId: string,
+  patientTreatmentId: string
+): Promise<void> {
+  await db
+    .update(patientTreatments)
+    .set({ lastCycleReminderAt: new Date(), updatedAt: new Date() })
+    .where(
+      and(
+        eq(patientTreatments.id, patientTreatmentId),
+        eq(patientTreatments.tenantId, tenantId)
+      )
+    );
+}
+
+function httpError(statusCode: number, message: string): Error {
+  const err = new Error(message);
+  (err as Error & { statusCode?: number }).statusCode = statusCode;
+  return err;
+}
+
+export interface SendCycleReminderResult {
+  status: 'sent';
+}
+
+export async function sendCycleReminder(
+  tenantId: string,
+  patientTreatmentId: string
+): Promise<SendCycleReminderResult> {
+  const ctx = await self.fetchCycleReminderContext(
+    tenantId,
+    patientTreatmentId
+  );
+  if (!ctx || !ctx.isActive) {
+    throw httpError(404, 'Tratamiento no encontrado');
+  }
+
+  const isGold =
+    ctx.subscriptionPlan === 'gold' && ctx.subscriptionStatus === 'active';
+  if (!isGold) {
+    throw httpError(403, 'El recordatorio por WhatsApp requiere el plan Gold');
+  }
+
+  if (!ctx.patientPhone) {
+    throw httpError(400, 'El paciente no tiene un teléfono cargado');
+  }
+
+  const cooldownMs = cycleCooldownDays() * MS_PER_DAY;
+  if (
+    ctx.lastCycleReminderAt &&
+    Date.now() - ctx.lastCycleReminderAt.getTime() < cooldownMs
+  ) {
+    throw httpError(409, 'Ya se envió un recordatorio recientemente');
+  }
+
+  await whatsAppNotificationService.sendCycleReminder(ctx.patientPhone, {
+    patientName: ctx.patientName,
+    treatmentName: ctx.treatmentName,
+    professionalName: ctx.professionalName,
+    address: ctx.address,
+  });
+
+  await self.markCycleReminderSent(tenantId, patientTreatmentId);
+  return { status: 'sent' };
 }
