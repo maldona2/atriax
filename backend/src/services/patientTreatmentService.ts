@@ -17,6 +17,7 @@ export interface PatientTreatmentRow {
   last_appointment_id: string | null;
   is_active: boolean;
   completed_at: Date | null;
+  last_cycle_reminder_at: Date | null;
   created_at: Date | null;
   updated_at: Date | null;
   treatment?: treatmentService.TreatmentRow | null;
@@ -49,6 +50,7 @@ function toRow(
     last_appointment_id: t.lastAppointmentId,
     is_active: t.isActive,
     completed_at: t.completedAt ?? null,
+    last_cycle_reminder_at: t.lastCycleReminderAt ?? null,
     created_at: t.createdAt,
     updated_at: t.updatedAt,
     treatment,

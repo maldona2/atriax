@@ -210,6 +210,9 @@ export const patientTreatments = pgTable(
     ),
     isActive: boolean('is_active').notNull().default(true),
     completedAt: timestamp('completed_at', { withTimezone: true }),
+    lastCycleReminderAt: timestamp('last_cycle_reminder_at', {
+      withTimezone: true,
+    }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   },
