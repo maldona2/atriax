@@ -49,14 +49,18 @@ function getApiErrorMessage(
 ): string {
   if (error && typeof error === 'object' && 'response' in error) {
     const axiosError = error as {
-      response?: { status?: number; data?: { message?: string } };
+      response?: {
+        status?: number;
+        data?: { message?: string; error?: { message?: string } };
+      };
     };
     const status = axiosError.response?.status;
     if (status === 404) return 'Turno no encontrado';
     if (status === 403)
       return `No tienes permisos para ${operation} este turno`;
     if (status === 400) {
-      const msg = axiosError.response?.data?.message;
+      const data = axiosError.response?.data;
+      const msg = data?.error?.message ?? data?.message;
       if (msg) return msg;
     }
   }

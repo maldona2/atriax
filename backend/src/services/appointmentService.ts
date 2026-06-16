@@ -628,7 +628,9 @@ export async function update(
 
     const currentStatus = current.status as AppointmentStatus;
     const allowed = VALID_TRANSITIONS[currentStatus] ?? [];
-    if (!allowed.includes(data.status)) {
+    // A no-op transition (same status) is allowed: editing other fields of an
+    // appointment re-sends its current status and must not be rejected.
+    if (data.status !== currentStatus && !allowed.includes(data.status)) {
       const err = new Error(
         `Cannot transition from '${currentStatus}' to '${data.status}'`
       );
