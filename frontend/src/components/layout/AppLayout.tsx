@@ -5,6 +5,7 @@ import {
   Syringe,
   Users,
   BarChart2,
+  Wallet,
   HelpCircle,
   Settings,
 } from 'lucide-react';
@@ -35,6 +36,7 @@ export function AppLayout() {
             label: 'Deudas',
             icon: BarChart2,
           },
+          { to: '/app/billing', label: 'Facturación', icon: Wallet },
           { to: '/app/help', label: 'Ayuda', icon: HelpCircle },
         ] as const)
       : ([
@@ -51,6 +53,7 @@ export function AppLayout() {
             label: 'Deudas',
             icon: BarChart2,
           },
+          { to: '/app/billing', label: 'Facturación', icon: Wallet },
           { to: '/app/help', label: 'Ayuda', icon: HelpCircle },
           { to: '/app/profile', label: 'Configuraciones', icon: Settings },
         ] as const);
