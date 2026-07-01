@@ -8,6 +8,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
@@ -1267,3 +1268,42 @@ export const appointmentCancellationTokensRelations = relations(
     }),
   })
 );
+
+// ─── infra payments ───────────────────────────────────────────────────────────
+// Monthly infrastructure charge paid by a tenant to the platform owner.
+// A row's existence means that billing month is paid; deleting it un-marks it.
+
+export const infraPayments = pgTable(
+  'infra_payments',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    billingMonth: text('billing_month').notNull(), // 'YYYY-MM'
+    paidAt: timestamp('paid_at', { withTimezone: true }).notNull().defaultNow(),
+    paidBy: uuid('paid_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('idx_infra_payments_tenant_month').on(
+      table.tenantId,
+      table.billingMonth
+    ),
+    index('idx_infra_payments_tenant').on(table.tenantId),
+  ]
+);
+
+export type InfraPayment = typeof infraPayments.$inferSelect;
+export type NewInfraPayment = typeof infraPayments.$inferInsert;
+
+export const infraPaymentsRelations = relations(infraPayments, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [infraPayments.tenantId],
+    references: [tenants.id],
+  }),
+}));

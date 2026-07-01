@@ -173,3 +173,24 @@ export interface Tenant {
   subscription_plan?: 'free' | 'pro' | 'gold';
   subscription_status?: 'active' | 'paused' | 'cancelled';
 }
+
+// Infra payments
+export interface PaidMonth {
+  billing_month: string; // 'YYYY-MM'
+  paid_at: string;
+}
+
+export interface TenantPaymentSummary {
+  tenant_id: string;
+  tenant_name: string;
+  user_email?: string;
+  current_month: string;
+  current_month_paid: boolean;
+  payments: PaidMonth[];
+}
+
+export interface BillingStatus {
+  billing_month: string;
+  paid: boolean;
+  paid_at: string | null;
+}

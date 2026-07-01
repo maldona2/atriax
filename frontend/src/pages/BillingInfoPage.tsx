@@ -7,6 +7,7 @@ import {
   RefreshCw,
   Server,
   MessageCircle,
+  Clock,
 } from 'lucide-react';
 
 import {
@@ -17,6 +18,8 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import api from '@/lib/api';
+import type { BillingStatus } from '@/types';
 
 /**
  * Datos de facturación. Editá estos valores si cambian los costos.
@@ -58,6 +61,7 @@ export function BillingInfoPage() {
   const [loading, setLoading] = useState(true);
   const [isFallback, setIsFallback] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<BillingStatus | null>(null);
 
   async function loadRate() {
     setLoading(true);
@@ -81,6 +85,10 @@ export function BillingInfoPage() {
 
   useEffect(() => {
     loadRate();
+    api
+      .get<BillingStatus>('/billing/status')
+      .then(({ data }) => setStatus(data))
+      .catch(() => setStatus(null));
   }, []);
 
   async function copyAlias() {
@@ -124,6 +132,18 @@ export function BillingInfoPage() {
           <CardTitle className="text-[34px] font-bold tracking-tight text-primary">
             {loading ? '—' : arsFmt.format(totalArs)}
           </CardTitle>
+          {status &&
+            (status.paid ? (
+              <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700 dark:bg-green-950 dark:text-green-400">
+                <Check className="size-3" />
+                Pagado este mes
+              </span>
+            ) : (
+              <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400">
+                <Clock className="size-3" />
+                Pendiente de pago
+              </span>
+            ))}
         </CardHeader>
         <CardContent className="space-y-1 text-[13px] text-muted-foreground">
           <p>

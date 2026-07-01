@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import * as tenantService from '../services/tenantService.js';
+import * as infraPaymentService from '../services/infraPaymentService.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireRole } from '../middleware/requireRole.js';
 
@@ -24,6 +25,13 @@ const updateTenantSchema = z.object({
 const updateSubscriptionSchema = z.object({
   plan: z.enum(['free', 'pro', 'gold']),
   status: z.enum(['active', 'paused', 'cancelled']),
+});
+
+const markPaidSchema = z.object({
+  billingMonth: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Invalid billing month, expected YYYY-MM')
+    .optional(),
 });
 
 router.get(
@@ -126,6 +134,70 @@ router.delete(
       const ok = await tenantService.deactivateTenant(req.params.id);
       if (!ok) {
         const err = new Error('Tenant not found');
+        (err as Error & { statusCode?: number }).statusCode = 404;
+        return next(err);
+      }
+      res.status(204).send();
+    } catch (e) {
+      next(e);
+    }
+  }
+);
+
+// ─── infra payments ───────────────────────────────────────────────────────────
+
+router.get(
+  '/infra-payments',
+  adminOnly,
+  async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const overview = await infraPaymentService.listPaymentsOverview();
+      res.json(overview);
+    } catch (e) {
+      next(e);
+    }
+  }
+);
+
+router.post(
+  '/tenants/:id/infra-payments',
+  adminOnly,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const parsed = markPaidSchema.safeParse(req.body ?? {});
+      if (!parsed.success) {
+        const err = new Error(
+          parsed.error.errors.map((e) => e.message).join(', ')
+        );
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        return next(err);
+      }
+
+      const month =
+        parsed.data.billingMonth ?? infraPaymentService.currentBillingMonth();
+      const record = await infraPaymentService.markPaid(
+        req.params.id,
+        month,
+        req.user?.id ?? null
+      );
+      res.status(201).json(record);
+    } catch (e) {
+      next(e);
+    }
+  }
+);
+
+router.delete(
+  '/tenants/:id/infra-payments/:month',
+  adminOnly,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const ok = await infraPaymentService.unmarkPaid(
+        req.params.id,
+        req.params.month
+      );
+      if (!ok) {
+        const err = new Error('Payment record not found');
         (err as Error & { statusCode?: number }).statusCode = 404;
         return next(err);
       }

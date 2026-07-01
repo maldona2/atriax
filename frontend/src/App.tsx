@@ -19,6 +19,7 @@ import LandingPage from '@/pages/LandingPage';
 import { RegistrationPage } from '@/pages/RegistrationPage';
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage';
 import { TenantsPage } from '@/pages/admin/TenantsPage';
+import { InfraPaymentsPage } from '@/pages/admin/InfraPaymentsPage';
 import { AppointmentsPage } from '@/pages/AppointmentsPage';
 import { AppointmentDetailPage } from '@/pages/AppointmentDetailPage';
 import { PatientsPage } from '@/pages/PatientsPage';
@@ -81,6 +82,10 @@ function App() {
                 }
               >
                 <Route path="tenants" element={<TenantsPage />} />
+                <Route
+                  path="infra-payments"
+                  element={<InfraPaymentsPage />}
+                />
                 <Route
                   index
                   element={<Navigate to="/admin/tenants" replace />}
