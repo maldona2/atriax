@@ -154,7 +154,7 @@ export function AppointmentsWeekGrid({
                 {isToday && <CurrentTimeIndicator />}
                 {dayAppointments.map((apt) => {
                   const { top, height } = calculatePosition(apt);
-                  const config = statusConfig[apt.status];
+                  const config = statusConfig[apt.status] ?? statusConfig.pending;
                   return (
                     <button
                       key={apt.id}
