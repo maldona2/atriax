@@ -12,6 +12,7 @@ import {
 } from 'date-fns';
 import { LayoutList, CalendarDays } from 'lucide-react';
 import { ContextualHelpButton } from '@/components/help/ContextualHelpButton';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { useAppointments } from '@/hooks/useAppointments';
@@ -233,16 +234,18 @@ export function AppointmentsPage() {
             onDateSelect={setSelectedDate}
             onDateChange={setCurrentDate}
           />
-          <AppointmentsWeekGrid
-            currentDate={currentDate}
-            weekDays={weekDays}
-            filteredAppointments={calendarAppointments}
-            onPreviousWeek={() => setCurrentDate(subWeeks(currentDate, 1))}
-            onNextWeek={() => setCurrentDate(addWeeks(currentDate, 1))}
-            onToday={() => setCurrentDate(new Date())}
-            onNewAppointment={openNewAppointment}
-            onAppointmentClick={handleCalendarAppointmentClick}
-          />
+          <ErrorBoundary>
+            <AppointmentsWeekGrid
+              currentDate={currentDate}
+              weekDays={weekDays}
+              filteredAppointments={calendarAppointments}
+              onPreviousWeek={() => setCurrentDate(subWeeks(currentDate, 1))}
+              onNextWeek={() => setCurrentDate(addWeeks(currentDate, 1))}
+              onToday={() => setCurrentDate(new Date())}
+              onNewAppointment={openNewAppointment}
+              onAppointmentClick={handleCalendarAppointmentClick}
+            />
+          </ErrorBoundary>
         </div>
 
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>

@@ -57,6 +57,12 @@ export const statusConfig: Record<
       'bg-neutral-50 border-neutral-200 text-neutral-500 hover:bg-neutral-100 dark:bg-neutral-900/80 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800/80 line-through opacity-60',
     dotColor: 'bg-neutral-400',
   },
+  'no-show': {
+    label: 'No se presentó',
+    className:
+      'bg-rose-50 border-rose-200 text-rose-900 hover:bg-rose-100 dark:bg-rose-950/80 dark:border-rose-800 dark:text-rose-200 dark:hover:bg-rose-900/80 opacity-75',
+    dotColor: 'bg-rose-500',
+  },
 };
 
 export const HOUR_HEIGHT = 60;
