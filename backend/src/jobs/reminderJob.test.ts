@@ -31,6 +31,11 @@ jest.mock('../whatsapp/services/WhatsAppNotificationService.js', () => ({
   },
 }));
 
+jest.mock('../services/cancellationTokenService.js', () => ({
+  createCancellationToken: () => Promise.resolve('raw-token'),
+  buildCancelUrl: (token: string) => `https://app.test/cancel/${token}`,
+}));
+
 jest.mock('../utils/logger.js', () => {
   const noop = () => {};
   return {
@@ -124,6 +129,46 @@ describe('reminderJob', () => {
         durationMinutes: 60,
       }),
       'apt-1'
+    );
+  });
+
+  // Regression: a patient with a phone but no email address must still get the
+  // WhatsApp reminder — it used to be skipped before the email was even tried.
+  it('sends WhatsApp when the patient has a phone but no email', async () => {
+    mockAppointmentRows.length = 0;
+    mockAppointmentRows.push({
+      appointmentId: 'apt-no-email',
+      tenantId: 'tenant-1',
+      scheduledAt: new Date('2025-03-16T14:00:00.000Z'),
+      durationMinutes: 60,
+      patientId: 'patient-1',
+      patientEmail: '',
+      patientPhone: '543813035140',
+      patientFirstName: 'Tomas',
+      patientLastName: 'Angelilli',
+    } as never);
+    mockProfessionalRows.length = 0;
+    mockProfessionalRows.push({
+      tenantId: 'tenant-1',
+      fullName: 'Dr. Test',
+      address: null,
+      subscriptionPlan: 'gold',
+      subscriptionStatus: 'active',
+    } as never);
+    mockWhatsAppSendReminder.mockReturnValue(Promise.resolve(true));
+
+    await sendReminders();
+
+    expect(mockSendReminder).not.toHaveBeenCalled();
+    expect(mockWhatsAppSendReminder).toHaveBeenCalledWith(
+      '543813035140',
+      expect.objectContaining({
+        patientName: 'Tomas Angelilli',
+        cancelUrl: 'https://app.test/cancel/raw-token',
+      })
+    );
+    expect(mockRecordDelivery).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'sent' })
     );
   });
 });

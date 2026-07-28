@@ -59,7 +59,7 @@ export async function maybeSendImmediateReminder(
 
   if (!appt) return;
 
-  if (!appt.patientEmail) return;
+  if (!appt.patientEmail && !appt.patientPhone) return;
 
   const alreadySent = await hasReminderBeenSent(appointmentId);
   if (alreadySent) return;
@@ -87,48 +87,76 @@ export async function maybeSendImmediateReminder(
   };
 
   let sendError: string | null = null;
-  try {
-    await sendWithRetry(appt.patientEmail, notificationData, appointmentId);
-  } catch (err) {
-    sendError = err instanceof Error ? err.message : String(err);
+  if (appt.patientEmail) {
+    try {
+      await sendWithRetry(appt.patientEmail, notificationData, appointmentId);
+    } catch (err) {
+      sendError = err instanceof Error ? err.message : String(err);
+    }
+  } else {
+    sendError = NO_EMAIL_ERROR;
   }
 
+  const isGold =
+    prof?.subscriptionPlan === 'gold' && prof?.subscriptionStatus === 'active';
+  const whatsAppSent = await sendWhatsAppReminder(
+    appt.patientPhone,
+    isGold,
+    appointmentId,
+    tenantId,
+    notificationData
+  );
+
+  const delivered = !sendError || whatsAppSent;
   await recordDelivery({
     tenantId,
     appointmentId,
     patientId: appt.patientId,
-    patientEmail: appt.patientEmail,
-    status: sendError ? 'failed' : 'sent',
-    errorMessage: sendError,
-    retryCount: sendError ? MAX_RETRIES : 0,
+    patientEmail: appt.patientEmail ?? '',
+    status: delivered ? 'sent' : deliveryFailureStatus(sendError),
+    errorMessage: delivered ? null : sendError,
+    retryCount: sendError && sendError !== NO_EMAIL_ERROR ? MAX_RETRIES : 0,
   });
 
-  if (!sendError) {
-    const isGold =
-      prof?.subscriptionPlan === 'gold' &&
-      prof?.subscriptionStatus === 'active';
-    if (appt.patientPhone && isGold) {
-      try {
-        const token = await createCancellationToken(
-          appointmentId,
-          tenantId,
-          48
-        );
-        const cancelUrl = buildCancelUrl(token);
-        await whatsAppNotificationService.sendAppointmentReminder(
-          appt.patientPhone,
-          { ...notificationData, cancelUrl }
-        );
-      } catch (err) {
-        logger.warn(
-          { err, appointmentId },
-          'Immediate reminder: WhatsApp send failed'
-        );
-      }
-    }
-    logger.info({ appointmentId }, 'Immediate reminder sent');
+  if (delivered) {
+    logger.info({ appointmentId, whatsAppSent }, 'Immediate reminder sent');
   } else {
     logger.warn({ appointmentId, sendError }, 'Immediate reminder failed');
+  }
+}
+
+const NO_EMAIL_ERROR = 'no email address';
+
+function deliveryFailureStatus(sendError: string | null): 'failed' | 'skipped' {
+  return sendError === NO_EMAIL_ERROR ? 'skipped' : 'failed';
+}
+
+/**
+ * Sends the WhatsApp reminder. Independent of the email channel: patients with
+ * no email address (or whose email bounced) must still get their reminder.
+ * Returns true only when Meta accepted the message.
+ */
+async function sendWhatsAppReminder(
+  patientPhone: string | null,
+  isGold: boolean,
+  appointmentId: string,
+  tenantId: string,
+  notificationData: Omit<
+    Parameters<typeof whatsAppNotificationService.sendAppointmentReminder>[1],
+    'cancelUrl'
+  >
+): Promise<boolean> {
+  if (!patientPhone || !isGold) return false;
+  try {
+    const token = await createCancellationToken(appointmentId, tenantId, 48);
+    const cancelUrl = buildCancelUrl(token);
+    return await whatsAppNotificationService.sendAppointmentReminder(
+      patientPhone,
+      { ...notificationData, cancelUrl }
+    );
+  } catch (err) {
+    logger.warn({ err, appointmentId }, 'Reminder: WhatsApp send failed');
+    return false;
   }
 }
 
@@ -262,8 +290,8 @@ export async function sendReminders(): Promise<void> {
 
       for (const row of batch) {
         try {
-          // Handle missing email
-          if (!row.patientEmail) {
+          // No contact channel at all — nothing to send
+          if (!row.patientEmail && !row.patientPhone) {
             logger.info(
               { appointmentId: row.appointmentId },
               'Reminder job: skipping — no patient email'
@@ -274,7 +302,7 @@ export async function sendReminders(): Promise<void> {
               patientId: row.patientId,
               patientEmail: '',
               status: 'skipped',
-              errorMessage: 'no email address',
+              errorMessage: NO_EMAIL_ERROR,
             });
             skippedNoEmail++;
             totalSkipped++;
@@ -318,63 +346,51 @@ export async function sendReminders(): Promise<void> {
           let retryCount = 0;
           let sendError: string | null = null;
 
-          try {
-            await sendWithRetry(
-              row.patientEmail,
-              notificationData,
-              row.appointmentId
-            );
-          } catch (err) {
-            retryCount = MAX_RETRIES;
-            sendError = err instanceof Error ? err.message : String(err);
+          if (row.patientEmail) {
+            try {
+              await sendWithRetry(
+                row.patientEmail,
+                notificationData,
+                row.appointmentId
+              );
+            } catch (err) {
+              retryCount = MAX_RETRIES;
+              sendError = err instanceof Error ? err.message : String(err);
+            }
+          } else {
+            sendError = NO_EMAIL_ERROR;
           }
 
-          if (sendError) {
-            await recordDelivery({
-              tenantId: row.tenantId,
-              appointmentId: row.appointmentId,
-              patientId: row.patientId,
-              patientEmail: row.patientEmail,
-              status: 'failed',
-              errorMessage: sendError,
-              retryCount,
-            });
-            totalFailed++;
-          } else {
-            await recordDelivery({
-              tenantId: row.tenantId,
-              appointmentId: row.appointmentId,
-              patientId: row.patientId,
-              patientEmail: row.patientEmail,
-              status: 'sent',
-              retryCount,
-            });
-            totalSent++;
+          // WhatsApp goes out regardless of the email result (Gold plan only)
+          const isGold =
+            prof?.subscriptionPlan === 'gold' &&
+            prof?.subscriptionStatus === 'active';
+          const whatsAppSent = await sendWhatsAppReminder(
+            row.patientPhone,
+            isGold,
+            row.appointmentId,
+            row.tenantId,
+            notificationData
+          );
 
-            // Send WhatsApp reminder to patient if they have a phone number
-            // and the professional is on Gold plan
-            const isGold =
-              prof?.subscriptionPlan === 'gold' &&
-              prof?.subscriptionStatus === 'active';
-            if (row.patientPhone && isGold) {
-              try {
-                const token = await createCancellationToken(
-                  row.appointmentId,
-                  row.tenantId,
-                  48
-                );
-                const cancelUrl = buildCancelUrl(token);
-                await whatsAppNotificationService.sendAppointmentReminder(
-                  row.patientPhone,
-                  { ...notificationData, cancelUrl }
-                );
-              } catch (err) {
-                logger.warn(
-                  { err, appointmentId: row.appointmentId },
-                  'Reminder job: WhatsApp send failed'
-                );
-              }
-            }
+          const delivered = !sendError || whatsAppSent;
+          await recordDelivery({
+            tenantId: row.tenantId,
+            appointmentId: row.appointmentId,
+            patientId: row.patientId,
+            patientEmail: row.patientEmail ?? '',
+            status: delivered ? 'sent' : deliveryFailureStatus(sendError),
+            errorMessage: delivered ? null : sendError,
+            retryCount,
+          });
+
+          if (delivered) {
+            totalSent++;
+          } else if (sendError === NO_EMAIL_ERROR) {
+            skippedNoEmail++;
+            totalSkipped++;
+          } else {
+            totalFailed++;
           }
         } catch (err) {
           logger.error(
