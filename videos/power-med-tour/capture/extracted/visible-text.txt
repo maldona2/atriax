@@ -1,0 +1,112 @@
+[span] Atriax
+[a] Beneficios
+[a] Funcionalidades
+[a] Iniciar sesión
+[a] Prueba gratis
+[h1] Gestiona tu consultorio médico con claridad total
+[p] La plataforma integral para médicos y profesionales de la salud. Organiza citas, historiales clínicos y operaciones en un solo lugar.
+[button] Comenzar prueba gratis
+[button] Agendar una demo
+[span] Datos seguros
+[span] 99.9% uptime
+[span] Para toda especialidad médica
+[h2] El caos diario en consultorios médicos
+[p] ¿Reconoces estos problemas? No estás solo.
+[h3] Conflictos de agenda
+[p] Citas duplicadas, solapamientos y confusión entre proveedores y salas.
+[h3] Registros dispersos
+[p] Historiales en papel, WhatsApp y hojas de cálculo. Imposible tener visión completa.
+[h3] Múltiples proveedores
+[p] Coordinar calendarios de varios profesionales es una pesadilla.
+[h3] Sin visibilidad
+[p] Desconoces el rendimiento real de tu clínica y dónde mejorar.
+[h2] Por qué elegir Atriax
+[p] Construido para las necesidades reales de médicos y profesionales de la salud, sin importar la especialidad.
+[h3] Un calendario para todo el equipo
+[p] Visualiza la disponibilidad de todos tus médicos y consultorios en tiempo real. Evita conflictos y optimiza cada hora.
+[li] Vista unificada multi-médico
+[li] Gestión de consultorios y recursos
+[li] Recordatorios automáticos
+[h3] Cada detalle del paciente en un lugar
+[p] Perfiles completos con historial clínico, estudios, consentimientos y planes de tratamiento para cualquier especialidad.
+[li] Historial clínico digitalizado
+[li] Formularios de consentimiento digitales
+[li] Notas y etiquetas personalizadas
+[h3] Visibilidad clara para directores
+[p] Dashboard con métricas clave: ocupación, ingresos, no-shows. Toma decisiones basadas en datos reales.
+[li] Métricas de rendimiento en tiempo real
+[li] Reportes exportables
+[li] Alertas y notificaciones
+[h3] Adaptado a tu especialidad
+[p] No es un software genérico. Configura flujos y plantillas según las necesidades de tu práctica médica.
+[li] Plantillas por especialidad
+[li] Seguimiento de evolución del paciente
+[li] Integración con tu flujo actual
+[h2] Funcionalidades completas
+[p] Todo lo que necesitas para gestionar tu clínica de manera profesional.
+[button] Citas
+[button] Pacientes
+[button] Operaciones
+[h3] Gestión de citas inteligente
+[p] Organiza tu agenda de forma eficiente con herramientas diseñadas para clínicas con múltiples proveedores.
+[span] Calendario centralizado para todos los proveedores
+[span] Reserva online opcional con disponibilidad inteligente
+[span] Recordatorios automáticos por SMS y email
+[span] Gestión de salas y equipamiento
+[span] Reducción de no-shows hasta un 40%
+[span] Vista semanal
+[h2] Comienza en 3 simples pasos
+[p] Implementación rápida sin complicaciones técnicas.
+[h3] Configura tu práctica
+[p] Crea tu cuenta, añade la información de tu consultorio o clínica, médicos y espacios. Te guiamos en cada paso del proceso.
+[h3] Invita a tu equipo
+[p] Añade a tu personal con los roles adecuados. Importa tus datos existentes de pacientes de forma sencilla.
+[h3] Gestiona desde el día uno
+[p] Empieza a agendar citas, gestionar pacientes y visualizar métricas. Soporte disponible cuando lo necesites.
+[h2] Lo que dicen nuestros clientes
+[div] -35% no-shows
+[blockquote] Desde que usamos Atriax, redujimos los no-shows en un 35%. La organización del consultorio mejoró completamente.
+[div] Dra. Carmen Vidal
+[div] Médica Clínica General, Centro de Salud Integral
+[div] 100% historiales digitalizados
+[blockquote] Por fin tengo toda la información de mis pacientes en un solo lugar. El historial clínico digital es invaluable para el seguimiento.
+[div] Dr. Miguel Fernández
+[div] Traumatólogo, Centro Médico Aurora
+[div] 3 consultorios unificados
+[blockquote] Gestionar 3 consultorios de distintas especialidades era un caos. Ahora con Atriax, tengo control total desde cualquier lugar.
+[div] Laura Martínez
+[div] Directora de Operaciones, Grupo Médico Salud+
+[h2] ¿Para quién es Atriax?
+[p] Para médicos de cualquier especialidad: clínica general, pediatría, cardiología, traumatología, dermatología, y más.
+[h3] Consultorios individuales
+[p] Médicos independientes de cualquier especialidad que buscan profesionalizar y digitalizar su gestión diaria.
+[h3] Clínicas multi-especialidad
+[p] Centros con varios médicos y especialistas que necesitan coordinar agendas y compartir información de pacientes.
+[h3] Grupos y redes médicas
+[p] Organizaciones con múltiples sedes o franquicias que requieren visibilidad centralizada y control unificado.
+[h2] Precios simples y transparentes
+[p] Sin sorpresas. Paga solo por lo que necesitas.
+[span] Planes por proveedor
+[span] Sin contratos a largo plazo
+[span] Empieza gratis, paga cuando estés listo
+[h3] Preguntas frecuentes sobre precios
+[button] ¿Hay costos ocultos?
+[button] ¿Puedo cambiar de plan?
+[button] ¿Hay descuentos por pago anual?
+[h2] Preguntas frecuentes
+[button] ¿Mis datos están seguros?
+[button] ¿Cómo es el proceso de migración?
+[button] ¿Ofrecen capacitación y soporte?
+[button] ¿Funciona en móvil y tablet?
+[button] ¿Cuál es la diferencia entre prueba gratis y plan de pago?
+[button] ¿Soportan múltiples clínicas o sedes?
+[button] ¿Puedo cancelar en cualquier momento?
+[h2] Transforma la gestión de tu práctica médica hoy
+[p] No pierdas otro día con operaciones desorganizadas. Únete a cientos de médicos y clínicas que ya confían en Atriax.
+[a] Comenzar prueba gratis
+[button] Agendar una demo
+[p] Sin tarjeta de crédito · Cancela cuando quieras
+[a] Términos
+[a] Privacidad
+[a] Contacto
+[div] © 2026 Atriax. Todos los derechos reservados.

@@ -1,0 +1,202 @@
+<template>
+  <div id="root" data-composition-id="03-dashboard" data-start="0" data-duration="10.5" data-width="1920" data-height="1080">
+<style>
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    }
+    [id="03-dashboard-bg"] {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+    }
+    [id="03-dashboard-stage"] {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    [id="03-dashboard-zoom-outer"] {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 50%;
+      will-change: transform;
+    }
+    [id="03-dashboard-zoom-inner"] {
+      position: absolute;
+      inset: 0;
+      will-change: transform;
+    }
+    [id="03-dashboard-title"] {
+      position: absolute;
+      top: 130px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 52px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      color: #0a0a0a;
+    }
+    .d03-word {
+      display: inline-block;
+      margin: 0 7px;
+    }
+    [id="03-dashboard-card"] {
+      position: absolute;
+      left: 300px;
+      top: 300px;
+      width: 1320px;
+      height: 500px;
+      background: #ffffff;
+      border: 1.5px solid rgba(10, 10, 10, 0.16);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    [id="03-dashboard-card"] img {
+      display: block;
+      width: 1320px;
+      height: auto;
+    }
+    .d03-ring {
+      position: absolute;
+      border: 2.5px solid rgba(10, 10, 10, 0.55);
+      border-radius: 12px;
+    }
+    [id="03-dashboard-ring-turnos"]   { left: 356px; top: 100px; width: 150px; height: 68px; }
+    [id="03-dashboard-ring-ingresos"] { left: 791px; top: 100px; width: 148px; height: 68px; }
+    [id="03-dashboard-ring-deuda"]    { left: 936px; top: 100px; width: 203px; height: 68px; }
+    .d03-callout {
+      position: absolute;
+      background: #0a0a0a;
+      color: #ffffff;
+      border-radius: 100px;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      padding: 12px 24px;
+      white-space: nowrap;
+    }
+    [id="03-dashboard-co-turnos"]   { left: 352px; top: 192px; }
+    [id="03-dashboard-co-ingresos"] { left: 782px; top: 192px; }
+    [id="03-dashboard-co-deuda"]    { left: 952px; top: 256px; }
+    .d03-marker {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      pointer-events: none;
+    }
+    [id="03-dashboard-t-turnos"]   { left: 429px; top: 133px; }
+    [id="03-dashboard-t-ingresos"] { left: 949px; top: 133px; }
+  </style>
+
+  
+    <div class="clip" id="03-dashboard-bg" data-start="0" data-duration="10.5" data-track-index="0"></div>
+
+    <div class="clip" id="03-dashboard-stage" data-start="0" data-duration="10.5" data-track-index="1">
+      <div id="03-dashboard-zoom-outer">
+        <div id="03-dashboard-zoom-inner">
+
+          <h2 id="03-dashboard-title">
+            <span class="d03-word">El</span><span class="d03-word">d&iacute;a,</span><span class="d03-word">de</span><span class="d03-word">un</span><span class="d03-word">vistazo</span>
+          </h2>
+
+          <div id="03-dashboard-card">
+            <img src="assets/01-dashboard.png" alt="" />
+            <div class="d03-marker" id="03-dashboard-t-turnos"></div>
+            <div class="d03-marker" id="03-dashboard-t-ingresos"></div>
+            <div class="d03-ring" id="03-dashboard-ring-turnos"></div>
+            <div class="d03-ring" id="03-dashboard-ring-ingresos"></div>
+            <div class="d03-ring" id="03-dashboard-ring-deuda"></div>
+            <div class="d03-callout" id="03-dashboard-co-turnos">4 turnos hoy</div>
+            <div class="d03-callout" id="03-dashboard-co-ingresos">$28.000 hoy</div>
+            <div class="d03-callout" id="03-dashboard-co-deuda">deuda al d&iacute;a</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    (function () {
+      var byId = function (id) { return document.getElementById(id); };
+      var outer = byId("03-dashboard-zoom-outer");
+      var inner = byId("03-dashboard-zoom-inner");
+      var card = byId("03-dashboard-card");
+      var words = document.querySelectorAll('[id="03-dashboard-title"] .d03-word');
+
+      // --- Measure zoom targets BEFORE any tween shifts the layout (nested-wrapper form, T = -offset)
+      var W = 1920, H = 1080;
+      var stageRect = outer.getBoundingClientRect();
+      var k = stageRect.width > 0 ? stageRect.width / W : 0;
+      function offsetOf(el) {
+        var r = el.getBoundingClientRect();
+        return {
+          x: (r.left + r.width / 2 - (stageRect.left + stageRect.width / 2)) / k,
+          y: (r.top + r.height / 2 - (stageRect.top + stageRect.height / 2)) / k
+        };
+      }
+      // Hand-derived fallbacks from the authored layout (card at 300,300; markers at 431/951,135)
+      var offA = { x: -229, y: -105 };
+      var offB = { x: 291, y: -105 };
+      if (k > 0) {
+        offA = offsetOf(byId("03-dashboard-t-turnos"));
+        offB = offsetOf(byId("03-dashboard-t-ingresos"));
+      }
+
+      // ZOOM_SCALE capped so the 1920px-source screenshot (rendered 1320px wide) never
+      // exceeds source resolution: 1320 * 1.45 = 1914 <= 1920.
+      var S = 1.45;
+
+      var tl = gsap.timeline({ paused: true });
+
+      // Scene 1 (0-2s): per-word title reveal + dashboard card rises from below
+      tl.fromTo(words,
+        { y: 26, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out", stagger: 0.11 }, 0.2);
+      tl.fromTo(card,
+        { y: 320, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 1.2, ease: "power3.out" }, 0.45);
+
+      // Scene 2 (2-4.5s): coordinate-target-zoom onto the KPI strip (Turnos hoy)
+      // outer scales, inner counter-translates; shared position/duration/ease.
+      tl.to(outer, { scale: S, duration: 1.35, ease: "power3.inOut" }, 2.0);
+      tl.to(inner, { x: -offA.x, y: -offA.y, duration: 1.35, ease: "power3.inOut" }, 2.0);
+      tl.fromTo(byId("03-dashboard-ring-turnos"),
+        { opacity: 0, scale: 0.7 },
+        { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 3.2);
+      tl.fromTo(byId("03-dashboard-co-turnos"),
+        { opacity: 0, scale: 0 },
+        { opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.8)", transformOrigin: "50% 0%" }, 3.5);
+
+      // Scene 3 (4.5-7s): pan (constant scale, inner translate only) to the income block;
+      // callouts reveal sequentially, each on its own beat.
+      tl.to(inner, { x: -offB.x, y: -offB.y, duration: 1.15, ease: "power2.inOut" }, 4.55);
+      tl.fromTo(byId("03-dashboard-ring-ingresos"),
+        { opacity: 0, scale: 0.7 },
+        { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 5.65);
+      tl.fromTo(byId("03-dashboard-co-ingresos"),
+        { opacity: 0, scale: 0 },
+        { opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.8)", transformOrigin: "50% 0%" }, 5.85);
+      tl.fromTo(byId("03-dashboard-ring-deuda"),
+        { opacity: 0, scale: 0.7 },
+        { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 6.35);
+      tl.fromTo(byId("03-dashboard-co-deuda"),
+        { opacity: 0, scale: 0 },
+        { opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.8)", transformOrigin: "50% 0%" }, 6.55);
+
+      // Scene 4 (7-10s): single pull-back phase to the full card; callouts persist; still hold.
+      tl.to(outer, { scale: 1, duration: 1.5, ease: "power3.inOut" }, 7.3);
+      tl.to(inner, { x: 0, y: 0, duration: 1.5, ease: "power3.inOut" }, 7.3);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["03-dashboard"] = tl;
+    })();
+  </script>
+</template>

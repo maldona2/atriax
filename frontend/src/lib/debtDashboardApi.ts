@@ -55,18 +55,27 @@ export async function fetchPaymentHistory(
   return data;
 }
 
-export async function fetchPaymentMethodAnalytics(): Promise<
-  PaymentMethodAnalytics[]
-> {
-  const { data } = await api.get('/debt-dashboard/payment-methods');
+export async function fetchPaymentMethodAnalytics(
+  startDate?: string,
+  endDate?: string
+): Promise<PaymentMethodAnalytics[]> {
+  const params: Record<string, string> = {};
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
+  const { data } = await api.get('/debt-dashboard/payment-methods', { params });
   return data.methods;
 }
 
 export async function fetchPatientAppointments(
-  patientId: string
+  patientId: string,
+  startDate?: string,
+  endDate?: string
 ): Promise<PatientAppointmentDetail[]> {
+  const params: Record<string, string> = { patientId };
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
   const { data } = await api.get('/debt-dashboard/patient-appointments', {
-    params: { patientId },
+    params,
   });
   return data.appointments;
 }

@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchPaymentMethodAnalytics } from '@/lib/debtDashboardApi';
 import type { PaymentMethodAnalytics } from '@/types/debtDashboard';
 
-export function usePaymentMethodAnalytics() {
+export function usePaymentMethodAnalytics(
+  startDate?: string,
+  endDate?: string
+) {
   const [data, setData] = useState<PaymentMethodAnalytics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -10,7 +13,7 @@ export function usePaymentMethodAnalytics() {
 
   const fetch = useCallback(async () => {
     try {
-      const result = await fetchPaymentMethodAnalytics();
+      const result = await fetchPaymentMethodAnalytics(startDate, endDate);
       setData(result);
       setError(null);
     } catch {
@@ -18,7 +21,7 @@ export function usePaymentMethodAnalytics() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [startDate, endDate]);
 
   useEffect(() => {
     setLoading(true);

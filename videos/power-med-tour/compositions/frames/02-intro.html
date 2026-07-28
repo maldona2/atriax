@@ -1,0 +1,253 @@
+<template>
+  <div id="root" data-composition-id="02-intro" data-duration="8.4" data-width="1920" data-height="1080">
+    <!-- Track 0 — full-bleed ground (never on #root) -->
+    <div id="02-intro-bg" class="clip" data-start="0" data-duration="8.4" data-track-index="0"></div>
+
+    <!-- Track 1 — brand block (Scene 1) -->
+    <div id="02-intro-titleclip" class="clip" data-start="0" data-duration="8.4" data-track-index="1">
+      <div id="02-intro-titleblock">
+        <div id="02-intro-accentline"></div>
+        <h1 id="02-intro-name"
+          ><span class="02-intro-l">A</span><span class="02-intro-l">t</span><span class="02-intro-l">r</span><span class="02-intro-l">i</span><span class="02-intro-l">a</span><span class="02-intro-l">x</span></h1>
+        <p id="02-intro-sub">
+          <span class="02-intro-w">Gestión</span>
+          <span class="02-intro-w">para</span>
+          <span class="02-intro-w">consultorios</span>
+          <span class="02-intro-w">médicos</span>
+          <span class="02-intro-w">y</span>
+          <span class="02-intro-w">estéticos</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Track 2 — floating landing surface (Scenes 2–3): glow → card → (titular is the layer above) -->
+    <div id="02-intro-cardclip" class="clip" data-start="2" data-duration="6.4" data-track-index="2">
+      <div id="02-intro-cardwrap">
+        <div id="02-intro-jitter">
+          <div id="02-intro-glow"></div>
+          <div id="02-intro-card">
+            <div id="02-intro-chrome">
+              <span class="02-intro-dot"></span>
+              <span class="02-intro-dot"></span>
+              <span class="02-intro-dot"></span>
+              <span id="02-intro-addr"></span>
+            </div>
+            <div id="02-intro-viewport">
+              <img id="02-intro-page" src="assets/00-landing.png" alt="" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* No font files ship with this project (assets/fonts + capture/assets/fonts are empty),
+       so only the generic family is named — weights/tracking carry the frame.md ramp. */
+    #root {
+      position: absolute;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    }
+    [id="02-intro-bg"],
+    [id="02-intro-titleclip"],
+    [id="02-intro-cardclip"] {
+      position: absolute;
+      inset: 0;
+    }
+    [id="02-intro-bg"] {
+      background: #ffffff;
+    }
+
+    /* — brand block (left 40%) — */
+    [id="02-intro-titleblock"] {
+      position: absolute;
+      left: 96px;
+      top: 200px;
+      width: 600px;
+    }
+    [id="02-intro-accentline"] {
+      width: 60px;
+      height: 4px;
+      border-radius: 2px;
+      background: #0a0a0a;
+      margin-bottom: 38px;
+      transform-origin: left center;
+    }
+    [id="02-intro-name"] {
+      font-size: 116px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      color: #0a0a0a;
+    }
+    [class~="02-intro-l"] {
+      display: inline-block;
+      will-change: transform, opacity;
+    }
+    [id="02-intro-sub"] {
+      margin-top: 24px;
+      font-size: 30px;
+      font-weight: 400;
+      line-height: 1.55;
+      color: #737373;
+      max-width: 540px;
+    }
+    [class~="02-intro-w"] {
+      display: inline-block;
+      will-change: transform, opacity;
+    }
+
+    /* — floating landing card (right 60%) — */
+    [id="02-intro-cardwrap"] {
+      position: absolute;
+      left: 784px;
+      top: 330px;
+      width: 1040px;
+      height: 444px;
+      will-change: transform;
+    }
+    [id="02-intro-jitter"] {
+      position: absolute;
+      inset: 0;
+    }
+    [id="02-intro-glow"] {
+      position: absolute;
+      inset: -160px;
+      z-index: 1;
+      background: radial-gradient(closest-side, rgba(10, 10, 10, 0.55), rgba(10, 10, 10, 0) 72%);
+      opacity: 0;
+    }
+    [id="02-intro-card"] {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background: #ffffff;
+      border: 1.5px solid rgba(10, 10, 10, 0.16);
+      border-radius: 14px;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+    [id="02-intro-chrome"] {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 18px;
+      border-bottom: 1.5px solid rgba(10, 10, 10, 0.1);
+      background: rgba(10, 10, 10, 0.03);
+    }
+    [class~="02-intro-dot"] {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(10, 10, 10, 0.18);
+    }
+    [id="02-intro-addr"] {
+      margin-left: 14px;
+      width: 320px;
+      height: 20px;
+      border-radius: 100px;
+      background: rgba(10, 10, 10, 0.05);
+    }
+    [id="02-intro-viewport"] {
+      position: relative;
+      height: 397px; /* 444 − 3 (borders) − 44 (chrome) */
+      overflow: hidden;
+    }
+    [id="02-intro-page"] {
+      display: block;
+      width: 100%; /* 1037px inside borders → 1037 × 1080/1920 = 583px tall */
+      height: auto;
+      will-change: transform;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    (() => {
+      const $ = (id) => document.getElementById(id);
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["02-intro"] = tl;
+
+      const letters = document.querySelectorAll('[class~="02-intro-l"]');
+      const words = document.querySelectorAll('[class~="02-intro-w"]');
+      const card = $("02-intro-card");
+      const jitterEl = $("02-intro-jitter");
+
+      /* Static 3D tilt owned by GSAP (not CSS) so the Scene-3 settle composes cleanly. */
+      gsap.set(card, { transformPerspective: 1600, rotationY: -7, rotationX: 3 });
+
+      /* ── Scene 1 (0.0–2.0s): "Atriax" staggered reveal + subline (dynamic-content-sequencing) ── */
+      tl.fromTo(
+        "[id='02-intro-accentline']",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.5, ease: "power3.out" },
+        0.05,
+      );
+      tl.fromTo(
+        letters,
+        { y: 34, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out", stagger: 0.07 },
+        0.15,
+      );
+      /* content-aware stagger: window scales with word count, never hardcoded per item */
+      const wordStagger = Math.min(0.09, 0.6 / words.length);
+      tl.fromTo(
+        words,
+        { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power2.out", stagger: wordStagger },
+        0.85,
+      );
+
+      /* ── Scene 2 (2.0–5.0s): landing rises as tilted 3D card, inner content scrolls (3d-page-scroll) ── */
+      tl.fromTo(
+        "[id='02-intro-cardwrap']",
+        { y: 820 }, /* card top 330+820 = 1150 → fully below the 1080 canvas */
+        { y: 0, duration: 1.4, ease: "power3.out" },
+        2.0,
+      );
+      /* SCROLL_DISTANCE measured from layout: img 583px − viewport 397px = 186px.
+         Starts showing the page bottom, settles on the site hero (top). */
+      tl.fromTo(
+        "[id='02-intro-page']",
+        { y: -186 },
+        { y: 0, duration: 1.5, ease: "power3.out" },
+        3.3,
+      );
+
+      /* ── Scene 3 (5.0–8.0s): card settles flat + ambient glow bloom, one beat ── */
+      tl.to(card, { rotationY: 0, rotationX: 0, duration: 0.9, ease: "power2.inOut" }, 5.0);
+      tl.fromTo(
+        "[id='02-intro-glow']",
+        { opacity: 0, scale: 0.88 },
+        { opacity: 0.12, scale: 1, duration: 0.9, ease: "power2.out" }, /* dark glow on white: well under the 0.45 ceiling */
+        5.0,
+      );
+
+      /* HELD read: subtle jitter (sine-wave-loop, low amp) as the only life — bounded phase
+         tween, sin(0)=0 at start, amplitude eased out over the last 25% so the cut lands still. */
+      const CYCLES = 1;
+      const phase = { p: 0 };
+      tl.to(
+        phase,
+        {
+          p: Math.PI * 2 * CYCLES,
+          duration: 2.05,
+          ease: "none",
+          onUpdate: () => {
+            const t = phase.p / (Math.PI * 2 * CYCLES);
+            const env = t < 0.75 ? 1 : (1 - t) / 0.25;
+            jitterEl.style.transform =
+              "translateY(" + (Math.sin(phase.p) * 2.2 * env).toFixed(3) + "px)";
+          },
+        },
+        5.95,
+      );
+    })();
+  </script>
+</template>

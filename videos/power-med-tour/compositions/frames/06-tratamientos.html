@@ -1,0 +1,302 @@
+<template>
+  <div id="root" data-duration="8.4" data-composition-id="06-tratamientos" data-width="1920" data-height="1080">
+  <style>
+    #root {
+      width: 1920px;
+      height: 1080px;
+      position: relative;
+      overflow: hidden;
+      container-type: size;
+      font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    /* ---- background layer (track 0) ---- */
+    .tx06-bg {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+    }
+    .tx06-shot {
+      --dof: 0px;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: blur(var(--dof));
+      will-change: filter, opacity;
+      opacity: 0.55;
+    }
+    .tx06-wash {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.5));
+    }
+
+    /* ---- content layer (track 1) ---- */
+    .tx06-content {
+      position: absolute;
+      inset: 0;
+    }
+
+    .tx06-header {
+      position: absolute;
+      top: 96px;
+      left: 96px;
+    }
+    .tx06-accent-line {
+      width: 60px;
+      height: 4px;
+      border-radius: 2px;
+      background: #0a0a0a;
+      transform-origin: left center;
+      margin-bottom: 18px;
+    }
+    .tx06-eyebrow {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #0a0a0a;
+      margin-bottom: 12px;
+    }
+    .tx06-h2 {
+      font-size: 52px;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: #0a0a0a;
+    }
+    .tx06-pill {
+      position: absolute;
+      top: 104px;
+      right: 96px;
+      padding: 10px 22px;
+      border-radius: 100px;
+      background: rgba(10, 10, 10, 0.05);
+      color: #0a0a0a;
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    /* burst grid — items share one center, expand to 2x2 targets */
+    .tx06-card {
+      position: absolute;
+      top: 590px;
+      left: 960px;
+      width: 600px;
+      height: 232px;
+      box-sizing: border-box;
+      padding: 26px 32px;
+      background: rgba(10, 10, 10, 0.03);
+      border: 1.5px solid rgba(10, 10, 10, 0.16);
+      border-radius: 14px;
+      will-change: transform;
+    }
+    .tx06-name {
+      font-size: 30px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      color: #0a0a0a;
+    }
+    .tx06-cost {
+      margin-top: 6px;
+      font-size: 16px;
+      font-weight: 400;
+      color: #737373;
+    }
+    .tx06-price {
+      display: inline-block;
+      margin-top: 12px;
+      min-width: 300px;
+      font-size: 52px;
+      font-weight: 700;
+      line-height: 1;
+      color: #0a0a0a;
+      font-variant-numeric: tabular-nums;
+      transform-origin: left 60%;
+      will-change: transform;
+    }
+    .tx06-proto {
+      margin-top: 16px;
+    }
+    .tx06-proto-label {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #737373;
+      margin-bottom: 8px;
+    }
+    .tx06-track {
+      width: 100%;
+      height: 8px;
+      border-radius: 6px;
+      background: rgba(10, 10, 10, 0.05);
+      overflow: hidden;
+    }
+    .tx06-fill {
+      width: 100%;
+      height: 100%;
+      border-radius: 6px;
+      background: #0a0a0a;
+      transform-origin: left center;
+    }
+  </style>
+
+  <div class="clip tx06-bg" data-start="0" data-duration="8.4" data-track-index="0">
+    <img class="tx06-shot" id="tx06-shot" src="assets/05-tratamientos.png" alt="" />
+    <div class="tx06-wash"></div>
+  </div>
+
+  <div class="clip tx06-content" data-start="0" data-duration="8.4" data-track-index="1">
+    <div class="tx06-header">
+      <div class="tx06-accent-line" id="tx06-line"></div>
+      <div class="tx06-eyebrow" id="tx06-eyebrow">Catálogo</div>
+      <div class="tx06-h2" id="tx06-title">Protocolos de tratamiento</div>
+    </div>
+    <div class="tx06-pill" id="tx06-pill">4 tratamientos</div>
+
+    <div class="tx06-card" data-tx="-316" data-ty="-132">
+      <div class="tx06-name">Mesoterapia facial</div>
+      <div class="tx06-cost">Costo $12.000</div>
+      <div class="tx06-price" data-price="45000">$0</div>
+      <div class="tx06-proto">
+        <div class="tx06-proto-label">Protocolo de sesiones</div>
+        <div class="tx06-track"><div class="tx06-fill"></div></div>
+      </div>
+    </div>
+    <div class="tx06-card" data-tx="316" data-ty="-132">
+      <div class="tx06-name">Limpieza profunda</div>
+      <div class="tx06-cost">Costo $6.000</div>
+      <div class="tx06-price" data-price="28000">$0</div>
+      <div class="tx06-proto">
+        <div class="tx06-proto-label">Protocolo de sesiones</div>
+        <div class="tx06-track"><div class="tx06-fill"></div></div>
+      </div>
+    </div>
+    <div class="tx06-card" data-tx="-316" data-ty="132">
+      <div class="tx06-name">Rellenos con ácido hialurónico</div>
+      <div class="tx06-cost">Costo $50.000</div>
+      <div class="tx06-price" data-price="120000">$0</div>
+      <div class="tx06-proto">
+        <div class="tx06-proto-label">Protocolo de sesiones</div>
+        <div class="tx06-track"><div class="tx06-fill"></div></div>
+      </div>
+    </div>
+    <div class="tx06-card" data-tx="316" data-ty="132">
+      <div class="tx06-name">Peeling químico</div>
+      <div class="tx06-cost">Costo $9.000</div>
+      <div class="tx06-price" data-price="38000">$0</div>
+      <div class="tx06-proto">
+        <div class="tx06-proto-label">Protocolo de sesiones</div>
+        <div class="tx06-track"><div class="tx06-fill"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    (function () {
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["06-tratamientos"] = tl;
+
+      const fmt = (v) =>
+        "$" + Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+      /* Scene 1 (0-1.5s) — title reveal; screenshot racks out of focus (depth-of-field-blur) */
+      tl.to(
+        "#tx06-shot",
+        { "--dof": "13px", opacity: 0.35, duration: 1.0, ease: "power2.inOut" },
+        0.15,
+      );
+      tl.fromTo(
+        "#tx06-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.6, ease: "power3.out" },
+        0.15,
+      );
+      tl.fromTo(
+        "#tx06-eyebrow",
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        0.25,
+      );
+      tl.fromTo(
+        "#tx06-title",
+        { opacity: 0, y: 28 },
+        { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" },
+        0.35,
+      );
+      tl.fromTo(
+        "#tx06-pill",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        0.6,
+      );
+
+      /* Scene 2 (1.5-5.0s) — center-outward-expansion into the 2x2 grid,
+         each card lands on its own beat with a power3 settle */
+      document.querySelectorAll(".tx06-card").forEach((el, i) => {
+        tl.fromTo(
+          el,
+          { xPercent: -50, yPercent: -50, x: 0, y: 0, scale: 0.62, opacity: 0 },
+          {
+            xPercent: -50,
+            yPercent: -50,
+            x: Number(el.dataset.tx),
+            y: Number(el.dataset.ty),
+            scale: 1,
+            opacity: 1,
+            duration: 1.1,
+            ease: "power3.out",
+          },
+          1.6 + i * 0.55,
+        );
+      });
+
+      /* Scene 3 (5.0-8.0s) — prices tick with value-scaled counters (chord: same
+         start, duration, ease) while the session bars fill; quiet hold after 6.5s */
+      const COUNT_DUR = 1.5;
+      const COUNT_EASE = "power2.out";
+      document.querySelectorAll(".tx06-price").forEach((el) => {
+        const target = Number(el.dataset.price);
+        const state = { value: 0 };
+        tl.to(
+          state,
+          {
+            value: target,
+            duration: COUNT_DUR,
+            ease: COUNT_EASE,
+            onUpdate: () => {
+              el.textContent = fmt(state.value);
+            },
+          },
+          5.0,
+        );
+        tl.fromTo(
+          el,
+          { opacity: 0, scale: 0.55 },
+          { opacity: 1, scale: 1, duration: COUNT_DUR, ease: COUNT_EASE },
+          5.0,
+        );
+      });
+      tl.fromTo(
+        ".tx06-proto",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.4, ease: "power2.out" },
+        4.95,
+      );
+      tl.fromTo(
+        ".tx06-fill",
+        { scaleX: 0 },
+        { scaleX: 1, duration: COUNT_DUR, ease: COUNT_EASE },
+        5.0,
+      );
+    })();
+  </script>
+</div>
+</template>

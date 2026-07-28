@@ -1,0 +1,260 @@
+<template>
+  <div id="root" data-composition-id="05-pacientes" data-width="1920" data-height="1080" data-duration="10.5">
+    <style>
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        container-type: size;
+        font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+        color: #0a0a0a;
+      }
+
+      #pacientes05-bg {
+        position: absolute;
+        inset: 0;
+        background: #ffffff;
+      }
+
+      #pacientes05-stage {
+        position: absolute;
+        inset: 0;
+        overflow: hidden; /* required: camera zoom + blur smear extend past frame */
+      }
+
+      #pacientes05-world {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 50%;
+        will-change: transform;
+        filter: url(#pacientes05-streak);
+      }
+
+      /* station cards (screenshots) */
+      .pacientes05-shot {
+        position: absolute;
+        border: 1.5px solid rgba(10, 10, 10, 0.16);
+        border-radius: 14px;
+        overflow: hidden;
+        background: #ffffff;
+      }
+      .pacientes05-shot img {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* station A — listado (world left) */
+      #pacientes05-listado {
+        left: 90px;
+        top: 200px;
+        width: 1050px;
+        height: 590px;
+      }
+
+      /* station B — ficha (world right, slightly higher: diagonal journey) */
+      #pacientes05-ficha {
+        left: 2100px;
+        top: 240px;
+        width: 1450px;
+        height: 816px;
+      }
+
+      /* title block — right 40% of station 1 view */
+      #pacientes05-header {
+        position: absolute;
+        left: 1240px;
+        top: 360px;
+        width: 600px;
+      }
+      #pacientes05-eyebrow {
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #0a0a0a;
+      }
+      #pacientes05-line {
+        width: 60px;
+        height: 4px;
+        border-radius: 2px;
+        background: #0a0a0a;
+        margin: 18px 0 26px;
+      }
+      #pacientes05-title {
+        font-size: 80px;
+        font-weight: 700;
+        line-height: 1.08;
+        letter-spacing: -0.02em;
+        color: #0a0a0a;
+      }
+
+      /* marker circle on the "Fernández, Lucía" row (in-card coords) */
+      #pacientes05-ring {
+        position: absolute;
+        left: 134px;
+        top: 180px;
+        width: 306px;
+        height: 58px;
+        border: 3px solid #0a0a0a;
+        border-radius: 50%;
+      }
+
+      /* callouts over the ficha (world coords) */
+      .pacientes05-callout {
+        position: absolute;
+        left: 3430px;
+        width: 380px;
+        background: #ffffff;
+        border: 1.5px solid rgba(10, 10, 10, 0.16);
+        border-left: 4px solid #0a0a0a;
+        border-radius: 12px;
+        padding: 16px 24px;
+        font-size: 26px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: #0a0a0a;
+      }
+      #pacientes05-c1 { top: 480px; }
+      #pacientes05-c2 { top: 642px; }
+      #pacientes05-c3 { top: 925px; }
+    </style>
+
+    <div id="pacientes05-bg" class="clip" data-start="0" data-duration="10.5" data-track-index="0"></div>
+
+    <div id="pacientes05-stage" class="clip" data-start="0" data-duration="10.5" data-track-index="1">
+      <svg width="0" height="0" aria-hidden="true" style="position: absolute">
+        <filter id="pacientes05-streak" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur id="pacientes05-streak-blur" in="SourceGraphic" stdDeviation="0 0" />
+        </filter>
+      </svg>
+
+      <div id="pacientes05-world">
+        <div id="pacientes05-listado" class="pacientes05-shot">
+          <img src="assets/04-pacientes.png" alt="" />
+          <div id="pacientes05-ring"></div>
+        </div>
+
+        <div id="pacientes05-header">
+          <div id="pacientes05-eyebrow">Pacientes</div>
+          <div id="pacientes05-line"></div>
+          <div id="pacientes05-title">Cada paciente,<br />completo</div>
+        </div>
+
+        <div id="pacientes05-ficha" class="pacientes05-shot">
+          <img src="assets/08-paciente-detalle.png" alt="" />
+        </div>
+
+        <div id="pacientes05-c1" class="pacientes05-callout">Citas con estados</div>
+        <div id="pacientes05-c2" class="pacientes05-callout">Tratamientos activos</div>
+        <div id="pacientes05-c3" class="pacientes05-callout">Historial médico</div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+
+        // --- virtual camera: single wrapper, T = -offset × S ---
+        const world = document.getElementById("pacientes05-world");
+        const cam = { scale: 1, x: 0, y: 0 };
+        const applyCamera = () => {
+          world.style.transform =
+            "translate(" + cam.x + "px, " + cam.y + "px) scale(" + cam.scale + ")";
+        };
+        applyCamera(); // seed frame 0
+
+        // --- motion-blur streak (wrapper-level carve-out, inOut leg → seed 0) ---
+        const blurNode = document.getElementById("pacientes05-streak-blur");
+        const blur = { v: 0 };
+        const writeBlur = () => blurNode.setAttribute("stdDeviation", blur.v + " 0");
+        writeBlur();
+
+        // seek-safe initial states (applied synchronously at build)
+        gsap.set(["#pacientes05-eyebrow", "#pacientes05-title", "#pacientes05-listado"], {
+          opacity: 0,
+        });
+        gsap.set("#pacientes05-line", { scaleX: 0, transformOrigin: "left center" });
+        gsap.set("#pacientes05-ring", { scale: 0, transformOrigin: "50% 50%" });
+        gsap.set(".pacientes05-callout", { opacity: 0 });
+
+        // --- Scene 1 (0.0–2.5s): title + listado station, asymmetric 60/40 ---
+        tl.fromTo(
+          "#pacientes05-listado",
+          { opacity: 0, y: 46 },
+          { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" },
+          0.1,
+        );
+        tl.fromTo(
+          "#pacientes05-eyebrow",
+          { opacity: 0, y: 22 },
+          { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+          0.25,
+        );
+        tl.fromTo(
+          "#pacientes05-title",
+          { opacity: 0, y: 34 },
+          { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" },
+          0.4,
+        );
+        tl.to("#pacientes05-line", { scaleX: 1, duration: 0.5, ease: "power2.out" }, 0.7);
+
+        // --- Scene 2 (2.5–4.5s): circle the row, camera focuses on it ---
+        tl.fromTo(
+          "#pacientes05-ring",
+          { scale: 0, rotation: -2 },
+          { scale: 1, rotation: -2, duration: 0.6, ease: "back.out(1.7)" },
+          2.5,
+        );
+        tl.to(
+          cam,
+          { scale: 1.35, x: 465, y: 10, duration: 1.1, ease: "power3.inOut", onUpdate: applyCamera },
+          2.65,
+        );
+
+        // diagonal swoop to the ficha station — blur peaks mid-leg, sharp at landing (~5.5s)
+        tl.to(
+          cam,
+          {
+            scale: 1,
+            x: -1950,
+            y: -180,
+            duration: 1.3,
+            ease: "power3.inOut",
+            onUpdate: applyCamera,
+          },
+          4.2,
+        );
+        tl.to(blur, { v: 16, duration: 0.65, ease: "power3.in", onUpdate: writeBlur }, 4.2);
+        tl.to(blur, { v: 0, duration: 0.65, ease: "power3.out", onUpdate: writeBlur }, 4.85);
+
+        // --- Scene 3 (4.5–8.0s): landed — three callouts spring-pop in the back half ---
+        tl.fromTo(
+          "#pacientes05-c1",
+          { opacity: 0, y: 18, scale: 0.85 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.6)" },
+          5.9,
+        );
+        tl.fromTo(
+          "#pacientes05-c2",
+          { opacity: 0, y: 18, scale: 0.85 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.6)" },
+          6.6,
+        );
+        tl.fromTo(
+          "#pacientes05-c3",
+          { opacity: 0, y: 18, scale: 0.85 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.6)" },
+          7.3,
+        );
+
+        // --- Scene 4 (8.0–10.0s): hold, settled ---
+
+        window.__timelines["05-pacientes"] = tl;
+      })();
+    </script>
+  </div>
+</template>

@@ -1,0 +1,389 @@
+<template>
+  <div id="root" data-duration="10.5" data-composition-id="07-deudas" data-width="1920" data-height="1080">
+    <style>
+      #root {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        container-type: size;
+        font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+      }
+
+      /* ids are prefixed with the frame id "07-deudas-" (contract), which starts with a
+         digit — so CSS targets them via [id="..."] attribute selectors, and JS uses
+         getElementById refs, never "#07-..." selector strings (invalid CSS ident). */
+
+      /* ── full-bleed ground (clip layer, never #root) ── */
+      [id="07-deudas-bg"] {
+        position: absolute;
+        inset: 0;
+        background: #ffffff;
+      }
+
+      /* ── dashboard screenshot: background card, dimmed ── */
+      [id="07-deudas-shot"] {
+        position: absolute;
+        left: 340px;
+        top: 170px;
+        width: 1240px;
+        height: 698px;
+      }
+      .d07-shot-card {
+        position: absolute;
+        inset: 0;
+        border-radius: 14px;
+        border: 1.5px solid rgba(10, 10, 10, 0.16);
+        overflow: hidden;
+        background: #ffffff;
+      }
+      .d07-shot-card img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform-origin: center center;
+      }
+      .d07-shot-veil {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.45);
+      }
+
+      /* ── title ── */
+      [id="07-deudas-title"] {
+        position: absolute;
+        left: 0;
+        top: 58px;
+        width: 1920px;
+        text-align: center;
+      }
+      .d07-accent-line {
+        width: 60px;
+        height: 4px;
+        border-radius: 2px;
+        background: #0a0a0a;
+        margin: 0 auto 18px auto;
+        transform-origin: center center;
+      }
+      .d07-h2 {
+        font-size: 50px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        color: #0a0a0a;
+      }
+
+      /* ── stat stations (triptych) ── */
+      .d07-station {
+        position: absolute;
+      }
+      [id="07-deudas-st-cobrado"] { left: 230px; top: 520px; width: 440px; height: 250px; }
+      [id="07-deudas-st-pendiente"] { left: 710px; top: 520px; width: 440px; height: 250px; }
+      [id="07-deudas-st-margen"] { left: 1190px; top: 460px; width: 500px; height: 320px; }
+
+      .d07-card {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        border-radius: 14px;
+        border: 1.5px solid rgba(10, 10, 10, 0.16);
+        background: linear-gradient(rgba(10, 10, 10, 0.03), rgba(10, 10, 10, 0.03)), #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+      }
+
+      .d07-num-wrap {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        width: 100%;
+      }
+      .d07-num {
+        font-variant-numeric: tabular-nums;
+        display: inline-block;
+        font-size: 60px;
+        font-weight: 700;
+        line-height: 1;
+        color: #0a0a0a;
+        transform-origin: center center;
+      }
+      [id="07-deudas-st-margen"] .d07-num {
+        font-size: 84px;
+      }
+      .d07-suffix {
+        display: inline-block;
+        font-size: 56px;
+        font-weight: 700;
+        color: #0a0a0a;
+        margin-left: 4px;
+      }
+      .d07-label {
+        font-size: 19px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #717171;
+      }
+
+      /* progress bar (pendiente) */
+      .d07-track {
+        width: 340px;
+        height: 10px;
+        border-radius: 6px;
+        background: rgba(10, 10, 10, 0.06);
+        overflow: hidden;
+      }
+      .d07-fill {
+        width: 100%;
+        height: 100%;
+        border-radius: 6px;
+        background: #0a0a0a;
+        transform-origin: left center;
+      }
+
+      /* ring (margen) */
+      .d07-ring-svg {
+        display: block;
+      }
+      .d07-ring-track {
+        fill: none;
+        stroke: rgba(10, 10, 10, 0.08);
+        stroke-width: 10;
+      }
+      .d07-ring-fill {
+        fill: none;
+        stroke: #0a0a0a;
+        stroke-width: 10;
+        stroke-linecap: round;
+        transform: rotate(-90deg);
+        transform-origin: center center;
+      }
+
+      /* ambient glow behind the margen card */
+      .d07-glow {
+        position: absolute;
+        inset: -150px;
+        z-index: 1;
+        border-radius: 50%;
+        background: radial-gradient(circle at center, rgba(10, 10, 10, 0.5) 0%, rgba(10, 10, 10, 0) 68%);
+        transform-origin: center center;
+        pointer-events: none;
+      }
+    </style>
+
+    <!-- track 0 — white ground, full duration -->
+    <div id="07-deudas-bg" class="clip" data-start="0" data-duration="10.5" data-track-index="0"></div>
+
+    <!-- track 1 — dashboard screenshot rises as a dim background card -->
+    <div id="07-deudas-shot" class="clip" data-start="0" data-duration="10.5" data-track-index="1">
+      <div class="d07-shot-card" id="07-deudas-shot-card">
+        <img id="07-deudas-shot-img" src="assets/06-deudas.png" alt="" />
+        <div class="d07-shot-veil"></div>
+      </div>
+    </div>
+
+    <!-- track 2 — title -->
+    <div id="07-deudas-title" class="clip" data-start="0" data-duration="10.5" data-track-index="2">
+      <div class="d07-accent-line" id="07-deudas-line"></div>
+      <div class="d07-h2" id="07-deudas-h2">Inteligencia financiera del consultorio</div>
+    </div>
+
+    <!-- track 3 — stat: total cobrado -->
+    <div id="07-deudas-st-cobrado" class="d07-station clip" data-start="2" data-duration="8.5" data-track-index="3">
+      <div class="d07-card" id="07-deudas-card-cobrado">
+        <div class="d07-num-wrap">
+          <span class="d07-num" id="07-deudas-num-cobrado">$0</span>
+        </div>
+        <div class="d07-label">Total cobrado</div>
+      </div>
+    </div>
+
+    <!-- track 4 — stat: pendiente de cobro -->
+    <div id="07-deudas-st-pendiente" class="d07-station clip" data-start="4.3" data-duration="6.2" data-track-index="4">
+      <div class="d07-card" id="07-deudas-card-pendiente">
+        <div class="d07-num-wrap">
+          <span class="d07-num" id="07-deudas-num-pendiente">$0</span>
+        </div>
+        <div class="d07-label">Pendiente de cobro</div>
+        <div class="d07-track"><div class="d07-fill" id="07-deudas-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- track 5 — stat: margen de ganancia (hero of the triptych) -->
+    <div id="07-deudas-st-margen" class="d07-station clip" data-start="6.6" data-duration="3.9" data-track-index="5">
+      <div class="d07-glow" id="07-deudas-glow"></div>
+      <div class="d07-card" id="07-deudas-card-margen">
+        <div class="d07-num-wrap">
+          <span class="d07-num" id="07-deudas-num-margen">0.0</span><span class="d07-suffix" id="07-deudas-suffix">%</span>
+        </div>
+        <div class="d07-label">Margen de ganancia</div>
+        <svg class="d07-ring-svg" width="120" height="120" viewBox="0 0 120 120">
+          <circle class="d07-ring-track" cx="60" cy="60" r="50"></circle>
+          <circle class="d07-ring-fill" id="07-deudas-ring" cx="60" cy="60" r="50"></circle>
+        </svg>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        var tl = gsap.timeline({ paused: true });
+
+        /* ids start with a digit ("07-deudas-…") — always resolve via getElementById,
+           never a "#07-…" selector string (invalid CSS ident, querySelector throws). */
+        var el = function (id) {
+          return document.getElementById(id);
+        };
+
+        var fmtAR = function (v) {
+          return "$" + Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        };
+
+        /* ── Scene 1 (0.0–2.0s): title reveal + dashboard rises dim ── */
+        tl.fromTo(el("07-deudas-line"), { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power3.out" }, 0.05);
+        tl.fromTo(
+          el("07-deudas-h2"),
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" },
+          0.15
+        );
+        tl.fromTo(
+          el("07-deudas-shot-card"),
+          { opacity: 0, y: 90 },
+          { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" },
+          0.35
+        );
+        /* macro move: slow push-in on the screenshot under everything */
+        tl.fromTo(
+          el("07-deudas-shot-img"),
+          { scale: 1 },
+          { scale: 1.035, duration: 9.5, ease: "none" },
+          0.5
+        );
+
+        /* ── Scene 2 (2.0–4.3s): $146.000 count-up, counting-dynamic-scale ── */
+        var numCobrado = el("07-deudas-num-cobrado");
+        var stCobrado = { value: 0 };
+        tl.fromTo(
+          el("07-deudas-card-cobrado"),
+          { opacity: 0, y: 46 },
+          { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+          2.0
+        );
+        tl.to(
+          stCobrado,
+          {
+            value: 146000,
+            duration: 1.8,
+            ease: "power3.out",
+            onUpdate: function () {
+              numCobrado.textContent = fmtAR(stCobrado.value);
+            },
+          },
+          2.15
+        );
+        tl.fromTo(
+          numCobrado,
+          { scale: 0.55 },
+          { scale: 1, duration: 1.8, ease: "power3.out" },
+          2.15
+        );
+
+        /* ── Scene 3 (4.3–6.6s): $693.000 count-up + bar fill, same beat ── */
+        var numPend = el("07-deudas-num-pendiente");
+        var stPend = { value: 0 };
+        tl.fromTo(
+          el("07-deudas-card-pendiente"),
+          { opacity: 0, y: 46 },
+          { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+          4.3
+        );
+        tl.to(
+          stPend,
+          {
+            value: 693000,
+            duration: 1.8,
+            ease: "power3.out",
+            onUpdate: function () {
+              numPend.textContent = fmtAR(stPend.value);
+            },
+          },
+          4.45
+        );
+        tl.fromTo(
+          numPend,
+          { scale: 0.55 },
+          { scale: 1, duration: 1.8, ease: "power3.out" },
+          4.45
+        );
+        /* pendiente share of total facturado: 693 / (693 + 146) ≈ 0.826 */
+        tl.fromTo(
+          el("07-deudas-fill"),
+          { scaleX: 0 },
+          { scaleX: 0.826, duration: 1.8, ease: "power3.out" },
+          4.45
+        );
+
+        /* ── Scene 4 (6.6–8.5s): 75.3% count-up + ring fill ── */
+        var numMargen = el("07-deudas-num-margen");
+        var stMargen = { value: 0 };
+        tl.fromTo(
+          el("07-deudas-card-margen"),
+          { opacity: 0, y: 46 },
+          { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+          6.6
+        );
+        tl.to(
+          stMargen,
+          {
+            value: 75.3,
+            duration: 1.4,
+            ease: "power3.out",
+            onUpdate: function () {
+              numMargen.textContent = stMargen.value.toFixed(1);
+            },
+          },
+          6.75
+        );
+        tl.fromTo(
+          numMargen,
+          { scale: 0.55 },
+          { scale: 1, duration: 1.4, ease: "power3.out" },
+          6.75
+        );
+        var ring = el("07-deudas-ring");
+        var LEN = ring.getTotalLength();
+        ring.style.strokeDasharray = LEN;
+        tl.fromTo(
+          ring,
+          { strokeDashoffset: LEN },
+          { strokeDashoffset: LEN * (1 - 0.753), duration: 1.4, ease: "power3.out" },
+          6.75
+        );
+        /* suffix lands after the count — the number gets its own beat */
+        tl.fromTo(
+          el("07-deudas-suffix"),
+          { opacity: 0, y: 18 },
+          { opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" },
+          8.15
+        );
+
+        /* ── Scene 5 (8.5–10.0s): ambient glow blooms behind the margen, hold ── */
+        tl.fromTo(
+          el("07-deudas-glow"),
+          { opacity: 0, scale: 0.85 },
+          { opacity: 0.16, scale: 1, duration: 0.9, ease: "power2.out" },
+          8.5
+        );
+
+        window.__timelines["07-deudas"] = tl;
+      })();
+    </script>
+  </div>
+</template>

@@ -848,8 +848,18 @@ export class DebtDashboardService {
   }
 
   async getPaymentMethodAnalytics(
-    tenantId: string
+    tenantId: string,
+    startDate?: string,
+    endDate?: string
   ): Promise<PaymentMethodAnalytics[]> {
+    const conditions = [eq(paymentRecords.tenantId, tenantId)];
+    if (startDate) {
+      conditions.push(gte(appointments.scheduledAt, new Date(startDate)));
+    }
+    if (endDate) {
+      conditions.push(lte(appointments.scheduledAt, new Date(endDate)));
+    }
+
     const results = await db
       .select({
         paymentMethod: paymentRecords.paymentMethod,
@@ -857,7 +867,14 @@ export class DebtDashboardService {
         transactionCount: sql<number>`count(*)`,
       })
       .from(paymentRecords)
-      .where(eq(paymentRecords.tenantId, tenantId))
+      .leftJoin(
+        appointments,
+        and(
+          eq(paymentRecords.appointmentId, appointments.id),
+          eq(appointments.tenantId, tenantId)
+        )
+      )
+      .where(and(...conditions))
       .groupBy(paymentRecords.paymentMethod);
 
     const grandTotal = results.reduce(

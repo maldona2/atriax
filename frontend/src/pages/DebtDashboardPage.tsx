@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { ElementType, FormEvent } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import {
@@ -94,6 +95,11 @@ import {
   reactivatePlan,
   updateAppointmentPayment,
 } from '@/lib/debtDashboardApi';
+import {
+  formatMonthValue,
+  getCurrentMonthValue,
+  getMonthDateRange,
+} from '@/lib/monthRange';
 import type {
   PaymentHistoryFilters,
   PatientPaymentRecord,
@@ -122,7 +128,7 @@ function StatCard({
   value: string;
   change?: string;
   changeType?: 'positive' | 'negative' | 'neutral';
-  icon: React.ElementType;
+  icon: ElementType;
   subtitle?: string;
   loading?: boolean;
   valueColor?: 'positive' | 'negative';
@@ -179,9 +185,14 @@ function StatCard({
   );
 }
 
-function OverviewTab() {
-  const statistics = useDebtStatistics();
-  const paymentMethods = usePaymentMethodAnalytics();
+interface DateRangeProps {
+  startDate: string;
+  endDate: string;
+}
+
+function OverviewTab({ startDate, endDate }: DateRangeProps) {
+  const statistics = useDebtStatistics(startDate, endDate);
+  const paymentMethods = usePaymentMethodAnalytics(startDate, endDate);
 
   // Build a simple 2-point area chart from paid vs unpaid
   const trendData = statistics.data
@@ -905,9 +916,9 @@ function AppointmentPaymentDialog({
       );
       setError(null);
     }
-  }, [appt]);
+  }, [appt, today]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!appt) return;
     const amountCents = Math.round(parseFloat(amountPesos) * 100);
@@ -1040,16 +1051,18 @@ function PatientAppointmentsSheet({
   patient,
   onClose,
   onPaymentSaved,
+  startDate,
+  endDate,
 }: {
   patient: PatientPaymentRecord | null;
   onClose: () => void;
   onPaymentSaved?: () => void;
-}) {
+} & DateRangeProps) {
   const {
     data: appts,
     loading,
     refetch,
-  } = usePatientAppointments(patient?.patientId ?? null);
+  } = usePatientAppointments(patient?.patientId ?? null, startDate, endDate);
   const [editingAppt, setEditingAppt] =
     useState<PatientAppointmentDetail | null>(null);
 
@@ -1177,7 +1190,7 @@ function PatientAppointmentsSheet({
   );
 }
 
-function HistoryTab() {
+function HistoryTab({ startDate, endDate }: DateRangeProps) {
   const [filters, setFilters] = useState<PaymentHistoryFilters>({
     page: 1,
     pageSize: 20,
@@ -1185,15 +1198,21 @@ function HistoryTab() {
   const [selectedPatient, setSelectedPatient] =
     useState<PatientPaymentRecord | null>(null);
 
-  const { records, totalCount, loading, refetch } = usePaymentHistory(filters);
+  const { records, totalCount, loading, refetch } = usePaymentHistory({
+    ...filters,
+    startDate,
+    endDate,
+  });
 
   // Keep the open sheet's summary bar in sync after a payment is saved
   useEffect(() => {
-    if (!selectedPatient) return;
-    const updated = records.find(
-      (r) => r.patientId === selectedPatient.patientId
-    );
-    if (updated) setSelectedPatient(updated);
+    setSelectedPatient((currentPatient) => {
+      if (!currentPatient) return null;
+      return (
+        records.find((r) => r.patientId === currentPatient.patientId) ??
+        currentPatient
+      );
+    });
   }, [records]);
 
   const getStatusBadge = (status: string) => {
@@ -1448,14 +1467,20 @@ function HistoryTab() {
         patient={selectedPatient}
         onClose={() => setSelectedPatient(null)}
         onPaymentSaved={refetch}
+        startDate={startDate}
+        endDate={endDate}
       />
     </>
   );
 }
 
 export function DebtDashboardPage() {
-  const statistics = useDebtStatistics();
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthValue);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { startDate, endDate } = getMonthDateRange(selectedMonth);
+  const statistics = useDebtStatistics(startDate, endDate);
+  const currentMonth = getCurrentMonthValue();
+  const selectedMonthLabel = formatMonthValue(selectedMonth);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -1468,27 +1493,57 @@ export function DebtDashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">
             Dashboard de Deudas
           </h1>
           <p className="text-sm text-muted-foreground">
-            Gestión y seguimiento de pagos de pacientes
+            Datos de <span className="capitalize">{selectedMonthLabel}</span>{' '}
+            según la fecha del turno
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="gap-2 w-full sm:w-auto"
-        >
-          <RefreshCw
-            className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
-          />
-          Actualizar
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <div className="space-y-1.5">
+            <Label htmlFor="debt-dashboard-month">Mes de los turnos</Label>
+            <Input
+              id="debt-dashboard-month"
+              type="month"
+              value={selectedMonth}
+              onChange={(event) => {
+                if (event.target.value) {
+                  setSelectedMonth(event.target.value);
+                }
+              }}
+              className="w-full sm:w-[190px]"
+            />
+            <p className="text-xs text-muted-foreground">
+              KPIs, Vista General e Historial
+            </p>
+          </div>
+          {selectedMonth !== currentMonth && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedMonth(currentMonth)}
+              className="w-full sm:w-auto"
+            >
+              Mes actual
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="w-full gap-2 sm:w-auto"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
+            />
+            Actualizar
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -1580,7 +1635,7 @@ export function DebtDashboardPage() {
         </ScrollArea>
 
         <TabsContent value="overview" className="min-w-0 space-y-6">
-          <OverviewTab />
+          <OverviewTab startDate={startDate} endDate={endDate} />
         </TabsContent>
 
         <TabsContent value="aging" className="min-w-0">
@@ -1592,7 +1647,7 @@ export function DebtDashboardPage() {
         </TabsContent>
 
         <TabsContent value="history" className="min-w-0">
-          <HistoryTab />
+          <HistoryTab startDate={startDate} endDate={endDate} />
         </TabsContent>
       </Tabs>
     </div>

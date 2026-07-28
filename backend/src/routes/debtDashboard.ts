@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, gte, lte } from 'drizzle-orm';
 import { authenticate } from '../middleware/auth.js';
 import { requireRole } from '../middleware/requireRole.js';
 import { debtDashboardService } from '../services/debtDashboardService.js';
@@ -166,8 +166,17 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = getTenantId(req);
-      const methods =
-        await debtDashboardService.getPaymentMethodAnalytics(tenantId);
+      const parsed = dateRangeSchema.safeParse(req.query);
+      if (!parsed.success) {
+        const err = new Error('Invalid query parameters');
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        return next(err);
+      }
+      const methods = await debtDashboardService.getPaymentMethodAnalytics(
+        tenantId,
+        parsed.data.startDate,
+        parsed.data.endDate
+      );
       res.json({ methods });
     } catch (err) {
       next(err);
@@ -178,6 +187,8 @@ router.get(
 // GET /api/debt-dashboard/patient-appointments?patientId=<uuid>
 const patientAppointmentsSchema = z.object({
   patientId: z.string().uuid(),
+  startDate: z.string().datetime({ offset: true }).optional(),
+  endDate: z.string().datetime({ offset: true }).optional(),
 });
 
 router.get(
@@ -192,7 +203,17 @@ router.get(
         (err as Error & { statusCode?: number }).statusCode = 400;
         return next(err);
       }
-      const { patientId } = parsed.data;
+      const { patientId, startDate, endDate } = parsed.data;
+      const conditions = [
+        eq(appointments.tenantId, tenantId),
+        eq(appointments.patientId, patientId),
+      ];
+      if (startDate) {
+        conditions.push(gte(appointments.scheduledAt, new Date(startDate)));
+      }
+      if (endDate) {
+        conditions.push(lte(appointments.scheduledAt, new Date(endDate)));
+      }
       const rows = await db
         .select({
           id: appointments.id,
@@ -203,12 +224,7 @@ router.get(
           notes: appointments.notes,
         })
         .from(appointments)
-        .where(
-          and(
-            eq(appointments.tenantId, tenantId),
-            eq(appointments.patientId, patientId)
-          )
-        )
+        .where(and(...conditions))
         .orderBy(desc(appointments.scheduledAt));
       res.json({ appointments: rows });
     } catch (err) {

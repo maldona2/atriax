@@ -1,0 +1,306 @@
+<template>
+  <div id="root" data-duration="8.4" data-composition-id="08-facturacion" data-width="1920" data-height="1080">
+    <style>
+      #root {
+        width: 1920px;
+        height: 1080px;
+        position: relative;
+        overflow: hidden;
+        font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+      }
+      .fx08-bg {
+        position: absolute;
+        inset: 0;
+        background: #ffffff;
+      }
+      .fx08-stage {
+        position: absolute;
+        inset: 0;
+        overflow: hidden; /* zoom > 1 leaks past the frame otherwise */
+      }
+      .fx08-header {
+        position: absolute;
+        left: 96px;
+        top: 96px;
+      }
+      .fx08-accent-line {
+        width: 60px;
+        height: 4px;
+        border-radius: 2px;
+        background: #0a0a0a;
+        transform-origin: left center;
+      }
+      .fx08-eyebrow {
+        margin-top: 18px;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #0a0a0a;
+      }
+      .fx08-title {
+        margin-top: 14px;
+        font-size: 62px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        color: #0a0a0a;
+      }
+      .fx08-title span {
+        display: inline-block;
+      }
+      /* --- coordinate-target-zoom: outer scales, inner translates --- */
+      .fx08-hero {
+        position: absolute;
+        inset: 0;
+      }
+      .fx08-zoom-outer {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+      .fx08-zoom-inner {
+        position: absolute;
+        inset: 0;
+        will-change: transform;
+      }
+      /* Crop window — PRIVACY: shows ONLY the top "Total a transferir" card
+         (source y 155–350). Everything below — including the payment-alias
+         card — is clipped by overflow:hidden and can never render. */
+      .fx08-crop {
+        position: absolute;
+        left: 335px;
+        top: 400px;
+        width: 1250px;
+        height: 338px;
+        overflow: hidden;
+        border: 1.5px solid rgba(10, 10, 10, 0.16);
+        border-radius: 14px;
+        background: #f6f6f5;
+      }
+      .fx08-crop img {
+        position: absolute;
+        width: 3329px; /* 1920 × 1.7337 */
+        left: -1260px; /* -727 × 1.7337 */
+        top: -269px; /* -155 × 1.7337 */
+      }
+      /* highlight sweep over the USD 28 × $1.500 formula (marker-highlight mode) */
+      .fx08-target {
+        position: absolute;
+        left: 22px;
+        top: 236px;
+        width: 416px;
+        height: 44px;
+        pointer-events: none;
+      }
+      .fx08-hl-bar {
+        position: absolute;
+        inset: 0 -8px;
+        background: rgba(10, 10, 10, 0.06);
+        border-radius: 6px;
+        transform-origin: left center;
+      }
+      .fx08-hl-line {
+        position: absolute;
+        left: -4px;
+        right: -4px;
+        bottom: 0;
+        height: 3px;
+        border-radius: 2px;
+        background: #0a0a0a;
+        transform-origin: left center;
+      }
+      /* keyword glow ring around $ 42.000 */
+      .fx08-glow {
+        position: absolute;
+        left: 18px;
+        top: 70px;
+        width: 272px;
+        height: 90px;
+        border: 3px solid #0a0a0a;
+        border-radius: 14px;
+        box-shadow: 0 0 28px rgba(10, 10, 10, 0.22);
+        pointer-events: none;
+      }
+      /* spring-pop callout (split-highlight component) */
+      .fx08-callout-row {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 778px;
+        display: flex;
+        justify-content: center;
+      }
+      .fx08-callout {
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+        padding: 20px 36px;
+        background: rgba(10, 10, 10, 0.05);
+        border-left: 4px solid #0a0a0a;
+        border-radius: 12px;
+        font-size: 30px;
+        font-weight: 500;
+        color: #0a0a0a;
+      }
+      .fx08-live-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #0a0a0a;
+        flex: none;
+      }
+    </style>
+
+    <div class="fx08-bg clip" data-start="0" data-duration="8.4" data-track-index="0"></div>
+
+    <div class="fx08-stage clip" data-start="0" data-duration="8.4" data-track-index="1">
+      <div class="fx08-header" id="fx08-header">
+        <div class="fx08-accent-line" id="fx08-accent-line"></div>
+        <div class="fx08-eyebrow" id="fx08-eyebrow">Facturación</div>
+        <div class="fx08-title" id="fx08-title">
+          <span>Cotización del dólar,</span> <span>en tiempo real</span>
+        </div>
+      </div>
+
+      <div class="fx08-hero" id="fx08-hero">
+        <div class="fx08-zoom-outer" id="fx08-zoom-outer">
+          <div class="fx08-zoom-inner" id="fx08-zoom-inner">
+            <div class="fx08-crop">
+              <img src="assets/07-facturacion.png" alt="" />
+              <div class="fx08-glow" id="fx08-glow"></div>
+              <div class="fx08-target" id="fx08-target">
+                <span class="fx08-hl-bar" id="fx08-hl-bar"></span>
+                <span class="fx08-hl-line" id="fx08-hl-line"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fx08-callout-row">
+        <div class="fx08-callout" id="fx08-callout">
+          <span class="fx08-live-dot" id="fx08-live-dot"></span>
+          <span>Consulta la cotización oficial del día</span>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script>
+      (function fx08Init() {
+        if (!window.gsap) {
+          setTimeout(fx08Init, 10);
+          return;
+        }
+
+        var W = 1920,
+          H = 1080,
+          ZOOM = 1.8;
+
+        /* coordinate-target-zoom: measure the target's real laid-out center
+           relative to the stage, compensating for any host scale. Baked once
+           at setup — target is absolutely positioned px over an image, so the
+           measurement is font/load independent. */
+        var offX = -395,
+          offY = 118; /* fallback = hand-computed from the fixed px layout */
+        var stage = document.getElementById("fx08-hero");
+        var target = document.getElementById("fx08-target");
+        if (stage && target) {
+          var s = stage.getBoundingClientRect();
+          var t = target.getBoundingClientRect();
+          if (s.width > 0 && t.width > 0) {
+            var k = s.width / W;
+            offX = (t.left + t.width / 2 - (s.left + s.width / 2)) / k;
+            offY = (t.top + t.height / 2 - (s.top + s.height / 2)) / k;
+          }
+        }
+        var counterX = -offX,
+          counterY = -offY;
+
+        var tl = gsap.timeline({ paused: true });
+
+        /* Scene 1 (0–2s): title reveal, billing card (top crop) enters */
+        tl.fromTo(
+          "#fx08-accent-line",
+          { scaleX: 0 },
+          { scaleX: 1, duration: 0.5, ease: "power2.out" },
+          0.05
+        );
+        tl.fromTo(
+          "#fx08-eyebrow",
+          { y: 18, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+          0.12
+        );
+        tl.fromTo(
+          "#fx08-title span",
+          { y: 28, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.6, ease: "power3.out", stagger: 0.14 },
+          0.22
+        );
+        tl.fromTo(
+          "#fx08-hero",
+          { y: 46, opacity: 0, scale: 0.96 },
+          { y: 0, opacity: 1, scale: 1, duration: 0.85, ease: "power3.out" },
+          0.35
+        );
+
+        /* Scene 2 (2–4.5s): zoom-to-target on the USD formula.
+           Scale and counter-translate share position, duration, ease. */
+        tl.to("#fx08-header", { opacity: 0.15, duration: 0.8, ease: "power2.inOut" }, 2.0);
+        tl.to(
+          "#fx08-zoom-outer",
+          { scale: ZOOM, duration: 1.4, ease: "power3.inOut" },
+          2.0
+        );
+        tl.to(
+          "#fx08-zoom-inner",
+          { x: counterX, y: counterY, duration: 1.4, ease: "power3.inOut" },
+          2.0
+        );
+        /* highlight sweep over the formula on its beat */
+        tl.fromTo(
+          "#fx08-hl-bar",
+          { scaleX: 0 },
+          { scaleX: 1, duration: 0.55, ease: "power2.out" },
+          3.45
+        );
+        tl.fromTo(
+          "#fx08-hl-line",
+          { scaleX: 0 },
+          { scaleX: 1, duration: 0.45, ease: "power2.out" },
+          3.6
+        );
+
+        /* Scene 3 (4.5–6.5s): callout spring-pop, then $42.000 keyword glow */
+        tl.fromTo(
+          "#fx08-callout",
+          { opacity: 0, scale: 0.6, y: 16 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.65, ease: "back.out(1.8)" },
+          4.55
+        );
+        tl.to("#fx08-live-dot", { scale: 1.45, duration: 0.3, ease: "sine.inOut" }, 5.3);
+        tl.to("#fx08-live-dot", { scale: 1, duration: 0.3, ease: "sine.inOut" }, 5.6);
+        tl.fromTo(
+          "#fx08-glow",
+          { opacity: 0, scale: 1.18 },
+          { opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.5)" },
+          5.4
+        );
+
+        /* Scene 4 (6.5–8s): held read — subtle breath only (scale about center
+           keeps the zoom target pinned). No exit: root transition owns it. */
+        tl.to(
+          "#fx08-zoom-outer",
+          { scale: ZOOM + 0.03, duration: 1.35, ease: "sine.inOut" },
+          6.55
+        );
+
+        window.__timelines = window.__timelines || {};
+        window.__timelines["08-facturacion"] = tl;
+      })();
+    </script>
+  </div>
+</template>

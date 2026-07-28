@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #000;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #FFFFFF;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="77"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div
+        id="el-01-hook"
+        class="scene"
+        data-composition-id="01-hook"
+        data-composition-src="compositions/frames/01-hook.html"
+        data-start="0"
+        data-duration="6.4"
+        data-track-index="0"
+      ></div>
+
+      <div
+        id="el-02-intro"
+        class="scene"
+        data-composition-id="02-intro"
+        data-composition-src="compositions/frames/02-intro.html"
+        data-start="6"
+        data-duration="8.4"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-03-dashboard"
+        class="scene"
+        data-composition-id="03-dashboard"
+        data-composition-src="compositions/frames/03-dashboard.html"
+        data-start="14"
+        data-duration="10.5"
+        data-track-index="0"
+      ></div>
+
+      <div
+        id="el-04-turnos"
+        class="scene"
+        data-composition-id="04-turnos"
+        data-composition-src="compositions/frames/04-turnos.html"
+        data-start="24"
+        data-duration="9.5"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-05-pacientes"
+        class="scene"
+        data-composition-id="05-pacientes"
+        data-composition-src="compositions/frames/05-pacientes.html"
+        data-start="33"
+        data-duration="10.5"
+        data-track-index="0"
+      ></div>
+
+      <div
+        id="el-06-tratamientos"
+        class="scene"
+        data-composition-id="06-tratamientos"
+        data-composition-src="compositions/frames/06-tratamientos.html"
+        data-start="43"
+        data-duration="8.4"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-07-deudas"
+        class="scene"
+        data-composition-id="07-deudas"
+        data-composition-src="compositions/frames/07-deudas.html"
+        data-start="51"
+        data-duration="10.5"
+        data-track-index="0"
+      ></div>
+
+      <div
+        id="el-08-facturacion"
+        class="scene"
+        data-composition-id="08-facturacion"
+        data-composition-src="compositions/frames/08-facturacion.html"
+        data-start="61"
+        data-duration="8.4"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-09-outro"
+        class="scene"
+        data-composition-id="09-outro"
+        data-composition-src="compositions/frames/09-outro.html"
+        data-start="69"
+        data-duration="8"
+        data-track-index="0"
+      ></div>
+
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+      // ── frame transitions (injected by transitions.mjs) ──
+      (function () { var tl = window.__timelines["main"];
+        tl.to("#el-01-hook", { scale: 2.5, opacity: 0, filter: "blur(8px)", duration: 0.4, ease: "power3.in" }, 6);
+        tl.fromTo("#el-02-intro", { scale: 0.5, opacity: 0, filter: "blur(8px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, 6);
+        tl.to("#el-02-intro", { scale: 2.5, opacity: 0, filter: "blur(8px)", duration: 0.4, ease: "power3.in" }, 14);
+        tl.fromTo("#el-03-dashboard", { scale: 0.5, opacity: 0, filter: "blur(8px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, 14);
+        tl.to("#el-03-dashboard", { x: -1920, duration: 0.5, ease: "power3.inOut" }, 24);
+        tl.fromTo("#el-04-turnos", { x: 1920, opacity: 1 }, { x: 0, duration: 0.5, ease: "power3.inOut" }, 24);
+        tl.to("#el-04-turnos", { x: -1920, duration: 0.5, ease: "power3.inOut" }, 33);
+        tl.fromTo("#el-05-pacientes", { x: 1920, opacity: 1 }, { x: 0, duration: 0.5, ease: "power3.inOut" }, 33);
+        tl.to("#el-05-pacientes", { x: -1920, duration: 0.5, ease: "power3.inOut" }, 43);
+        tl.fromTo("#el-06-tratamientos", { x: 1920, opacity: 1 }, { x: 0, duration: 0.5, ease: "power3.inOut" }, 43);
+        tl.to("#el-06-tratamientos", { scale: 2.5, opacity: 0, filter: "blur(8px)", duration: 0.4, ease: "power3.in" }, 51);
+        tl.fromTo("#el-07-deudas", { scale: 0.5, opacity: 0, filter: "blur(8px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, 51);
+        tl.to("#el-07-deudas", { x: -1920, duration: 0.5, ease: "power3.inOut" }, 61);
+        tl.fromTo("#el-08-facturacion", { x: 1920, opacity: 1 }, { x: 0, duration: 0.5, ease: "power3.inOut" }, 61);
+        tl.to("#el-08-facturacion", { scale: 2.5, opacity: 0, filter: "blur(8px)", duration: 0.4, ease: "power3.in" }, 69);
+        tl.fromTo("#el-09-outro", { scale: 0.5, opacity: 0, filter: "blur(8px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, 69);
+        tl.to({}, { duration: 77 }, 0); // full-span anchor — main.duration() == composition total (Studio master duration)
+      })();
+    </script>
+  </body>
+</html>

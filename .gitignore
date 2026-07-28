@@ -49,3 +49,4 @@ sendgrid.env
 
 # Superpowers visual brainstorm scratch
 .superpowers/
+.gstack/
