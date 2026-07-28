@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { requireRole } from '../middleware/requireRole.js';
 import * as infraPaymentService from '../services/infraPaymentService.js';
+import { requireManualBillingUser } from '../services/billingAccessService.js';
 
 const router = Router();
 const professionalOnly = [authenticate, requireRole('professional')];
@@ -23,6 +24,7 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = getTenantId(req);
+      await requireManualBillingUser(req.user!.id);
       const status = await infraPaymentService.getTenantStatus(tenantId);
       res.json(status);
     } catch (err) {

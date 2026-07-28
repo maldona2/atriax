@@ -11,6 +11,7 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { PublicRoute } from '@/components/layout/PublicRoute';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { ManualBillingRoute } from '@/components/layout/ManualBillingRoute';
 import { Toaster } from '@/components/ui/sonner';
 import { LoginPage } from '@/pages/LoginPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
@@ -82,10 +83,7 @@ function App() {
                 }
               >
                 <Route path="tenants" element={<TenantsPage />} />
-                <Route
-                  path="infra-payments"
-                  element={<InfraPaymentsPage />}
-                />
+                <Route path="infra-payments" element={<InfraPaymentsPage />} />
                 <Route
                   index
                   element={<Navigate to="/admin/tenants" replace />}
@@ -109,7 +107,14 @@ function App() {
                 <Route path="patients/:id" element={<PatientDetailPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="debt-dashboard" element={<DebtDashboardPage />} />
-                <Route path="billing" element={<BillingInfoPage />} />
+                <Route
+                  path="billing"
+                  element={
+                    <ManualBillingRoute>
+                      <BillingInfoPage />
+                    </ManualBillingRoute>
+                  }
+                />
                 <Route path="help" element={<HelpPage />} />
                 <Route path="help/:section" element={<HelpPage />} />
                 <Route
@@ -127,7 +132,10 @@ function App() {
               />
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/cancel/:token" element={<CancelAppointmentPage />} />
+              <Route
+                path="/cancel/:token"
+                element={<CancelAppointmentPage />}
+              />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Router>

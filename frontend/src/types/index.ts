@@ -69,6 +69,29 @@ export {
   validateRequiredFields,
 } from '../utils/content-validator';
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  fullName: string | null;
+  role: 'professional' | 'super_admin';
+  tenantId: string | null;
+  isVerified?: boolean;
+  billingMode: 'manual_transfer' | 'mercado_pago';
+  phone?: string | null;
+  specialty?: string | null;
+  licenseNumber?: string | null;
+  address?: string | null;
+  bio?: string | null;
+  education?: Array<{
+    degree: string;
+    institution: string;
+    year: number;
+  }> | null;
+  workingHours?: { start: string; end: string; days: string[] } | null;
+  appointmentDuration?: number | null;
+  avatarUrl?: string | null;
+}
+
 // Treatment types
 export type {
   Treatment,

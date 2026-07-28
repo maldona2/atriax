@@ -91,9 +91,7 @@ describe('SubscriptionAPI Authentication', () => {
         .set('Authorization', `Bearer ${validToken}`);
 
       // Should not return 401 (authentication passed)
-      // Returns 501 because endpoint is not implemented yet
       expect(response.status).not.toBe(401);
-      expect(response.status).toBe(501); // Not implemented
     });
 
     it('should accept Bearer token with case-insensitive prefix', async () => {
@@ -112,7 +110,6 @@ describe('SubscriptionAPI Authentication', () => {
         .set('Authorization', `bearer ${validToken}`);
 
       expect(response.status).not.toBe(401);
-      expect(response.status).toBe(501); // Not implemented
     });
   });
 
@@ -251,6 +248,24 @@ describe('SubscriptionAPI Authentication', () => {
   });
 
   describe('User ID Extraction', () => {
+    it('should reject access to another user subscription', async () => {
+      const validToken = jwt.sign(
+        {
+          sub: 'user-123',
+          email: 'test@example.com',
+          role: 'professional',
+        },
+        JWT_SECRET,
+        { expiresIn: '1h' }
+      );
+
+      const response = await request(app)
+        .get('/subscriptions/user-456')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(403);
+    });
+
     it('should extract user ID from JWT claims', async () => {
       const userId = 'user-789';
       const validToken = jwt.sign(
@@ -269,7 +284,6 @@ describe('SubscriptionAPI Authentication', () => {
 
       // Authentication should pass (user ID extracted from JWT)
       expect(response.status).not.toBe(401);
-      expect(response.status).toBe(501); // Not implemented
     });
 
     it('should extract user ID with tenantId from JWT claims', async () => {
@@ -292,7 +306,6 @@ describe('SubscriptionAPI Authentication', () => {
 
       // Authentication should pass (user ID and tenantId extracted from JWT)
       expect(response.status).not.toBe(401);
-      expect(response.status).toBe(501); // Not implemented
     });
   });
 
@@ -386,6 +399,21 @@ describe('Webhook Endpoint Implementation', () => {
     it('should return 400 for payment webhook with missing signature', async () => {
       const validPayload = {
         id: 'webhook-123',
+        type: 'payment',
+        data: { id: 'payment-456' },
+      };
+
+      const response = await request(app)
+        .post('/subscriptions/webhooks/payment')
+        .send(validPayload);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Missing signature');
+    });
+
+    it('should accept Mercado Pago numeric notification IDs', async () => {
+      const validPayload = {
+        id: 12345,
         type: 'payment',
         data: { id: 'payment-456' },
       };

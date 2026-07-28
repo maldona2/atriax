@@ -75,7 +75,8 @@ export class WebhookHandler {
         return false;
       }
 
-      const signedTemplate = `id:${resourceId};request-id:${requestId};ts:${ts}`;
+      const normalizedResourceId = resourceId.toLowerCase();
+      const signedTemplate = `id:${normalizedResourceId};request-id:${requestId};ts:${ts};`;
 
       // Create HMAC using webhook secret and Mercado Pago template
       const hmac = crypto.createHmac('sha256', this.webhookSecret);

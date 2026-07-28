@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { eq, sql } from 'drizzle-orm';
 import { db, users } from '../db/client.js';
+import { getBillingMode, type BillingMode } from './billingAccessService.js';
 
 const TOKEN_EXPIRY = '30d';
 
@@ -14,6 +15,7 @@ export interface LoginResult {
     role: string;
     tenantId: string | null;
     isVerified: boolean;
+    billingMode: BillingMode;
   };
 }
 
@@ -73,6 +75,7 @@ export async function login(
       role: user.role,
       tenantId: user.tenantId,
       isVerified: user.isVerified,
+      billingMode: getBillingMode(user.email),
     },
   };
 }
@@ -84,6 +87,7 @@ export interface UserProfile {
   role: string;
   tenantId: string | null;
   isVerified?: boolean;
+  billingMode: BillingMode;
   phone?: string | null;
   specialty?: string | null;
   licenseNumber?: string | null;
@@ -116,6 +120,7 @@ function toProfile(user: typeof users.$inferSelect): UserProfile {
     appointmentDuration: user.appointmentDuration ?? null,
     avatarUrl: user.avatarUrl ?? null,
     isVerified: user.isVerified,
+    billingMode: getBillingMode(user.email),
   };
 }
 

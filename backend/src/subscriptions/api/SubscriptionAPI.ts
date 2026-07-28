@@ -8,12 +8,10 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { authenticate } from '../../middleware/auth.js';
 import type { AuthUser } from '../../middleware/auth.js';
 import {
-  CreateSubscriptionRequest,
-  SubscriptionStatusResponse,
   PlanName,
   PaymentWebhook,
   PreApprovalWebhook,
@@ -25,7 +23,13 @@ import { LimitEnforcer } from '../services/LimitEnforcer.js';
 import { UsageTracker } from '../services/UsageTracker.js';
 import { loadSubscriptionConfig } from '../config/env.js';
 import { db, users, subscriptions } from '../../db/client.js';
+import { getBillingMode } from '../../services/billingAccessService.js';
 import logger from '../../utils/logger.js';
+
+function getWebhookResourceId(req: Request, fallbackId: string): string {
+  const queryId = req.query['data.id'];
+  return typeof queryId === 'string' ? queryId : fallbackId;
+}
 
 /**
  * SubscriptionAPI class manages subscription-related HTTP endpoints
@@ -264,6 +268,30 @@ export class SubscriptionAPI {
         return;
       }
 
+      if (getBillingMode(user.email) === 'manual_transfer') {
+        res.status(403).json({
+          error: 'Esta cuenta utiliza facturación manual.',
+        });
+        return;
+      }
+
+      const [currentSubscription] = await db
+        .select({ status: subscriptions.status })
+        .from(subscriptions)
+        .where(eq(subscriptions.userId, authenticatedUser.id))
+        .orderBy(desc(subscriptions.createdAt))
+        .limit(1);
+
+      if (
+        currentSubscription &&
+        ['pending', 'authorized', 'paused'].includes(currentSubscription.status)
+      ) {
+        res.status(409).json({
+          error: 'Ya existe una suscripción vigente o pendiente.',
+        });
+        return;
+      }
+
       // Create PreApproval with Mercado Pago
       const preApprovalResponse = await this.paymentGateway.createPreApproval({
         userId: authenticatedUser.id,
@@ -373,6 +401,7 @@ export class SubscriptionAPI {
         .select()
         .from(subscriptions)
         .where(eq(subscriptions.userId, userId))
+        .orderBy(desc(subscriptions.createdAt))
         .limit(1);
 
       if (!subscription) {
@@ -494,6 +523,7 @@ export class SubscriptionAPI {
         .select()
         .from(subscriptions)
         .where(eq(subscriptions.userId, userId))
+        .orderBy(desc(subscriptions.createdAt))
         .limit(1);
 
       if (!subscription) {
@@ -619,6 +649,7 @@ export class SubscriptionAPI {
         .select()
         .from(subscriptions)
         .where(eq(subscriptions.userId, userId))
+        .orderBy(desc(subscriptions.createdAt))
         .limit(1);
 
       if (!subscription) {
@@ -720,10 +751,16 @@ export class SubscriptionAPI {
   ): Promise<void> {
     try {
       const userId = req.params.userId;
+      const authenticatedUser = req.user as AuthUser;
 
       if (!userId) {
         logger.warn('Get subscription status called without userId');
         res.status(400).json({ error: 'User ID is required' });
+        return;
+      }
+
+      if (authenticatedUser.id !== userId) {
+        res.status(403).json({ error: 'Forbidden' });
         return;
       }
 
@@ -749,6 +786,7 @@ export class SubscriptionAPI {
         .select()
         .from(subscriptions)
         .where(eq(subscriptions.userId, userId))
+        .orderBy(desc(subscriptions.createdAt))
         .limit(1);
 
       if (subscriptionRows.length === 0 || user.subscriptionPlan === 'free') {
@@ -866,12 +904,12 @@ export class SubscriptionAPI {
   ): Promise<void> {
     try {
       // Validate payload structure
-      const webhook = req.body;
+      const payload = req.body;
 
-      if (!this.isValidPaymentWebhook(webhook)) {
+      if (!this.isValidPaymentWebhook(payload)) {
         logger.warn(
           {
-            payload: webhook,
+            payload,
             timestamp: new Date().toISOString(),
           },
           'Invalid payment webhook payload structure'
@@ -879,6 +917,12 @@ export class SubscriptionAPI {
         res.status(400).json({ error: 'Invalid payload structure' });
         return;
       }
+
+      const webhook: PaymentWebhook = {
+        ...payload,
+        id: String(payload.id),
+        data: { id: String(payload.data.id) },
+      };
 
       // Validate webhook signature
       const signatureHeader = req.headers['x-signature'] as string;
@@ -898,7 +942,7 @@ export class SubscriptionAPI {
 
       const isValidSignature = this.webhookHandler.validateWebhook(
         signatureHeader,
-        webhook.id,
+        getWebhookResourceId(req, webhook.data.id),
         requestId
       );
 
@@ -952,12 +996,12 @@ export class SubscriptionAPI {
   ): Promise<void> {
     try {
       // Validate payload structure
-      const webhook = req.body;
+      const payload = req.body;
 
-      if (!this.isValidPreApprovalWebhook(webhook)) {
+      if (!this.isValidPreApprovalWebhook(payload)) {
         logger.warn(
           {
-            payload: webhook,
+            payload,
             timestamp: new Date().toISOString(),
           },
           'Invalid PreApproval webhook payload structure'
@@ -965,6 +1009,12 @@ export class SubscriptionAPI {
         res.status(400).json({ error: 'Invalid payload structure' });
         return;
       }
+
+      const webhook = {
+        ...payload,
+        id: String(payload.id),
+        data: { id: String(payload.data.id) },
+      } as PreApprovalWebhook;
 
       // Validate webhook signature
       const signatureHeader = req.headers['x-signature'] as string;
@@ -984,7 +1034,7 @@ export class SubscriptionAPI {
 
       const isValidSignature = this.webhookHandler.validateWebhook(
         signatureHeader,
-        webhook.id,
+        getWebhookResourceId(req, webhook.data.id),
         requestId
       );
 
@@ -1034,11 +1084,12 @@ export class SubscriptionAPI {
     return (
       payload &&
       typeof payload === 'object' &&
-      typeof payload.id === 'string' &&
+      (typeof payload.id === 'string' || typeof payload.id === 'number') &&
       payload.type === 'payment' &&
       payload.data &&
       typeof payload.data === 'object' &&
-      typeof payload.data.id === 'string'
+      (typeof payload.data.id === 'string' ||
+        typeof payload.data.id === 'number')
     );
   }
 
@@ -1058,14 +1109,15 @@ export class SubscriptionAPI {
     return (
       payload &&
       typeof payload === 'object' &&
-      typeof payload.id === 'string' &&
+      (typeof payload.id === 'string' || typeof payload.id === 'number') &&
       (payload.type === 'preapproval' ||
         payload.type === 'subscription_preapproval') &&
       typeof payload.action === 'string' &&
       validActions.includes(payload.action) &&
       payload.data &&
       typeof payload.data === 'object' &&
-      typeof payload.data.id === 'string'
+      (typeof payload.data.id === 'string' ||
+        typeof payload.data.id === 'number')
     );
   }
 }

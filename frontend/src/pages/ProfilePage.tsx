@@ -172,6 +172,12 @@ const WEEK_DAYS = [
 export function ProfilePage() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const isManualBilling = user?.billingMode === 'manual_transfer';
+  const requestedTab = searchParams.get('tab') ?? 'profile';
+  const initialTab =
+    isManualBilling && requestedTab === 'subscription'
+      ? 'profile'
+      : requestedTab;
   const { theme, setTheme } = useTheme();
   const { saving, updateProfile, changePassword } = useProfile();
   const { appointments } = useAppointments();
@@ -192,6 +198,8 @@ export function ProfilePage() {
     pauseSubscription,
     resumeSubscription,
   } = useSubscription();
+  const isGoldPlanDisabled =
+    plans.find((plan) => plan.name === 'gold')?.disabled ?? true;
   const [doctor, setDoctor] = useState<ProfileDoctor>(() => {
     const d = user
       ? userToDoctor(user)
@@ -353,10 +361,14 @@ export function ProfilePage() {
 
       <main className="mx-auto max-w-5xl px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8">
         <Tabs
-          defaultValue={searchParams.get('tab') ?? 'profile'}
+          defaultValue={initialTab}
           className="flex flex-col gap-4 sm:gap-6 md:gap-8"
         >
-          <TabsList className="grid h-auto w-full max-w-2xl grid-cols-5 gap-0.5 rounded-lg bg-muted/0 p-0.5 sm:gap-1 sm:rounded-xl sm:p-1 [&>*]:h-auto">
+          <TabsList
+            className={`grid h-auto w-full max-w-2xl ${
+              isManualBilling ? 'grid-cols-4' : 'grid-cols-5'
+            } gap-0.5 rounded-lg bg-muted/0 p-0.5 sm:gap-1 sm:rounded-xl sm:p-1 [&>*]:h-auto`}
+          >
             <TabsTrigger
               value="profile"
               className="h-auto gap-1 rounded-md px-1.5 py-2 text-xs sm:gap-2 sm:rounded-lg sm:px-3 sm:py-2.5 sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
@@ -378,13 +390,15 @@ export function ProfilePage() {
               <Syringe className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Tratamientos</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="subscription"
-              className="h-auto gap-1 rounded-md px-1.5 py-2 text-xs sm:gap-2 sm:rounded-lg sm:px-3 sm:py-2.5 sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
-            >
-              <CreditCard className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Suscripción</span>
-            </TabsTrigger>
+            {!isManualBilling && (
+              <TabsTrigger
+                value="subscription"
+                className="h-auto gap-1 rounded-md px-1.5 py-2 text-xs sm:gap-2 sm:rounded-lg sm:px-3 sm:py-2.5 sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <CreditCard className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Suscripción</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="settings"
               className="h-auto gap-1 rounded-md px-1.5 py-2 text-xs sm:gap-2 sm:rounded-lg sm:px-3 sm:py-2.5 sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
@@ -917,292 +931,309 @@ export function ProfilePage() {
             />
           </TabsContent>
 
-          <TabsContent
-            value="subscription"
-            className="space-y-5 sm:space-y-6 md:space-y-8"
-          >
-            {/* Current Subscription Status */}
-            {subscriptionStatus && (
-              <div className="relative overflow-hidden rounded-xl border bg-card p-4 shadow-sm sm:rounded-2xl sm:p-6">
-                <div className="absolute right-0 top-0 h-24 w-24 translate-x-6 -translate-y-6 rounded-full bg-primary/5 sm:h-32 sm:w-32 sm:translate-x-8 sm:-translate-y-8" />
-                <div className="absolute right-8 top-8 h-12 w-12 rounded-full bg-primary/10 sm:right-12 sm:top-12 sm:h-16 sm:w-16" />
-                <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 sm:h-14 sm:w-14 sm:rounded-2xl">
-                      <CreditCard className="h-5 w-5 text-primary sm:h-7 sm:w-7" />
+          {!isManualBilling && (
+            <TabsContent
+              value="subscription"
+              className="space-y-5 sm:space-y-6 md:space-y-8"
+            >
+              {/* Current Subscription Status */}
+              {subscriptionStatus && (
+                <div className="relative overflow-hidden rounded-xl border bg-card p-4 shadow-sm sm:rounded-2xl sm:p-6">
+                  <div className="absolute right-0 top-0 h-24 w-24 translate-x-6 -translate-y-6 rounded-full bg-primary/5 sm:h-32 sm:w-32 sm:translate-x-8 sm:-translate-y-8" />
+                  <div className="absolute right-8 top-8 h-12 w-12 rounded-full bg-primary/10 sm:right-12 sm:top-12 sm:h-16 sm:w-16" />
+                  <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 sm:h-14 sm:w-14 sm:rounded-2xl">
+                        <CreditCard className="h-5 w-5 text-primary sm:h-7 sm:w-7" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground sm:text-sm">
+                          Plan actual
+                        </p>
+                        <p className="text-xl font-bold capitalize tracking-tight sm:text-2xl">
+                          {subscriptionStatus.plan}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground sm:text-sm">
-                        Plan actual
-                      </p>
-                      <p className="text-xl font-bold capitalize tracking-tight sm:text-2xl">
-                        {subscriptionStatus.plan}
-                      </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Badge
+                        variant={
+                          subscriptionStatus.status === 'active'
+                            ? 'default'
+                            : subscriptionStatus.status === 'paused'
+                              ? 'secondary'
+                              : 'destructive'
+                        }
+                        className="px-3 py-1 text-sm"
+                      >
+                        {subscriptionStatus.status === 'active' && 'Activo'}
+                        {subscriptionStatus.status === 'paused' && 'Pausado'}
+                        {subscriptionStatus.status === 'cancelled' &&
+                          'Cancelado'}
+                        {subscriptionStatus.status === 'failed' && 'Fallido'}
+                      </Badge>
+                      {subscriptionStatus.plan !== 'free' && (
+                        <>
+                          {subscriptionStatus.status === 'active' && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => pauseSubscription()}
+                                disabled={subscriptionLoading}
+                              >
+                                Pausar
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => {
+                                  if (
+                                    confirm(
+                                      '¿Estás seguro de que quieres cancelar tu suscripción?'
+                                    )
+                                  ) {
+                                    void cancelSubscription();
+                                  }
+                                }}
+                                disabled={subscriptionLoading}
+                              >
+                                Cancelar
+                              </Button>
+                            </>
+                          )}
+                          {subscriptionStatus.status === 'paused' && (
+                            <Button
+                              size="sm"
+                              onClick={() => resumeSubscription()}
+                              disabled={subscriptionLoading}
+                            >
+                              Reanudar
+                            </Button>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Badge
-                      variant={
-                        subscriptionStatus.status === 'active'
-                          ? 'default'
-                          : subscriptionStatus.status === 'paused'
-                            ? 'secondary'
-                            : 'destructive'
+                </div>
+              )}
+
+              {/* Feature Status */}
+              {subscriptionStatus && (
+                <Card className="border-0 shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Zap className="h-5 w-5 text-amber-500" />
+                      Estado de funciones
+                    </CardTitle>
+                    <CardDescription>
+                      Funciones disponibles en tu plan actual
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <FeatureStatus status={subscriptionStatus} />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Subscription Plans */}
+              <div className="space-y-4 sm:space-y-6">
+                <div className="pb-1 text-center sm:pb-2">
+                  <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
+                    Elige tu plan
+                  </h2>
+                  <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2 sm:text-base">
+                    Selecciona el plan que mejor se adapte a tus necesidades
+                  </p>
+                </div>
+
+                <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {/* Free Plan */}
+                  <div className="relative flex flex-col rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md sm:rounded-2xl sm:p-6">
+                    <div className="mb-6">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
+                        <User className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <h3 className="mt-4 text-xl font-bold">Gratis</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Ideal para comenzar
+                      </p>
+                    </div>
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold tracking-tight">
+                        $0
+                      </span>
+                      <span className="text-muted-foreground">/mes</span>
+                    </div>
+                    <ul className="mb-8 flex-1 space-y-3">
+                      {[
+                        'Hasta 5 pacientes',
+                        'Sin acceso a calendario',
+                        'Recordatorios por email básicos',
+                      ].map((feature) => (
+                        <li key={feature} className="flex items-start gap-3">
+                          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                            <Check className="h-3 w-3 text-primary" />
+                          </div>
+                          <span className="text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      disabled={
+                        subscriptionStatus?.plan === 'free' ||
+                        subscriptionLoading
                       }
-                      className="px-3 py-1 text-sm"
+                      onClick={() => {
+                        if (
+                          confirm(
+                            '¿Querés cancelar tu suscripción paga y pasar al plan Gratis?'
+                          )
+                        ) {
+                          void cancelSubscription();
+                        }
+                      }}
                     >
-                      {subscriptionStatus.status === 'active' && 'Activo'}
-                      {subscriptionStatus.status === 'paused' && 'Pausado'}
-                      {subscriptionStatus.status === 'cancelled' && 'Cancelado'}
-                      {subscriptionStatus.status === 'failed' && 'Fallido'}
-                    </Badge>
-                    {subscriptionStatus.plan !== 'free' && (
-                      <>
-                        {subscriptionStatus.status === 'active' && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => pauseSubscription()}
-                              disabled={subscriptionLoading}
-                            >
-                              Pausar
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => {
-                                if (
-                                  confirm(
-                                    '¿Estás seguro de que quieres cancelar tu suscripción?'
-                                  )
-                                ) {
-                                  void cancelSubscription();
-                                }
-                              }}
-                              disabled={subscriptionLoading}
-                            >
-                              Cancelar
-                            </Button>
-                          </>
-                        )}
-                        {subscriptionStatus.status === 'paused' && (
-                          <Button
-                            size="sm"
-                            onClick={() => resumeSubscription()}
-                            disabled={subscriptionLoading}
-                          >
-                            Reanudar
-                          </Button>
-                        )}
-                      </>
-                    )}
+                      {subscriptionStatus?.plan === 'free'
+                        ? 'Plan actual'
+                        : 'Seleccionar'}
+                    </Button>
                   </div>
-                </div>
-              </div>
-            )}
 
-            {/* Feature Status */}
-            {subscriptionStatus && (
-              <Card className="border-0 shadow-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Zap className="h-5 w-5 text-amber-500" />
-                    Estado de funciones
-                  </CardTitle>
-                  <CardDescription>
-                    Funciones disponibles en tu plan actual
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <FeatureStatus status={subscriptionStatus} />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Subscription Plans */}
-            <div className="space-y-4 sm:space-y-6">
-              <div className="pb-1 text-center sm:pb-2">
-                <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
-                  Elige tu plan
-                </h2>
-                <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2 sm:text-base">
-                  Selecciona el plan que mejor se adapte a tus necesidades
-                </p>
-              </div>
-
-              <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {/* Free Plan */}
-                <div className="relative flex flex-col rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md sm:rounded-2xl sm:p-6">
-                  <div className="mb-6">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
-                      <User className="h-6 w-6 text-muted-foreground" />
+                  {/* Pro Plan - Highlighted */}
+                  <div className="relative flex flex-col rounded-xl border-2 border-primary bg-card p-4 shadow-lg transition-all hover:shadow-xl sm:rounded-2xl sm:p-6 md:scale-[1.02] lg:scale-105">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-primary px-3 py-1 text-primary-foreground shadow-md">
+                        <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                        Recomendado
+                      </Badge>
                     </div>
-                    <h3 className="mt-4 text-xl font-bold">Gratis</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Ideal para comenzar
-                    </p>
+                    <div className="mb-6">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                        <Sparkles className="h-6 w-6 text-primary" />
+                      </div>
+                      <h3 className="mt-4 text-xl font-bold">Pro</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Para profesionales activos
+                      </p>
+                    </div>
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold tracking-tight">
+                        $30.000
+                      </span>
+                      <span className="text-muted-foreground">/mes</span>
+                    </div>
+                    <ul className="mb-8 flex-1 space-y-3">
+                      {[
+                        'Pacientes ilimitados',
+                        'Sincronización con Google Calendar',
+                        'Recordatorios SMS + Email',
+                        'Reportes avanzados',
+                        'Soporte prioritario',
+                      ].map((feature) => (
+                        <li key={feature} className="flex items-start gap-3">
+                          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                            <Check className="h-3 w-3 text-primary" />
+                          </div>
+                          <span className="text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      className="w-full"
+                      disabled={
+                        subscriptionStatus?.plan === 'pro' ||
+                        subscriptionLoading
+                      }
+                      onClick={() => createSubscription('pro')}
+                    >
+                      {subscriptionStatus?.plan === 'pro'
+                        ? 'Plan actual'
+                        : 'Comenzar ahora'}
+                    </Button>
                   </div>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold tracking-tight">
-                      $0
-                    </span>
-                    <span className="text-muted-foreground">/mes</span>
+
+                  {/* Gold Plan */}
+                  <div className="relative flex flex-col rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md sm:rounded-2xl sm:p-6">
+                    <div className="mb-6">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
+                        <Building2 className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <h3 className="mt-4 text-xl font-bold">Gold</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Para profesionales que quieren potenciar su práctica
+                      </p>
+                    </div>
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold tracking-tight">
+                        $50.000
+                      </span>
+                      <span className="text-muted-foreground">/mes</span>
+                    </div>
+                    <ul className="mb-8 flex-1 space-y-3">
+                      {[
+                        'Todo en Pro',
+                        'Asistente de IA integrado',
+                        'Conexión WhatsApp Bot',
+                        'Turnos ilimitados',
+                        'Soporte prioritario',
+                      ].map((feature) => (
+                        <li key={feature} className="flex items-start gap-3">
+                          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                            <Check className="h-3 w-3 text-primary" />
+                          </div>
+                          <span className="text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      disabled={
+                        subscriptionStatus?.plan === 'gold' ||
+                        subscriptionLoading ||
+                        isGoldPlanDisabled
+                      }
+                      onClick={() => createSubscription('gold')}
+                    >
+                      {subscriptionStatus?.plan === 'gold'
+                        ? 'Plan actual'
+                        : isGoldPlanDisabled
+                          ? 'Próximamente'
+                          : 'Contratar Gold'}
+                    </Button>
                   </div>
-                  <ul className="mb-8 flex-1 space-y-3">
-                    {[
-                      'Hasta 5 pacientes',
-                      'Sin acceso a calendario',
-                      'Recordatorios por email básicos',
-                    ].map((feature) => (
-                      <li key={feature} className="flex items-start gap-3">
-                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                          <Check className="h-3 w-3 text-primary" />
-                        </div>
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    disabled={
-                      subscriptionStatus?.plan === 'free' || subscriptionLoading
-                    }
-                    onClick={() => createSubscription('free')}
-                  >
-                    {subscriptionStatus?.plan === 'free'
-                      ? 'Plan actual'
-                      : 'Seleccionar'}
-                  </Button>
                 </div>
 
-                {/* Pro Plan - Highlighted */}
-                <div className="relative flex flex-col rounded-xl border-2 border-primary bg-card p-4 shadow-lg transition-all hover:shadow-xl sm:rounded-2xl sm:p-6 md:scale-[1.02] lg:scale-105">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary px-3 py-1 text-primary-foreground shadow-md">
-                      <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                      Recomendado
-                    </Badge>
-                  </div>
-                  <div className="mb-6">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                      <Sparkles className="h-6 w-6 text-primary" />
+                {/* Gold CTA */}
+                <div className="rounded-xl bg-primary p-4 text-primary-foreground sm:rounded-2xl sm:p-6 md:p-8">
+                  <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:gap-4 sm:text-left">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/10 sm:h-14 sm:w-14 sm:rounded-2xl">
+                      <Building2 className="h-5 w-5 sm:h-7 sm:w-7" />
                     </div>
-                    <h3 className="mt-4 text-xl font-bold">Pro</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Para profesionales activos
-                    </p>
-                  </div>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold tracking-tight">
-                      $30.000
-                    </span>
-                    <span className="text-muted-foreground">/mes</span>
-                  </div>
-                  <ul className="mb-8 flex-1 space-y-3">
-                    {[
-                      'Pacientes ilimitados',
-                      'Sincronización con Google Calendar',
-                      'Recordatorios SMS + Email',
-                      'Reportes avanzados',
-                      'Soporte prioritario',
-                    ].map((feature) => (
-                      <li key={feature} className="flex items-start gap-3">
-                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                          <Check className="h-3 w-3 text-primary" />
-                        </div>
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    className="w-full"
-                    disabled={
-                      subscriptionStatus?.plan === 'pro' || subscriptionLoading
-                    }
-                    onClick={() => createSubscription('pro')}
-                  >
-                    {subscriptionStatus?.plan === 'pro'
-                      ? 'Plan actual'
-                      : 'Comenzar ahora'}
-                  </Button>
-                </div>
-
-                {/* Gold Plan */}
-                <div className="relative flex flex-col rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md sm:rounded-2xl sm:p-6">
-                  <div className="mb-6">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
-                      <Building2 className="h-6 w-6 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base font-semibold sm:text-lg">
+                        ¿Querés llevar tu práctica al siguiente nivel?
+                      </h3>
+                      <p className="mt-1 text-xs text-primary-foreground/80 sm:text-sm">
+                        Contactá con nuestro equipo para activar el plan Gold y
+                        acceder al asistente de IA y WhatsApp Bot.
+                      </p>
                     </div>
-                    <h3 className="mt-4 text-xl font-bold">Gold</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Para profesionales que quieren potenciar su práctica
-                    </p>
+                    <Button
+                      variant="secondary"
+                      className="mt-1 w-full shrink-0 sm:mt-0 sm:w-auto"
+                    >
+                      Hablar con ventas
+                    </Button>
                   </div>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold tracking-tight">
-                      $50.000
-                    </span>
-                    <span className="text-muted-foreground">/mes</span>
-                  </div>
-                  <ul className="mb-8 flex-1 space-y-3">
-                    {[
-                      'Todo en Pro',
-                      'Asistente de IA integrado',
-                      'Conexión WhatsApp Bot',
-                      'Turnos ilimitados',
-                      'Soporte prioritario',
-                    ].map((feature) => (
-                      <li key={feature} className="flex items-start gap-3">
-                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                          <Check className="h-3 w-3 text-primary" />
-                        </div>
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    disabled={
-                      subscriptionStatus?.plan === 'gold' || subscriptionLoading
-                    }
-                    onClick={() => createSubscription('gold')}
-                  >
-                    {subscriptionStatus?.plan === 'gold'
-                      ? 'Plan actual'
-                      : 'Contactar ventas'}
-                  </Button>
                 </div>
               </div>
-
-              {/* Gold CTA */}
-              <div className="rounded-xl bg-primary p-4 text-primary-foreground sm:rounded-2xl sm:p-6 md:p-8">
-                <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:gap-4 sm:text-left">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/10 sm:h-14 sm:w-14 sm:rounded-2xl">
-                    <Building2 className="h-5 w-5 sm:h-7 sm:w-7" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-base font-semibold sm:text-lg">
-                      ¿Querés llevar tu práctica al siguiente nivel?
-                    </h3>
-                    <p className="mt-1 text-xs text-primary-foreground/80 sm:text-sm">
-                      Contactá con nuestro equipo para activar el plan Gold y
-                      acceder al asistente de IA y WhatsApp Bot.
-                    </p>
-                  </div>
-                  <Button
-                    variant="secondary"
-                    className="mt-1 w-full shrink-0 sm:mt-0 sm:w-auto"
-                  >
-                    Hablar con ventas
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
+          )}
 
           <TabsContent value="settings" className="space-y-4 sm:space-y-6">
             <GoogleCalendarSettings />
