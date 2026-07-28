@@ -89,17 +89,14 @@ import { CreatePlanDialog } from '@/components/debt-dashboard/CreatePlanDialog';
 import { EditPlanDialog } from '@/components/debt-dashboard/EditPlanDialog';
 import { RecordPaymentDialog } from '@/components/debt-dashboard/RecordPaymentDialog';
 import { ConfirmDialog } from '@/components/debt-dashboard/ConfirmDialog';
+import { MonthPeriodSelector } from '@/components/debt-dashboard/MonthPeriodSelector';
 import {
   cancelPaymentPlan,
   markPlanDelinquent,
   reactivatePlan,
   updateAppointmentPayment,
 } from '@/lib/debtDashboardApi';
-import {
-  formatMonthValue,
-  getCurrentMonthValue,
-  getMonthDateRange,
-} from '@/lib/monthRange';
+import { getCurrentMonthValue, getMonthDateRange } from '@/lib/monthRange';
 import type {
   PaymentHistoryFilters,
   PatientPaymentRecord,
@@ -1479,8 +1476,6 @@ export function DebtDashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { startDate, endDate } = getMonthDateRange(selectedMonth);
   const statistics = useDebtStatistics(startDate, endDate);
-  const currentMonth = getCurrentMonthValue();
-  const selectedMonthLabel = formatMonthValue(selectedMonth);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -1493,58 +1488,32 @@ export function DebtDashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">
             Dashboard de Deudas
           </h1>
           <p className="text-sm text-muted-foreground">
-            Datos de <span className="capitalize">{selectedMonthLabel}</span>{' '}
-            según la fecha del turno
+            Gestión y seguimiento de pagos de pacientes
           </p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-          <div className="space-y-1.5">
-            <Label htmlFor="debt-dashboard-month">Mes de los turnos</Label>
-            <Input
-              id="debt-dashboard-month"
-              type="month"
-              value={selectedMonth}
-              onChange={(event) => {
-                if (event.target.value) {
-                  setSelectedMonth(event.target.value);
-                }
-              }}
-              className="w-full sm:w-[190px]"
-            />
-            <p className="text-xs text-muted-foreground">
-              KPIs, Vista General e Historial
-            </p>
-          </div>
-          {selectedMonth !== currentMonth && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedMonth(currentMonth)}
-              className="w-full sm:w-auto"
-            >
-              Mes actual
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="w-full gap-2 sm:w-auto"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
-            />
-            Actualizar
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="h-11 w-full gap-2 sm:w-auto"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
+          />
+          Actualizar
+        </Button>
       </div>
+
+      <MonthPeriodSelector
+        value={selectedMonth}
+        onValueChange={setSelectedMonth}
+      />
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

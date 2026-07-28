@@ -42,3 +42,17 @@ export function formatMonthValue(monthValue: string): string {
     year: 'numeric',
   }).format(date);
 }
+
+export function shiftMonthValue(
+  monthValue: string,
+  monthOffset: number
+): string {
+  const [yearValue, monthValuePart] = monthValue.split('-');
+  const date = new Date(
+    Number(yearValue),
+    Number(monthValuePart) - 1 + monthOffset,
+    1
+  );
+
+  return getCurrentMonthValue(date);
+}

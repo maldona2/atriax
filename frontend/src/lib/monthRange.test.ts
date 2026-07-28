@@ -3,6 +3,7 @@ import {
   formatMonthValue,
   getCurrentMonthValue,
   getMonthDateRange,
+  shiftMonthValue,
 } from './monthRange';
 
 describe('monthRange', () => {
@@ -34,5 +35,10 @@ describe('monthRange', () => {
 
   it('formats a readable Spanish month label', () => {
     expect(formatMonthValue('2026-07')).toMatch(/julio.*2026/i);
+  });
+
+  it('moves between months across year boundaries', () => {
+    expect(shiftMonthValue('2026-01', -1)).toBe('2025-12');
+    expect(shiftMonthValue('2026-12', 1)).toBe('2027-01');
   });
 });
