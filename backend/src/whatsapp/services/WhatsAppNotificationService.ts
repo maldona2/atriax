@@ -38,15 +38,15 @@ export class WhatsAppNotificationService {
   async sendAppointmentBooked(
     phone: string,
     data: AppointmentNotificationData
-  ): Promise<void> {
-    await this._sendTemplate(phone, appointmentBookedTemplate(data), 'booked');
+  ): Promise<boolean> {
+    return this._sendTemplate(phone, appointmentBookedTemplate(data), 'booked');
   }
 
   async sendAppointmentConfirmed(
     phone: string,
     data: AppointmentNotificationData
-  ): Promise<void> {
-    await this._sendTemplate(
+  ): Promise<boolean> {
+    return this._sendTemplate(
       phone,
       appointmentConfirmedTemplate(data),
       'confirmed'
@@ -56,8 +56,8 @@ export class WhatsAppNotificationService {
   async sendAppointmentCancelled(
     phone: string,
     data: AppointmentNotificationData
-  ): Promise<void> {
-    await this._sendTemplate(
+  ): Promise<boolean> {
+    return this._sendTemplate(
       phone,
       appointmentCancelledTemplate(data),
       'cancelled'
@@ -67,8 +67,8 @@ export class WhatsAppNotificationService {
   async sendAppointmentReminder(
     phone: string,
     data: AppointmentNotificationData
-  ): Promise<void> {
-    await this._sendTemplate(
+  ): Promise<boolean> {
+    return this._sendTemplate(
       phone,
       appointmentReminderTemplate(data),
       'reminder'
@@ -78,23 +78,24 @@ export class WhatsAppNotificationService {
   async sendCycleReminder(
     phone: string,
     data: CycleReminderData
-  ): Promise<void> {
-    await this._sendTemplate(phone, cycleReminderTemplate(data), 'cycle');
+  ): Promise<boolean> {
+    return this._sendTemplate(phone, cycleReminderTemplate(data), 'cycle');
   }
 
   // ─── Private ────────────────────────────────────────────────────────────────
 
+  /** Returns true only when Meta accepted the message. */
   private async _sendTemplate(
     phone: string,
     template: WhatsAppTemplateMessage,
     type: string
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (!featureEnabled) {
       logger.debug(
         { type },
         'WhatsAppNotificationService: feature disabled, skipping'
       );
-      return;
+      return false;
     }
 
     if (!phone) {
@@ -102,7 +103,7 @@ export class WhatsAppNotificationService {
         { type },
         'WhatsAppNotificationService: no phone number, skipping'
       );
-      return;
+      return false;
     }
 
     try {
@@ -118,11 +119,13 @@ export class WhatsAppNotificationService {
           'WhatsAppNotificationService: send failed'
         );
       }
+      return result.success;
     } catch (err) {
       logger.error(
         { err, type, phone },
         'WhatsAppNotificationService: unexpected error'
       );
+      return false;
     }
   }
 }
