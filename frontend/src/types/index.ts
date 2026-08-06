@@ -216,4 +216,6 @@ export interface BillingStatus {
   billing_month: string;
   paid: boolean;
   paid_at: string | null;
+  due_day: number;
+  overdue: boolean;
 }

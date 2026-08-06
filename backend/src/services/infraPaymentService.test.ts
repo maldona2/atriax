@@ -1,7 +1,24 @@
 import {
   assertValidMonth,
   currentBillingMonth,
+  isOverdue,
 } from './infraPaymentService.js';
+
+describe('isOverdue', () => {
+  it('is never overdue while the month is paid', () => {
+    expect(isOverdue(true, new Date('2026-08-28T00:00:00.000Z'))).toBe(false);
+  });
+
+  it('is not overdue on or before the due day', () => {
+    expect(isOverdue(false, new Date('2026-08-01T00:00:00.000Z'))).toBe(false);
+    expect(isOverdue(false, new Date('2026-08-10T23:59:00.000Z'))).toBe(false);
+  });
+
+  it('is overdue from the day after the due day', () => {
+    expect(isOverdue(false, new Date('2026-08-11T00:00:00.000Z'))).toBe(true);
+    expect(isOverdue(false, new Date('2026-08-31T00:00:00.000Z'))).toBe(true);
+  });
+});
 
 describe('currentBillingMonth', () => {
   it('formats a date as YYYY-MM (UTC)', () => {

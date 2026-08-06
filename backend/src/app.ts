@@ -75,6 +75,10 @@ import remindersRoutes from './routes/reminders.js';
 import chatbotRoutes from './chatbot/routes.js';
 import whatsappRoutes from './whatsapp/routes.js';
 import debugRoutes from './routes/debug.js';
+import { requireBillingCurrent } from './middleware/requireBillingCurrent.js';
+
+// Lock out manual-billing tenants with an overdue monthly transfer.
+app.use('/api', requireBillingCurrent);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);

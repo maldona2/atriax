@@ -3,6 +3,9 @@ import { db, infraPayments, tenants, users } from '../db/client.js';
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
+/** Day of the month (UTC) the monthly transfer is due. */
+export const BILLING_DUE_DAY = 10;
+
 /** Current billing month as 'YYYY-MM' (UTC). */
 export function currentBillingMonth(now: Date = new Date()): string {
   const y = now.getUTCFullYear();
@@ -37,6 +40,14 @@ export interface TenantPaymentStatus {
   billing_month: string;
   paid: boolean;
   paid_at: Date | null;
+  due_day: number;
+  /** Unpaid and past the due day: access to the app is blocked. */
+  overdue: boolean;
+}
+
+/** True when the current month is unpaid and the due day has passed. */
+export function isOverdue(paid: boolean, now: Date = new Date()): boolean {
+  return !paid && now.getUTCDate() > BILLING_DUE_DAY;
 }
 
 /** Paid months for a tenant, most recent first. */
@@ -90,9 +101,10 @@ export async function listPaymentsOverview(): Promise<TenantPaymentSummary[]> {
 
 /** Current-month status for a single tenant (client-facing). */
 export async function getTenantStatus(
-  tenantId: string
+  tenantId: string,
+  now: Date = new Date()
 ): Promise<TenantPaymentStatus> {
-  const month = currentBillingMonth();
+  const month = currentBillingMonth(now);
   const [row] = await db
     .select({ paidAt: infraPayments.paidAt })
     .from(infraPayments)
@@ -104,10 +116,13 @@ export async function getTenantStatus(
     )
     .limit(1);
 
+  const paid = Boolean(row);
   return {
     billing_month: month,
-    paid: Boolean(row),
+    paid,
     paid_at: row?.paidAt ?? null,
+    due_day: BILLING_DUE_DAY,
+    overdue: isOverdue(paid, now),
   };
 }
 

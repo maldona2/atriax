@@ -20,14 +20,11 @@ import {
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import type { BillingStatus } from '@/types';
-
-/**
- * Datos de facturación. Editá estos valores si cambian los costos.
- * El total en pesos se calcula con el dólar oficial (venta) en vivo.
- */
-const ALIAS = 'molpo.';
-const MONTHLY_USD = 28; // lo que se cobra (redondeado)
-const FALLBACK_RATE = 1505; // venta oficial de respaldo si la API falla
+import {
+  BILLING_ALIAS as ALIAS,
+  BILLING_FALLBACK_RATE as FALLBACK_RATE,
+  BILLING_MONTHLY_USD as MONTHLY_USD,
+} from '@/config/billing';
 
 const COSTS = [
   {
@@ -141,7 +138,7 @@ export function BillingInfoPage() {
             ) : (
               <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400">
                 <Clock className="size-3" />
-                Pendiente de pago
+                Pendiente — vence el {status.due_day} de cada mes
               </span>
             ))}
         </CardHeader>
@@ -176,7 +173,9 @@ export function BillingInfoPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Cómo pagar</CardTitle>
-          <CardDescription>Transferencia mensual al siguiente alias</CardDescription>
+          <CardDescription>
+            Transferencia mensual al siguiente alias
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3">
@@ -202,7 +201,9 @@ export function BillingInfoPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">En qué se va la plata</CardTitle>
-          <CardDescription>Costos reales de infraestructura por mes</CardDescription>
+          <CardDescription>
+            Costos reales de infraestructura por mes
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {COSTS.map((c) => {

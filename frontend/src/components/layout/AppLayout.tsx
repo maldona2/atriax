@@ -15,6 +15,7 @@ import { DashboardShell } from './DashboardShell';
 import { useAppointmentNotifications } from '@/hooks/useAppointmentNotifications';
 import { useSubscription } from '@/hooks/useSubscription';
 import { ChatbotWidget } from '@/components/chatbot/ChatbotWidget';
+import { BillingReminderDialog } from '@/components/billing/BillingReminderDialog';
 
 export function AppLayout() {
   const { user, logout } = useAuth();
@@ -73,6 +74,7 @@ export function AppLayout() {
         <Outlet />
       </DashboardShell>
       <ChatbotWidget />
+      <BillingReminderDialog />
     </>
   );
 }
