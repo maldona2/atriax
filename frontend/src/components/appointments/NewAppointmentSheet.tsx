@@ -42,6 +42,14 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { QuickAddPatientDialog } from './QuickAddPatientDialog';
@@ -74,12 +82,34 @@ export function NewAppointmentSheet({
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [sessionNotesExpanded, setSessionNotesExpanded] = useState(false);
   const [patientOpen, setPatientOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDateModified, setIsDateModified] = useState(false);
   const prevPatientId = useRef<string>('');
 
   const { suggestedDate, calculationDetails } = useSuggestedAppointmentDate(
     form.patient_id || null
   );
+
+  // Ask the professional to re-read date and time before saving. A mistyped
+  // day is invisible once saved: the patient gets the WhatsApp anyway.
+  const scheduledAt = (() => {
+    if (!form.date) return null;
+    const [h, m] = (form.time || '').split(':').map(Number);
+    const d = new Date(form.date);
+    d.setHours(h ?? 0, m ?? 0, 0, 0);
+    return d;
+  })();
+  const isPastDate = scheduledAt ? scheduledAt.getTime() < Date.now() : false;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setConfirmOpen(true);
+  };
+
+  const handleConfirm = (e: React.MouseEvent<HTMLButtonElement>) => {
+    setConfirmOpen(false);
+    onSubmit(e as unknown as React.FormEvent);
+  };
 
   // Reset modification flag when patient changes
   useEffect(() => {
@@ -164,7 +194,7 @@ export function NewAppointmentSheet({
       </SheetHeader>
 
       <form
-        onSubmit={onSubmit}
+        onSubmit={handleSubmit}
         className="flex min-h-0 flex-1 flex-col overflow-hidden"
       >
         {/* Scrollable content area */}
@@ -555,6 +585,68 @@ export function NewAppointmentSheet({
           </Button>
         </div>
       </form>
+
+      {/* Confirmation step — last chance to catch a wrong day or hour */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirma la fecha y la hora</DialogTitle>
+            <DialogDescription>
+              Revisa los datos antes de guardar. El paciente recibe un WhatsApp
+              con esta fecha.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+            <div className="flex items-start gap-2">
+              <User className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span className="text-sm font-medium">
+                {selectedPatient
+                  ? `${selectedPatient.first_name} ${selectedPatient.last_name}`
+                  : 'Paciente sin seleccionar'}
+              </span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CalendarIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span className="text-base font-semibold capitalize">
+                {scheduledAt
+                  ? format(scheduledAt, "EEEE d 'de' MMMM 'de' yyyy", {
+                      locale: es,
+                    })
+                  : 'Sin fecha'}
+              </span>
+            </div>
+            <div className="flex items-start gap-2">
+              <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span className="text-base font-semibold">
+                {form.time || 'Sin hora'}
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  {form.duration_minutes} min
+                </span>
+              </span>
+            </div>
+          </div>
+
+          {isPastDate && (
+            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+              Esta fecha y hora ya pasaron.
+            </p>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmOpen(false)}
+            >
+              Corregir
+            </Button>
+            <Button type="button" onClick={handleConfirm} disabled={submitting}>
+              {submitting ? 'Creando...' : 'Confirmar y crear'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
