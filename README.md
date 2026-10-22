@@ -184,6 +184,22 @@ cd backend
 npm run db:migrate
 ```
 
+### Migrations in production
+
+The backend container does **not** run migrations on start; a restart or
+redeploy never touches the schema. Apply pending migrations explicitly, before
+deploying code that depends on them, from the running backend container
+(the image ships `drizzle-kit` and the `drizzle/` folder):
+
+```bash
+docker exec -it <backend-container> npm run db:migrate
+```
+
+In Coolify, either run that from the backend's Terminal tab or set
+`npm run db:migrate` as the backend's Pre-deployment command when you want it
+automated for a given deploy. With the local `docker-compose.yml`, run
+`docker compose run --rm backend npm run db:migrate` after the first `up`.
+
 ### Creating New Migrations (Drizzle)
 
 1. Edit the schema in `backend/src/db/schema.ts`
