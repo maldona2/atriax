@@ -32,8 +32,12 @@ async function startServer() {
     // Schedule jobs
     setupScheduledJobs();
 
-    // Start calendar sync worker
-    startCalendarSyncWorker();
+    // Start calendar sync worker (off in staging, it has no other flag)
+    if (process.env.DISABLE_BACKGROUND_WORKERS === 'true') {
+      logger.info('Calendar sync worker disabled (DISABLE_BACKGROUND_WORKERS)');
+    } else {
+      startCalendarSyncWorker();
+    }
   } catch (error) {
     logger.error(
       {
@@ -52,7 +56,10 @@ async function startServer() {
  */
 function setupScheduledJobs() {
   // Skip in-app cron if disabled (e.g., when using Railway cron jobs)
-  if (process.env.DISABLE_IN_APP_CRON === 'true') {
+  if (
+    process.env.DISABLE_IN_APP_CRON === 'true' ||
+    process.env.DISABLE_BACKGROUND_WORKERS === 'true'
+  ) {
     logger.info('In-app cron jobs disabled (using external scheduler)');
     return;
   }
