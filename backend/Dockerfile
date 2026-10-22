@@ -18,5 +18,6 @@ RUN npm run build
 # Expose port
 EXPOSE 5000
 
-# Run migrations then start server
-CMD ["sh", "-c", "npm run db:migrate && npm start"]
+# Migrations are not run on start: apply them explicitly before deploying
+# (see README "Migrations in production").
+CMD ["npm", "start"]
