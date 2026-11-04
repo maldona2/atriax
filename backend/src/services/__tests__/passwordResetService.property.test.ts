@@ -23,6 +23,7 @@ jest.mock('../../services/mailService.js', () => ({
 }));
 
 jest.mock('../../utils/logger.js', () => ({
+  __esModule: true,
   default: { error: jest.fn(), info: jest.fn(), warn: jest.fn() },
 }));
 
@@ -369,4 +370,49 @@ describe('passwordResetService property-based tests', () => {
       { numRuns: 5 }
     );
   }, 30_000);
+});
+
+describe('passwordResetService logging', () => {
+  const { db } = jest.requireMock('../../db/client.js') as {
+    db: { select: jest.Mock; insert: jest.Mock; update: jest.Mock };
+  };
+  const { sendPasswordResetEmail } = jest.requireMock(
+    '../../services/mailService.js'
+  ) as { sendPasswordResetEmail: jest.Mock };
+  const log = (
+    jest.requireMock('../../utils/logger.js') as {
+      default: { error: jest.Mock };
+    }
+  ).default;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('masks the recipient when the reset email fails', async () => {
+    db.select = selectReturning([
+      { id: UUIDS[0], email: 'juan.perez@example.com' },
+    ]);
+    db.update = updateCapturing([]);
+    db.insert = insertCapturing([]);
+    sendPasswordResetEmail.mockRejectedValueOnce(new Error('smtp down'));
+
+    await svc.requestPasswordReset('juan.perez@example.com');
+
+    const logged = JSON.stringify(log.error.mock.calls);
+    expect(logged).toContain('j***@example.com');
+    expect(logged).not.toContain('juan.perez@example.com');
+  });
+
+  test('masks the email when the reset request itself fails', async () => {
+    db.select = jest.fn(() => {
+      throw new Error('db down');
+    });
+
+    await svc.requestPasswordReset('juan.perez@example.com').catch(() => {});
+
+    const logged = JSON.stringify(log.error.mock.calls);
+    expect(logged).toContain('j***@example.com');
+    expect(logged).not.toContain('juan.perez@example.com');
+  });
 });
