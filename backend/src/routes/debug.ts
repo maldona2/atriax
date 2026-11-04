@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { sendReminders } from '../jobs/reminderJob.js';
 import { getDailyReminderCount } from '../services/reminderService.js';
+import { isMailConfigured } from '../services/mailService.js';
 import logger from '../utils/logger.js';
 
 const router = Router();
@@ -38,7 +39,7 @@ router.get('/reminders/stats', async (req, res) => {
         todayCount: count,
         serverTime: today.toISOString(),
         cronSchedule: process.env.REMINDER_CRON_SCHEDULE ?? '0 9 * * *',
-        resendConfigured: !!process.env.RESEND_API_KEY,
+        mailConfigured: isMailConfigured(),
       },
     });
   } catch (error) {
