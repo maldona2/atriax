@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { eq, and } from 'drizzle-orm';
 import { db, users, passwordResetTokens } from '../db/client.js';
 import { sendPasswordResetEmail } from './mailService.js';
+import { maskEmail } from './mailer/mailer.js';
 import logger from '../utils/logger.js';
 
 const SALT_ROUNDS = 12;
@@ -73,13 +74,17 @@ export async function requestPasswordReset(email: string): Promise<void> {
         logger.error(
           { err: mailErr },
           'Failed to send password reset email to %s',
-          email
+          maskEmail(email)
         );
       }
     }
   } catch (err) {
     // Log unexpected DB errors but do not expose them
-    logger.error({ err }, 'Error during requestPasswordReset for %s', email);
+    logger.error(
+      { err },
+      'Error during requestPasswordReset for %s',
+      maskEmail(email)
+    );
   } finally {
     // Ensure constant-time response regardless of code path taken
     const elapsed = Date.now() - start;

@@ -9,6 +9,12 @@ const __dirname = path.dirname(__filename);
 
 const app: Express = express();
 
+// Prod runs behind Coolify's Traefik (frontend nginx passes X-Forwarded-For
+// through unchanged), so the client IP is the last hop Traefik appended.
+// Without this, express-rate-limit keys every user on the proxy IP.
+// ponytail: fixed at 1 hop; raise it if another proxy that appends XFF is added.
+app.set('trust proxy', 1);
+
 // CORS configuration
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:3000',
