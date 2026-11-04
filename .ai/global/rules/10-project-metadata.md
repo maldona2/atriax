@@ -13,6 +13,6 @@
 - State management: React Context API
 - Authentication: JWT (30-day expiry)
 - File storage: AWS S3
-- Email service: SendGrid / Resend
+- Email service: SMTP via Amazon SES (nodemailer, `backend/src/services/mailer/`)
 - Payment integration: Mercado Pago
 - Calendar integration: Google Calendar API

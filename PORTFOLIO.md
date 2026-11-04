@@ -126,7 +126,7 @@ Servicios de dominio
       |
       +----> PostgreSQL + Drizzle ORM
       +----> Workers, colas y tareas programadas
-      +----> Google Calendar, WhatsApp, Resend, S3, Mercado Pago y OpenAI
+      +----> Google Calendar, WhatsApp, Amazon SES, S3, Mercado Pago y OpenAI
 ```
 
 Para las tareas que no debían bloquear la experiencia del usuario, incorporé
@@ -168,7 +168,7 @@ date-fns.
 **Backend:** Node.js, Express, TypeScript, PostgreSQL, Drizzle ORM, JWT, bcrypt,
 Zod, Pino y node-cron.
 
-**Integraciones:** Google Calendar API, WhatsApp Cloud API de Meta, Resend,
+**Integraciones:** Google Calendar API, WhatsApp Cloud API de Meta, Amazon SES (SMTP),
 Amazon S3, Mercado Pago y OpenAI API.
 
 **Calidad e infraestructura:** Jest, Vitest, Testing Library, Supertest,

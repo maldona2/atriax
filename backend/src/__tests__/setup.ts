@@ -1,2 +1,3 @@
-process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 'test-key';
-process.env.RESEND_FROM = process.env.RESEND_FROM || 'noreply@test.domain.com';
+// Mail runs in log mode in tests (jsonTransport): MAIL_FROM set, no SMTP_*.
+process.env.MAIL_FROM =
+  process.env.MAIL_FROM || 'Test <noreply@test.domain.com>';

@@ -20,6 +20,7 @@ jest.mock('../utils/logger.js', () => ({
     error: (...args: unknown[]) => mockLoggerError(...args),
     info: (...args: unknown[]) => mockLoggerInfo(...args),
     warn: (...args: unknown[]) => mockLoggerWarn(...args),
+    child: () => ({ error: jest.fn(), info: jest.fn(), warn: jest.fn() }),
   },
 }));
 
@@ -66,7 +67,7 @@ describe('mailService - Attachment Support', () => {
 
 describe('mailService - ICS Integration', () => {
   // Note: These tests verify the integration between mailService and icsGenerator
-  // They don't actually send emails (Resend API key is not configured in tests)
+  // They don't actually send emails (tests run the mailer in log mode)
   // The actual email sending is tested manually or in E2E tests
 
   it('should have updated function signatures to accept appointmentId', () => {
@@ -81,7 +82,7 @@ describe('mailService - ICS Integration', () => {
     };
 
     // These calls should compile without errors
-    // They won't actually send emails because RESEND_API_KEY is not set
+    // They won't actually send emails: no SMTP_* is set, so mail is log-only
     const appointmentId = '123e4567-e89b-12d3-a456-426614174000';
 
     // Just verify the imports and types are correct

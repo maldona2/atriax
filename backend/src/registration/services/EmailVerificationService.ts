@@ -12,7 +12,7 @@ import {
  * Simple EmailService implementation.
  *
  * For now this logs verification links to the server console.
- * It can be wired to a real provider (Resend, SendGrid, etc.) later.
+ * It can be wired to a real provider (see services/mailService.ts) later.
  */
 export class EmailVerificationService implements EmailService {
   private readonly frontendUrl: string;

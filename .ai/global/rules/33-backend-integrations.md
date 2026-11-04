@@ -22,7 +22,7 @@
 - Handle webhook events for subscription status changes.
 - Store amounts in cents (ARS currency).
 
-## Email (SendGrid/Resend)
+## Email (SMTP / Amazon SES)
 
 - Use `mailService.ts` for all email operations.
 - Template emails for consistency.

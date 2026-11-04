@@ -1,13 +1,13 @@
 /**
  * Preservation Property Tests — Email Branding (Atriax)
  *
- * These tests verify that domain strings, UID format, organizer email,
- * and RESEND_FROM override behavior are UNCHANGED by the branding fix.
+ * These tests verify that domain strings, UID format and organizer email
+ * are UNCHANGED by the branding fix.
  *
  * These tests run on UNFIXED code and are EXPECTED TO PASS.
  * They establish the baseline behavior that must be preserved after the fix.
  *
- * **Validates: Requirements 3.1, 3.2, 3.3, 3.4**
+ * **Validates: Requirements 3.2, 3.3, 3.4**
  */
 
 import * as fc from 'fast-check';
@@ -78,46 +78,6 @@ describe('Preservation 3.3 — ICS organizer email always noreply@anamnesia.pro'
       ),
       { numRuns: 50 }
     );
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Unit Test — RESEND_FROM override preservation
-// ---------------------------------------------------------------------------
-
-describe('Preservation 3.1 — RESEND_FROM env var override', () => {
-  const originalEnv = process.env.RESEND_FROM;
-
-  afterEach(() => {
-    if (originalEnv === undefined) {
-      delete process.env.RESEND_FROM;
-    } else {
-      process.env.RESEND_FROM = originalEnv;
-    }
-  });
-
-  /**
-   * When RESEND_FROM is explicitly set, the configured value is used as-is.
-   * The module-level constant is evaluated at import time, so we test the
-   * expression logic directly — same approach as the bug condition tests.
-   *
-   * **Validates: Requirements 3.1**
-   */
-  it('when RESEND_FROM env var is set, the configured value is used unchanged', () => {
-    const customFrom = 'Custom Sender <custom@example.com>';
-    process.env.RESEND_FROM = customFrom;
-    // Reproduce the module expression: process.env.RESEND_FROM ?? 'AnamnesIA <noreply@anamnesia.pro>'
-    const resolvedFrom =
-      process.env.RESEND_FROM ?? 'AnamnesIA <noreply@anamnesia.pro>';
-    expect(resolvedFrom).toBe(customFrom);
-  });
-
-  it('when RESEND_FROM env var is set to Atriax address, that exact value is used', () => {
-    const atriaxFrom = 'Atriax <noreply@anamnesia.pro>';
-    process.env.RESEND_FROM = atriaxFrom;
-    const resolvedFrom =
-      process.env.RESEND_FROM ?? 'AnamnesIA <noreply@anamnesia.pro>';
-    expect(resolvedFrom).toBe(atriaxFrom);
   });
 });
 
